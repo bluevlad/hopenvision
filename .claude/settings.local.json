@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(npm create vite@latest . -- --template react-ts)",
+      "Bash(npm install)",
+      "Bash(npm install:*)",
+      "Bash(npm run dev)",
+      "Bash(gradle wrapper:*)",
+      "Bash(where:*)",
+      "Bash(start http://localhost:5173)",
+      "Bash(curl:*)",
+      "Bash(java -version:*)",
+      "Bash(./gradlew.bat bootRun:*)",
+      "Bash(.gradlew.bat build -x test)",
+      "Bash(./gradlew.bat build:*)",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(netstat:*)",
+      "Bash(cat:*)",
+      "Bash(psql:*)",
+      "Bash(start http://localhost:8080/swagger-ui.html)",
+      "Bash(ls:*)",
+      "Bash(git init:*)",
+      "Bash(tree /F /L 3)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

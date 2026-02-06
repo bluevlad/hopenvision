@@ -1,0 +1,25 @@
+{
+  "recommendations": [
+    // Git
+    "vivaxy.vscode-conventional-commits",
+    "mhutchie.git-graph",
+    "eamodio.gitlens",
+
+    // Java/Spring
+    "vscjava.vscode-java-pack",
+    "vmware.vscode-spring-boot",
+    "vscjava.vscode-spring-initializr",
+
+    // TypeScript/React
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "dsznajder.es7-react-js-snippets",
+
+    // Docker
+    "ms-azuretools.vscode-docker",
+
+    // 기타
+    "redhat.vscode-yaml",
+    "yzhang.markdown-all-in-one"
+  ]
+}

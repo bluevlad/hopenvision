@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  hopenvision-db:
+    image: postgres:16-alpine
+    container_name: hopenvision-db
+    environment:
+      POSTGRES_DB: hopenvision
+      POSTGRES_USER: hopenvision
+      POSTGRES_PASSWORD: hopenvision123
+      TZ: Asia/Seoul
+    ports:
+      - "5432:5432"
+    volumes:
+      - hopenvision-postgres-data:/var/lib/postgresql/data
+      - ./doc/sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hopenvision"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hopenvision-network
+
+networks:
+  hopenvision-network:
+    driver: bridge
+
+volumes:
+  hopenvision-postgres-data:

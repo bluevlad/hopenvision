@@ -25,7 +25,14 @@
       "Bash(git init:*)",
       "Bash(tree /F /L 3)",
       "Bash(git remote add:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: 프로젝트 초기 설정 및 문서화\n\n- api/: Spring Boot 백엔드 \\(시험 관리 모듈\\)\n- web/: React + TypeScript 프론트엔드\n- doc/: 프로젝트 문서 \\(WBS, 개발 표준, 서버 설정\\)\n- scripts/: 자동화 스크립트 \\(start, stop, status\\)\n- docker-compose.yml: PostgreSQL 개발 환경\n- .vscode/: VS Code 설정 및 권장 확장\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git branch:*)",
+      "Bash(git push:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\ndocs: README.md 추가\n\n- 프로젝트 개요 및 주요 기능\n- 기술 스택 설명\n- 설치 및 실행 가이드\n- 문서 링크\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(docker compose:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker logs:*)"
     ]
   }
 }

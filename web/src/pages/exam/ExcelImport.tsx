@@ -9,7 +9,6 @@ import {
   Space,
   Typography,
   message,
-  Divider,
   Tag,
   Result,
   Spin,
@@ -19,12 +18,11 @@ import {
   FileExcelOutlined,
   DownloadOutlined,
   CheckCircleOutlined,
-  CloseCircleOutlined,
   ArrowLeftOutlined,
 } from '@ant-design/icons';
 import type { UploadFile, UploadProps } from 'antd';
 import { examApi } from '../../api/examApi';
-import type { ExcelImportResult, ImportedAnswerKey } from '../../types/exam';
+import type { ExcelImportResult } from '../../types/exam';
 
 const { Title, Text, Paragraph } = Typography;
 const { Dragger } = Upload;

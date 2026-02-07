@@ -1,5 +1,6 @@
 package com.hopenvision.exam.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -15,8 +16,11 @@ public class ExamDto {
     @AllArgsConstructor
     @Builder
     public static class Request {
+        @NotBlank(message = "시험코드는 필수입니다")
         private String examCd;
+        @NotBlank(message = "시험명은 필수입니다")
         private String examNm;
+        @NotBlank(message = "시험유형은 필수입니다")
         private String examType;
         private String examYear;
         private Integer examRound;

@@ -5,6 +5,7 @@ import com.hopenvision.exam.service.ExamService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -59,7 +60,7 @@ public class ExamController {
     @Operation(summary = "시험 등록", description = "새로운 시험을 등록합니다.")
     @PostMapping
     public ResponseEntity<ApiResponse<ExamDto.Response>> createExam(
-            @RequestBody ExamDto.Request request
+            @Valid @RequestBody ExamDto.Request request
     ) {
         ExamDto.Response result = examService.createExam(request);
         return ResponseEntity.ok(ApiResponse.success("시험이 등록되었습니다.", result));
@@ -69,7 +70,7 @@ public class ExamController {
     @PutMapping("/{examCd}")
     public ResponseEntity<ApiResponse<ExamDto.Response>> updateExam(
             @Parameter(description = "시험코드") @PathVariable String examCd,
-            @RequestBody ExamDto.Request request
+            @Valid @RequestBody ExamDto.Request request
     ) {
         ExamDto.Response result = examService.updateExam(examCd, request);
         return ResponseEntity.ok(ApiResponse.success("시험이 수정되었습니다.", result));

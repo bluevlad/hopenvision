@@ -130,7 +130,7 @@ export default function ExamList() {
       key: 'passScore',
       width: 100,
       align: 'center',
-      render: (value) => `${value}점`,
+      render: (value) => value != null ? `${value}점` : '-',
     },
     {
       title: '사용여부',

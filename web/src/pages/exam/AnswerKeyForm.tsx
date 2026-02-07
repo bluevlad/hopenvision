@@ -9,6 +9,7 @@ import {
   Table,
   Radio,
   message,
+  Modal,
   Alert,
   Row,
   Col,
@@ -95,12 +96,18 @@ export default function AnswerKeyForm() {
 
   // 저장
   const handleSave = () => {
-    // 모든 정답이 입력되었는지 확인
     const emptyAnswers = answers.filter((a) => !a.correctAns);
     if (emptyAnswers.length > 0) {
-      message.warning(`${emptyAnswers.length}개 문항의 정답이 입력되지 않았습니다.`);
+      Modal.confirm({
+        title: '미입력 정답 확인',
+        content: `${emptyAnswers.length}개 문항의 정답이 입력되지 않았습니다. 그래도 저장하시겠습니까?`,
+        okText: '저장',
+        cancelText: '취소',
+        onOk: () => saveMutation.mutate(),
+      });
+    } else {
+      saveMutation.mutate();
     }
-    saveMutation.mutate();
   };
 
   const columns = [

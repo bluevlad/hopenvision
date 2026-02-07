@@ -3,6 +3,7 @@ package com.hopenvision.exam.service;
 import com.hopenvision.exam.dto.*;
 import com.hopenvision.exam.entity.*;
 import com.hopenvision.exam.repository.*;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -44,7 +45,7 @@ public class ExamService {
      */
     public ExamDto.DetailResponse getExamDetail(String examCd) {
         Exam exam = examRepository.findById(examCd)
-                .orElseThrow(() -> new IllegalArgumentException("시험을 찾을 수 없습니다: " + examCd));
+                .orElseThrow(() -> new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd));
 
         List<ExamSubject> subjects = subjectRepository.findByExamCdOrderBySortOrder(examCd);
 
@@ -116,7 +117,7 @@ public class ExamService {
     @Transactional
     public ExamDto.Response updateExam(String examCd, ExamDto.Request request) {
         Exam exam = examRepository.findById(examCd)
-                .orElseThrow(() -> new IllegalArgumentException("시험을 찾을 수 없습니다: " + examCd));
+                .orElseThrow(() -> new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd));
 
         exam.setExamNm(request.getExamNm());
         exam.setExamType(request.getExamType());
@@ -136,7 +137,7 @@ public class ExamService {
     @Transactional
     public void deleteExam(String examCd) {
         if (!examRepository.existsById(examCd)) {
-            throw new IllegalArgumentException("시험을 찾을 수 없습니다: " + examCd);
+            throw new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd);
         }
         examRepository.deleteById(examCd);
     }
@@ -195,7 +196,7 @@ public class ExamService {
     public void deleteSubject(String examCd, String subjectCd) {
         ExamSubjectId id = new ExamSubjectId(examCd, subjectCd);
         if (!subjectRepository.existsById(id)) {
-            throw new IllegalArgumentException("과목을 찾을 수 없습니다.");
+            throw new EntityNotFoundException("과목을 찾을 수 없습니다.");
         }
         subjectRepository.deleteById(id);
     }

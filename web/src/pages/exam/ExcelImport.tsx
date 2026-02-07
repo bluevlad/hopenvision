@@ -327,7 +327,7 @@ const ExcelImport: React.FC = () => {
                 <Button
                   type="primary"
                   key="list"
-                  onClick={() => navigate('/exams')}
+                  onClick={() => navigate('/exam')}
                 >
                   시험 목록으로
                 </Button>,

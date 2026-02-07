@@ -17,10 +17,10 @@ export interface ExamResponse {
   examNm: string;
   examType: string;
   examYear: string;
-  examRound: number;
-  examDate: string;
-  totalScore: number;
-  passScore: number;
+  examRound: number | null;
+  examDate: string | null;
+  totalScore: number | null;
+  passScore: number | null;
   isUse: string;
   regDt: string;
   updDt: string;

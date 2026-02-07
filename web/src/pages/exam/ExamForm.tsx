@@ -181,6 +181,7 @@ export default function ExamForm() {
         isEdit ? (
           <Popconfirm
             title="과목을 삭제하시겠습니까?"
+            description="등록된 정답도 함께 삭제됩니다."
             onConfirm={() =>
               deleteSubjectMutation.mutate({
                 examCd: examCd!,

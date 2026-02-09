@@ -26,4 +26,13 @@ public interface UserScoreRepository extends JpaRepository<UserScore, UserScoreI
 
     @Query("SELECT us FROM UserScore us WHERE us.id.examCd = :examCd AND us.id.subjectCd = :subjectCd ORDER BY us.rawScore DESC")
     List<UserScore> findByExamCdAndSubjectCdOrderByScore(@Param("examCd") String examCd, @Param("subjectCd") String subjectCd);
+
+    @Query("SELECT AVG(us.rawScore) FROM UserScore us WHERE us.id.examCd = :examCd AND us.id.subjectCd = :subjectCd")
+    java.math.BigDecimal avgScoreByExamCdAndSubjectCd(@Param("examCd") String examCd, @Param("subjectCd") String subjectCd);
+
+    @Query("SELECT MAX(us.rawScore) FROM UserScore us WHERE us.id.examCd = :examCd AND us.id.subjectCd = :subjectCd")
+    java.math.BigDecimal maxScoreByExamCdAndSubjectCd(@Param("examCd") String examCd, @Param("subjectCd") String subjectCd);
+
+    @Query("SELECT MIN(us.rawScore) FROM UserScore us WHERE us.id.examCd = :examCd AND us.id.subjectCd = :subjectCd")
+    java.math.BigDecimal minScoreByExamCdAndSubjectCd(@Param("examCd") String examCd, @Param("subjectCd") String subjectCd);
 }

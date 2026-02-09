@@ -26,4 +26,16 @@ public interface UserTotalScoreRepository extends JpaRepository<UserTotalScore, 
 
     @Query("SELECT COUNT(uts) FROM UserTotalScore uts WHERE uts.examCd = :examCd AND uts.totalScore > :score")
     Long countByExamCdAndScoreGreaterThan(@Param("examCd") String examCd, @Param("score") java.math.BigDecimal score);
+
+    @Query("SELECT AVG(uts.totalScore) FROM UserTotalScore uts WHERE uts.examCd = :examCd")
+    java.math.BigDecimal avgTotalScoreByExamCd(@Param("examCd") String examCd);
+
+    @Query("SELECT MAX(uts.totalScore) FROM UserTotalScore uts WHERE uts.examCd = :examCd")
+    java.math.BigDecimal maxTotalScoreByExamCd(@Param("examCd") String examCd);
+
+    @Query("SELECT MIN(uts.totalScore) FROM UserTotalScore uts WHERE uts.examCd = :examCd")
+    java.math.BigDecimal minTotalScoreByExamCd(@Param("examCd") String examCd);
+
+    @Query("SELECT COUNT(uts) FROM UserTotalScore uts WHERE uts.examCd = :examCd AND uts.passYn = 'Y'")
+    Long countPassedByExamCd(@Param("examCd") String examCd);
 }

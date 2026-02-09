@@ -1,5 +1,6 @@
 import React, { useRef, useCallback } from 'react';
 import { Card, Input, Typography, Space, Tag, Tooltip } from 'antd';
+import type { InputRef } from 'antd';
 import { CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
 import type { QuestionResult } from '../types/user';
 
@@ -28,7 +29,7 @@ const QuickInputCard: React.FC<QuickInputCardProps> = ({
   results,
   showResults = false,
 }) => {
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const inputRefs = useRef<(InputRef | null)[]>([]);
 
   const resultMap = React.useMemo(() => {
     if (!results) return new Map<number, QuestionResult>();

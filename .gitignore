@@ -28,6 +28,10 @@ logs/
 # Temp
 tmp/
 temp/
+temp_*.txt
+
+# Upload
+upload/
 
 # Environment files (secrets)
 .env

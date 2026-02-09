@@ -69,4 +69,8 @@ public class ExamSubject {
     @OneToMany(mappedBy = "subject", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ExamAnswerKey> answerKeys = new ArrayList<>();
+
+    @OneToMany(mappedBy = "subject", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ExamQuestion> questions = new ArrayList<>();
 }

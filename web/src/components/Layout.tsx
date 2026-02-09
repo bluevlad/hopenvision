@@ -6,30 +6,38 @@ import {
   UserOutlined,
   BarChartOutlined,
   SettingOutlined,
+  FormOutlined,
 } from '@ant-design/icons';
 
 const { Header, Sider, Content } = AntLayout;
 
 const menuItems = [
   {
-    key: '/exam',
-    icon: <FileTextOutlined />,
-    label: '시험 관리',
+    key: '/user',
+    icon: <FormOutlined />,
+    label: '채점하기',
   },
   {
-    key: '/applicant',
-    icon: <UserOutlined />,
-    label: '응시자 관리',
-  },
-  {
-    key: '/statistics',
-    icon: <BarChartOutlined />,
-    label: '통계',
-  },
-  {
-    key: '/settings',
+    key: 'admin',
     icon: <SettingOutlined />,
-    label: '설정',
+    label: '관리자',
+    children: [
+      {
+        key: '/exam',
+        icon: <FileTextOutlined />,
+        label: '시험 관리',
+      },
+      {
+        key: '/applicant',
+        icon: <UserOutlined />,
+        label: '응시자 관리',
+      },
+      {
+        key: '/statistics',
+        icon: <BarChartOutlined />,
+        label: '통계',
+      },
+    ],
   },
 ];
 
@@ -45,11 +53,11 @@ export default function Layout() {
 
   const getSelectedKey = () => {
     const path = location.pathname;
+    if (path.startsWith('/user')) return '/user';
     if (path.startsWith('/exam')) return '/exam';
     if (path.startsWith('/applicant')) return '/applicant';
     if (path.startsWith('/statistics')) return '/statistics';
-    if (path.startsWith('/settings')) return '/settings';
-    return '/exam';
+    return '/user';
   };
 
   return (

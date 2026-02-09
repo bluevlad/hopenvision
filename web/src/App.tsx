@@ -7,6 +7,9 @@ import ExamList from './pages/exam/ExamList';
 import ExamForm from './pages/exam/ExamForm';
 import AnswerKeyForm from './pages/exam/AnswerKeyForm';
 import ExcelImport from './pages/exam/ExcelImport';
+import UserExamList from './pages/user/UserExamList';
+import UserAnswerForm from './pages/user/UserAnswerForm';
+import UserScoreResult from './pages/user/UserScoreResult';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -25,13 +28,18 @@ function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Layout />}>
-              <Route index element={<Navigate to="/exam" replace />} />
+              <Route index element={<Navigate to="/user" replace />} />
+              {/* 관리자 시스템 */}
               <Route path="exam" element={<ExamList />} />
               <Route path="exam/new" element={<ExamForm />} />
               <Route path="exam/:examCd" element={<ExamForm />} />
               <Route path="exam/:examCd/answers" element={<AnswerKeyForm />} />
               <Route path="exam/:examCd/import" element={<ExcelImport />} />
               <Route path="import/preview" element={<ExcelImport />} />
+              {/* 사용자 시스템 */}
+              <Route path="user" element={<UserExamList />} />
+              <Route path="user/exams/:examCd/answer" element={<UserAnswerForm />} />
+              <Route path="user/exams/:examCd/result" element={<UserScoreResult />} />
             </Route>
           </Routes>
         </BrowserRouter>

@@ -22,6 +22,9 @@ public interface ExamRepository extends JpaRepository<Exam, String> {
     // 사용 여부로 조회
     List<Exam> findByIsUse(String isUse);
 
+    // 사용 여부로 조회 (최신순 정렬)
+    List<Exam> findByIsUseOrderByRegDtDesc(String isUse);
+
     // 검색 (시험명, 시험코드)
     @Query("SELECT e FROM Exam e WHERE " +
            "(:keyword IS NULL OR :keyword = '' OR e.examNm LIKE %:keyword% OR e.examCd LIKE %:keyword%) " +

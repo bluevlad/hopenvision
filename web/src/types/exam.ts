@@ -136,3 +136,21 @@ export interface ImportedAnswerKey {
   correctAnswer: number;
   score: number | null;
 }
+
+// JSON 가져오기 결과
+export interface JsonImportResult {
+  totalCount: number;
+  successCount: number;
+  failCount: number;
+  errors: string[];
+  importedQuestions: ImportedQuestion[];
+}
+
+export interface ImportedQuestion {
+  questionNo: number;
+  questionText: string;
+  category: string;
+  difficulty: string;
+  correctAnswer: number;
+  title: string;
+}

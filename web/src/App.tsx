@@ -7,6 +7,7 @@ import ExamList from './pages/exam/ExamList';
 import ExamForm from './pages/exam/ExamForm';
 import AnswerKeyForm from './pages/exam/AnswerKeyForm';
 import ExcelImport from './pages/exam/ExcelImport';
+import JsonImport from './pages/exam/JsonImport';
 import UserExamList from './pages/user/UserExamList';
 import UserAnswerForm from './pages/user/UserAnswerForm';
 import UserScoreResult from './pages/user/UserScoreResult';
@@ -35,6 +36,7 @@ function App() {
               <Route path="exam/:examCd" element={<ExamForm />} />
               <Route path="exam/:examCd/answers" element={<AnswerKeyForm />} />
               <Route path="exam/:examCd/import" element={<ExcelImport />} />
+              <Route path="exam/:examCd/json-import" element={<JsonImport />} />
               <Route path="import/preview" element={<ExcelImport />} />
               {/* 사용자 시스템 */}
               <Route path="user" element={<UserExamList />} />

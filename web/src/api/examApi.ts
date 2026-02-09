@@ -9,7 +9,8 @@ import type {
   AnswerKeyResponse,
   AnswerKeyBulkRequest,
   PageResponse,
-  ExcelImportResult
+  ExcelImportResult,
+  JsonImportResult
 } from '../types/exam';
 
 const BASE_PATH = '/api/exams';
@@ -101,6 +102,32 @@ export const examApi = {
     const formData = new FormData();
     formData.append('file', file);
     const response = await client.post(`/api/import/exams/${examCd}/answer-keys`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // JSON 문제은행 미리보기
+  previewJsonQuestionBank: async (questionFile: File, answerFile: File): Promise<JsonImportResult> => {
+    const formData = new FormData();
+    formData.append('questionFile', questionFile);
+    formData.append('answerFile', answerFile);
+    const response = await client.post('/api/import/json/preview', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  // JSON 문제은행 가져오기
+  importJsonQuestionBank: async (examCd: string, subjectCd: string, questionFile: File, answerFile: File): Promise<JsonImportResult> => {
+    const formData = new FormData();
+    formData.append('questionFile', questionFile);
+    formData.append('answerFile', answerFile);
+    const response = await client.post(`/api/import/json/exams/${examCd}/subjects/${subjectCd}/questions`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

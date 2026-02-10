@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -59,33 +59,32 @@ export default function AnswerKeyForm() {
   });
 
   // 과목 선택 시 정답 초기화
-  useEffect(() => {
-    if (selectedSubject) {
-      if (answerData?.data && answerData.data.length > 0) {
-        // 기존 정답이 있으면 로드
-        setAnswers(
-          answerData.data.map((a) => ({
-            questionNo: a.questionNo,
-            correctAns: a.correctAns,
-            score: a.score,
-            isMultiAns: a.isMultiAns,
-          }))
-        );
-      } else {
-        // 새로 생성
-        const questionCnt = selectedSubject.questionCnt || 20;
-        const scorePerQ = selectedSubject.scorePerQ || 5;
-        setAnswers(
-          Array.from({ length: questionCnt }, (_, i) => ({
-            questionNo: i + 1,
-            correctAns: '',
-            score: scorePerQ,
-            isMultiAns: 'N',
-          }))
-        );
-      }
+  const initialAnswers = useMemo(() => {
+    if (!selectedSubject) return null;
+    if (answerData?.data && answerData.data.length > 0) {
+      return answerData.data.map((a) => ({
+        questionNo: a.questionNo,
+        correctAns: a.correctAns,
+        score: a.score,
+        isMultiAns: a.isMultiAns,
+      }));
     }
+    const questionCnt = selectedSubject.questionCnt || 20;
+    const scorePerQ = selectedSubject.scorePerQ || 5;
+    return Array.from({ length: questionCnt }, (_, i) => ({
+      questionNo: i + 1,
+      correctAns: '',
+      score: scorePerQ,
+      isMultiAns: 'N',
+    }));
   }, [selectedSubject, answerData]);
+
+  useEffect(() => {
+    if (initialAnswers) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 외부 데이터(react-query) 변경 시 로컬 state 동기화 필요
+      setAnswers(initialAnswers);
+    }
+  }, [initialAnswers]);
 
   // 정답 변경
   const handleAnswerChange = (questionNo: number, value: string) => {
@@ -123,7 +122,7 @@ export default function AnswerKeyForm() {
       dataIndex: 'correctAns',
       key: 'correctAns',
       align: 'center' as const,
-      render: (_: any, record: AnswerItem) => (
+      render: (_: unknown, record: AnswerItem) => (
         <Radio.Group
           value={record.correctAns}
           onChange={(e) => handleAnswerChange(record.questionNo, e.target.value)}

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
@@ -46,11 +46,7 @@ const UserAnswerForm: React.FC = () => {
     enabled: !!examCd,
   });
 
-  useEffect(() => {
-    if (exam && exam.subjects.length > 0 && !activeTab) {
-      setActiveTab(exam.subjects[0].subjectCd);
-    }
-  }, [exam, activeTab]);
+  const effectiveActiveTab = activeTab || (exam?.subjects?.[0]?.subjectCd ?? '');
 
   const submitMutation = useMutation({
     mutationFn: (request: SubmitRequest) => submitAnswers(examCd!, request),
@@ -311,7 +307,7 @@ const UserAnswerForm: React.FC = () => {
         </div>
 
         <Tabs
-          activeKey={activeTab}
+          activeKey={effectiveActiveTab}
           onChange={setActiveTab}
           items={tabItems}
           type="card"

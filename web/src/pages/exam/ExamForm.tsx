@@ -20,7 +20,7 @@ import { PlusOutlined, DeleteOutlined, ArrowLeftOutlined } from '@ant-design/ico
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { examApi } from '../../api/examApi';
-import type { SubjectRequest, SubjectResponse } from '../../types/exam';
+import type { ExamRequest, SubjectRequest, SubjectResponse } from '../../types/exam';
 import { EXAM_TYPES, SUBJECT_TYPES, QUESTION_TYPES } from '../../types/exam';
 
 const currentYear = new Date().getFullYear();
@@ -51,21 +51,21 @@ export default function ExamForm() {
       queryClient.invalidateQueries({ queryKey: ['exams'] });
       navigate('/exam');
     },
-    onError: (error: any) => {
+    onError: (error: Error & { response?: { data?: { message?: string } } }) => {
       message.error(error.response?.data?.message || '등록 중 오류가 발생했습니다.');
     },
   });
 
   // 시험 수정
   const updateMutation = useMutation({
-    mutationFn: ({ examCd, data }: { examCd: string; data: any }) =>
+    mutationFn: ({ examCd, data }: { examCd: string; data: ExamRequest }) =>
       examApi.updateExam(examCd, data),
     onSuccess: () => {
       message.success('시험이 수정되었습니다.');
       queryClient.invalidateQueries({ queryKey: ['exams'] });
       queryClient.invalidateQueries({ queryKey: ['exam', examCd] });
     },
-    onError: (error: any) => {
+    onError: (error: Error & { response?: { data?: { message?: string } } }) => {
       message.error(error.response?.data?.message || '수정 중 오류가 발생했습니다.');
     },
   });
@@ -79,7 +79,7 @@ export default function ExamForm() {
       queryClient.invalidateQueries({ queryKey: ['exam', examCd] });
       subjectForm.resetFields();
     },
-    onError: (error: any) => {
+    onError: (error: Error & { response?: { data?: { message?: string } } }) => {
       message.error(error.response?.data?.message || '과목 저장 중 오류가 발생했습니다.');
     },
   });
@@ -109,7 +109,7 @@ export default function ExamForm() {
   }, [examData, form]);
 
   // 폼 제출
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: ExamRequest & { examDate?: dayjs.Dayjs }) => {
     const data = {
       ...values,
       examDate: values.examDate?.format('YYYY-MM-DD'),
@@ -169,7 +169,7 @@ export default function ExamForm() {
       key: 'answerCnt',
       width: 100,
       align: 'center',
-      render: (v, record: any) =>
+      render: (v: number, record: SubjectResponse | SubjectRequest) =>
         record.questionCnt ? `${v || 0}/${record.questionCnt}` : '-',
     },
     {

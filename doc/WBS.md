@@ -25,18 +25,18 @@
 ### 1.2 Backend 프로젝트 구조화
 | ID | 작업 | 상태 | 산출물 |
 |----|------|------|--------|
-| 1.2.1 | 패키지 구조 정리 | 대기 | common/, user/, admin/ 패키지 |
-| 1.2.2 | 공통 모듈 구현 | 대기 | ApiResponse, Exception Handler |
-| 1.2.3 | 설정 파일 정리 | 대기 | application-{profile}.yml |
-| 1.2.4 | Dockerfile 작성 | 대기 | api/Dockerfile |
+| 1.2.1 | 패키지 구조 정리 | 완료 | config/, exam/, user/ 패키지 |
+| 1.2.2 | 공통 모듈 구현 | 완료 | GlobalExceptionHandler, WebConfig |
+| 1.2.3 | 설정 파일 정리 | 완료 | application-{local,dev,prod}.yml |
+| 1.2.4 | Dockerfile 작성 | 완료 | api/Dockerfile |
 
 ### 1.3 Frontend 프로젝트 구조화
 | ID | 작업 | 상태 | 산출물 |
 |----|------|------|--------|
-| 1.3.1 | 사용자/관리자 라우팅 분리 | 대기 | /user/*, /admin/* |
-| 1.3.2 | 공통 컴포넌트 정의 | 대기 | components/common/* |
+| 1.3.1 | 사용자/관리자 라우팅 분리 | 완료 | /user/*, /exam/*, /applicant/*, /statistics |
+| 1.3.2 | 공통 컴포넌트 정의 | 완료 | Layout.tsx, OMRCard.tsx, QuickInputCard.tsx |
 | 1.3.3 | 차트 라이브러리 설치 | 대기 | @ant-design/charts |
-| 1.3.4 | Dockerfile 작성 | 대기 | web/Dockerfile |
+| 1.3.4 | Dockerfile 작성 | 완료 | web/Dockerfile |
 
 ---
 
@@ -72,19 +72,19 @@
 ### 2.4 통계 대시보드
 | ID | 작업 | 상태 | 산출물 |
 |----|------|------|--------|
-| 2.4.1 | 대시보드 API | 대기 | AdminDashboardController.java |
-| 2.4.2 | 통계 조회 Service | 대기 | StatisticsService.java |
-| 2.4.3 | 대시보드 페이지 | 대기 | AdminDashboard.tsx |
-| 2.4.4 | 점수 분포 차트 | 대기 | ScoreDistributionChart.tsx |
-| 2.4.5 | 과목별 평균 차트 | 대기 | SubjectAverageChart.tsx |
-| 2.4.6 | 응시자 현황 차트 | 대기 | ApplicantStatusChart.tsx |
+| 2.4.1 | 통계 API | 완료 | StatisticsController.java |
+| 2.4.2 | 통계 조회 Service | 완료 | StatisticsService.java |
+| 2.4.3 | 통계 페이지 | 완료 | Statistics.tsx |
+| 2.4.4 | 점수 분포 차트 | 대기 | 차트 라이브러리 도입 후 구현 |
+| 2.4.5 | 과목별 평균 차트 | 대기 | 차트 라이브러리 도입 후 구현 |
+| 2.4.6 | 응시자 현황 차트 | 대기 | 차트 라이브러리 도입 후 구현 |
 
 ### 2.5 응시자 관리
 | ID | 작업 | 상태 | 산출물 |
 |----|------|------|--------|
-| 2.5.1 | 응시자 목록 API | 대기 | AdminApplicantController.java |
-| 2.5.2 | 응시자 목록 페이지 | 대기 | AdminApplicantList.tsx |
-| 2.5.3 | 응시자 상세 페이지 | 대기 | AdminApplicantDetail.tsx |
+| 2.5.1 | 응시자 CRUD API | 완료 | ApplicantController.java, ApplicantService.java |
+| 2.5.2 | 응시자 목록 페이지 | 완료 | ApplicantList.tsx |
+| 2.5.3 | 응시자 등록/수정 모달 | 완료 | ApplicantModal.tsx |
 | 2.5.4 | 응시자 Excel 내보내기 | 대기 | ExcelExportService.java |
 
 ---
@@ -94,20 +94,20 @@
 ### 3.1 시험 조회
 | ID | 작업 | 상태 | 산출물 |
 |----|------|------|--------|
-| 3.1.1 | 채점 가능 시험 목록 API | 대기 | UserExamController.java |
-| 3.1.2 | 시험 목록 페이지 | 대기 | UserExamList.tsx |
-| 3.1.3 | 시험 상세 페이지 | 대기 | UserExamDetail.tsx |
+| 3.1.1 | 채점 가능 시험 목록 API | 완료 | UserExamController.java |
+| 3.1.2 | 시험 목록 페이지 | 완료 | UserExamList.tsx |
+| 3.1.3 | 시험 상세 조회 API | 완료 | UserExamController.java |
 
 ### 3.2 답안 입력 및 채점
 | ID | 작업 | 상태 | 산출물 |
 |----|------|------|--------|
-| 3.2.1 | 사용자 답안 Entity | 대기 | UserAnswer.java |
-| 3.2.2 | 사용자 점수 Entity | 대기 | UserScore.java |
-| 3.2.3 | 답안 입력 API | 대기 | UserAnswerController.java |
-| 3.2.4 | 즉시 채점 Service | 대기 | ScoringService.java |
-| 3.2.5 | OMR 카드 UI 컴포넌트 | 대기 | OMRCard.tsx |
-| 3.2.6 | 답안 입력 페이지 | 대기 | UserAnswerForm.tsx |
-| 3.2.7 | 채점 결과 페이지 | 대기 | UserScoreResult.tsx |
+| 3.2.1 | 사용자 답안 Entity | 완료 | UserAnswer.java |
+| 3.2.2 | 사용자 점수 Entity | 완료 | UserScore.java, UserSubjectScore.java |
+| 3.2.3 | 답안 제출/채점 API | 완료 | UserExamController.java |
+| 3.2.4 | 즉시 채점 Service | 완료 | UserScoringService.java |
+| 3.2.5 | OMR 카드 UI 컴포넌트 | 완료 | OMRCard.tsx, QuickInputCard.tsx |
+| 3.2.6 | 답안 입력 페이지 | 완료 | UserAnswerForm.tsx |
+| 3.2.7 | 채점 결과 페이지 | 완료 | UserScoreResult.tsx |
 
 ### 3.3 성적 비교 및 분석
 | ID | 작업 | 상태 | 산출물 |
@@ -188,22 +188,22 @@
 ### 6.1 컨테이너화
 | ID | 작업 | 상태 | 산출물 |
 |----|------|------|--------|
-| 6.1.1 | Backend Dockerfile | 대기 | api/Dockerfile |
-| 6.1.2 | Frontend Dockerfile | 대기 | web/Dockerfile |
-| 6.1.3 | 개발용 Docker Compose | 대기 | docker/docker-compose.local.yml |
-| 6.1.4 | 운영용 Docker Compose | 대기 | docker/docker-compose.prod.yml |
+| 6.1.1 | Backend Dockerfile | 완료 | api/Dockerfile |
+| 6.1.2 | Frontend Dockerfile | 완료 | web/Dockerfile |
+| 6.1.3 | 개발용 Docker Compose | 완료 | docker-compose.yml |
+| 6.1.4 | 운영용 Docker Compose | 완료 | docker-compose.prod.yml |
 
 ### 6.2 CI/CD
 | ID | 작업 | 상태 | 산출물 |
 |----|------|------|--------|
-| 6.2.1 | GitHub Actions 설정 | 대기 | .github/workflows/deploy.yml |
-| 6.2.2 | Self-hosted Runner | 대기 | 로컬 Runner 설정 |
-| 6.2.3 | 자동 배포 스크립트 | 대기 | scripts/deploy.ps1 |
+| 6.2.1 | GitHub Actions 설정 | 완료 | .github/workflows/deploy-prod.yml |
+| 6.2.2 | Self-hosted Runner | 완료 | macOS Runner 구성 |
+| 6.2.3 | 자동화 스크립트 | 완료 | scripts/start-all.ps1, stop-all.ps1, status.ps1 |
 
 ### 6.3 Nginx 설정
 | ID | 작업 | 상태 | 산출물 |
 |----|------|------|--------|
-| 6.3.1 | Reverse Proxy 설정 | 대기 | docker/nginx/hopenvision.conf |
+| 6.3.1 | Reverse Proxy 설정 | 완료 | web/nginx.conf |
 | 6.3.2 | SSL 인증서 설정 | 대기 | certbot 설정 |
 
 ---
@@ -213,18 +213,19 @@
 ### 완료 현황
 | Phase | 전체 | 완료 | 진행률 |
 |-------|------|------|--------|
-| Phase 1: 기반 구축 | 14 | 6 | 43% |
-| Phase 2: 관리자 시스템 | 21 | 15 | 71% |
-| Phase 3: 사용자 시스템 | 17 | 0 | 0% |
+| Phase 1: 기반 구축 | 14 | 13 | 93% |
+| Phase 2: 관리자 시스템 | 21 | 18 | 86% |
+| Phase 3: 사용자 시스템 | 17 | 10 | 59% |
 | Phase 4: 배치 시스템 | 14 | 0 | 0% |
 | Phase 5: 회원 시스템 | 9 | 0 | 0% |
-| Phase 6: 배포/운영 | 9 | 0 | 0% |
-| **전체** | **84** | **21** | **25%** |
+| Phase 6: 배포/운영 | 9 | 8 | 89% |
+| **전체** | **84** | **49** | **58%** |
 
 ### 우선순위 작업 (다음 단계)
-1. **Phase 1 완료**: 패키지 구조 정리, 라우팅 분리
-2. **Phase 3 시작**: 사용자 답안 입력 및 채점 기능
-3. **Phase 4**: 배치 시스템 기본 구조
+1. **차트 라이브러리 도입**: 통계 시각화 (Phase 1.3.3, 2.4.4~2.4.6)
+2. **성적 비교/분석**: Phase 3.3 구현
+3. **채점 이력**: Phase 3.4 구현
+4. **배치 시스템**: Phase 4 착수
 
 ---
 
@@ -253,3 +254,4 @@ Phase 1 (기반 구축)
 |------|------|----------|
 | 1.0 | 2025-02-06 | 초안 작성 |
 | 2.0 | 2025-02-06 | 사용자/관리자/배치 시스템 구분, 회원 시스템 추가 |
+| 2.1 | 2026-02-10 | 실제 구현 상태 반영 (Phase 1.2~1.3, 2.4~2.5, 3.1~3.2, 6.1~6.3 업데이트) |

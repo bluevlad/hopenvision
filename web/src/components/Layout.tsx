@@ -7,6 +7,7 @@ import {
   BarChartOutlined,
   SettingOutlined,
   FormOutlined,
+  HistoryOutlined,
 } from '@ant-design/icons';
 
 const { Header, Sider, Content } = AntLayout;
@@ -16,6 +17,11 @@ const menuItems = [
     key: '/user',
     icon: <FormOutlined />,
     label: '채점하기',
+  },
+  {
+    key: '/user/history',
+    icon: <HistoryOutlined />,
+    label: '채점 이력',
   },
   {
     key: 'admin',
@@ -53,6 +59,7 @@ export default function Layout() {
 
   const getSelectedKey = () => {
     const path = location.pathname;
+    if (path === '/user/history') return '/user/history';
     if (path.startsWith('/user')) return '/user';
     if (path.startsWith('/exam')) return '/exam';
     if (path.startsWith('/applicant')) return '/applicant';

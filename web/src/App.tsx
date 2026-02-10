@@ -13,6 +13,7 @@ import Statistics from './pages/exam/Statistics';
 import UserExamList from './pages/user/UserExamList';
 import UserAnswerForm from './pages/user/UserAnswerForm';
 import UserScoreResult from './pages/user/UserScoreResult';
+import UserHistory from './pages/user/UserHistory';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -44,6 +45,7 @@ function App() {
               <Route path="import/preview" element={<ExcelImport />} />
               {/* 사용자 시스템 */}
               <Route path="user" element={<UserExamList />} />
+              <Route path="user/history" element={<UserHistory />} />
               <Route path="user/exams/:examCd/answer" element={<UserAnswerForm />} />
               <Route path="user/exams/:examCd/result" element={<UserScoreResult />} />
             </Route>

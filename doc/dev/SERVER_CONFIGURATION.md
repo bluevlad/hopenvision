@@ -98,13 +98,13 @@ services:
       - all
 
   # React Frontend (개발용)
+  # Nginx가 /api/ 요청을 백엔드로 프록시하므로 VITE_API_URL 불필요
   hopenvision-frontend:
     build:
       context: ./web
       dockerfile: Dockerfile
     container_name: hopenvision-frontend
     environment:
-      VITE_API_URL: http://localhost:9050
       TZ: Asia/Seoul
     ports:
       - "4050:80"
@@ -282,6 +282,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+ENV VITE_API_URL=""
 RUN npm run build
 
 # Runtime stage
@@ -794,3 +795,4 @@ logging:
 |------|------|----------|
 | 1.0 | 2025-02-06 | 초안 작성 |
 | 1.1 | 2026-02-07 | Claude-Opus-bluevlad 포트(4060) 추가, 포트 할당 계획 수립 |
+| 1.2 | 2026-02-10 | 민감정보 플레이스홀더 치환 (#10), API Nginx 프록시 방식 반영 (#11) |

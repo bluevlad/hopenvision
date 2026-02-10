@@ -577,12 +577,13 @@ DB_PASSWORD=${DB_PASSWORD}
 
 #### Frontend (.env)
 ```bash
-# 개발 환경
-VITE_API_URL=http://localhost:8080
-
-# 운영 환경
-VITE_API_URL=http://<YOUR_API_DOMAIN>
+# API URL은 빈 값으로 설정 (Nginx/Vite 프록시가 /api/ → 백엔드로 중계)
+VITE_API_URL=
 ```
+
+> **참고**: 프론트엔드는 상대경로 `/api/`로 API를 호출합니다.
+> - 로컬 개발(`npm run dev`): Vite proxy → `localhost:9050`
+> - Docker 배포: Nginx proxy → `hopenvision-api:8080`
 
 ### 6.2 프로필
 
@@ -613,3 +614,4 @@ VITE_API_URL=http://<YOUR_API_DOMAIN>
 | 버전 | 일자 | 변경 내용 |
 |------|------|----------|
 | 1.0 | 2025-02-06 | 초안 작성 |
+| 1.1 | 2026-02-10 | 프론트엔드 API URL을 Nginx 프록시 상대경로 방식으로 변경 (#11) |

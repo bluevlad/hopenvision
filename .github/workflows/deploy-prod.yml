@@ -16,8 +16,12 @@ jobs:
       - name: Create .env file
         run: |
           cat > .env << EOF
+          DB_HOST=${{ secrets.DB_HOST || 'postgresql' }}
+          DB_PORT=${{ secrets.DB_PORT || '5432' }}
+          DB_NAME=${{ secrets.DB_NAME || 'hopenvision' }}
           DB_USER=${{ secrets.DB_USER }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          TZ=Asia/Seoul
           EOF
 
       - name: Stop existing services

@@ -35,5 +35,6 @@ upload/
 
 # Environment files (secrets)
 .env
-.env.local
+.env.*
 !.env.example
+!.env.*.example

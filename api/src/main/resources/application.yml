@@ -12,9 +12,9 @@ spring:
       max-request-size: 10MB
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://172.30.1.72:5432/hopenvision}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres123}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:hopenvision}}
+    username: ${DB_USERNAME:${DB_USER:postgres}}
+    password: ${DB_PASSWORD:}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10

@@ -6,8 +6,8 @@
 
 | 환경 | 용도 | 호스트 | 컨테이너 |
 |------|------|--------|----------|
-| 개발 (Development) | 로컬 개발 및 테스트 | Windows 11 (172.30.1.78) | Docker Desktop |
-| 운영 (Production) | 실서비스 운영 | macOS (172.30.1.100) | OrbStack |
+| 개발 (Development) | 로컬 개발 및 테스트 | Windows 11 (<DEV_SERVER_IP>) | Docker Desktop |
+| 운영 (Production) | 실서비스 운영 | macOS (<PROD_SERVER_IP>) | OrbStack |
 
 ### 1.2 포트 할당
 
@@ -56,7 +56,7 @@ services:
     environment:
       POSTGRES_DB: hopenvision
       POSTGRES_USER: hopenvision
-      POSTGRES_PASSWORD: hopenvision123
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
       TZ: Asia/Seoul
     ports:
       - "5432:5432"
@@ -84,7 +84,7 @@ services:
       SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: jdbc:postgresql://hopenvision-db:5432/hopenvision
       SPRING_DATASOURCE_USERNAME: hopenvision
-      SPRING_DATASOURCE_PASSWORD: hopenvision123
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       TZ: Asia/Seoul
     ports:
       - "9050:8080"
@@ -121,8 +121,8 @@ services:
     image: dpage/pgadmin4:latest
     container_name: hopenvision-pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@hopenvision.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     ports:
       - "5050:80"
     networks:
@@ -358,28 +358,28 @@ server {
 ```nginx
 # HopenVision 서비스
 upstream hopenvision_frontend {
-    server 172.30.1.100:4050;
+    server <PROD_SERVER_IP>:4050;
 }
 
 upstream hopenvision_backend {
-    server 172.30.1.100:9050;
+    server <PROD_SERVER_IP>:9050;
 }
 
 # HTTP to HTTPS 리다이렉트
 server {
     listen 80;
-    server_name hopenvision.unmong.com;
+    server_name <YOUR_SUBDOMAIN>;
     return 301 https://$host$request_uri;
 }
 
 # HTTPS 서버
 server {
     listen 443 ssl http2;
-    server_name hopenvision.unmong.com;
+    server_name <YOUR_SUBDOMAIN>;
 
     # SSL 인증서
-    ssl_certificate /etc/letsencrypt/live/unmong.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/unmong.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/<YOUR_DOMAIN>/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/<YOUR_DOMAIN>/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
 
@@ -475,7 +475,7 @@ spring:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:hopenvision}
     driver-class-name: org.postgresql.Driver
     username: ${DB_USERNAME:hopenvision}
-    password: ${DB_PASSWORD:hopenvision123}
+    password: ${DB_PASSWORD}
     hikari:
       maximum-pool-size: 10
       minimum-idle: 5
@@ -624,7 +624,7 @@ try {
 # HopenVision 배포 스크립트 (Windows → Production)
 
 param(
-    [string]$Target = "172.30.1.100",
+    [string]$Target = "<PROD_SERVER_IP>",
     [string]$User = "admin"
 )
 
@@ -725,11 +725,11 @@ DB_USERNAME=hopenvision
 DB_PASSWORD=
 
 # .env (Git에서 제외, 실제 값 포함)
-DB_HOST=172.30.1.100
+DB_HOST=<PROD_SERVER_IP>
 DB_PORT=5432
 DB_NAME=hopenvision
 DB_USERNAME=hopenvision
-DB_PASSWORD=실제비밀번호
+DB_PASSWORD=your_db_password_here
 ```
 
 ### 8.2 .gitignore

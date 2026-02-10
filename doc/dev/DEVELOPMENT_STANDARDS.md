@@ -572,7 +572,7 @@ describe('ExamList', () => {
 # 개발 환경
 DB_URL=jdbc:postgresql://localhost:5432/hopenvision
 DB_USERNAME=hopenvision
-DB_PASSWORD=hopenvision123
+DB_PASSWORD=${DB_PASSWORD}
 ```
 
 #### Frontend (.env)
@@ -581,7 +581,7 @@ DB_PASSWORD=hopenvision123
 VITE_API_URL=http://localhost:8080
 
 # 운영 환경
-VITE_API_URL=http://api.hopenvision.com
+VITE_API_URL=http://<YOUR_API_DOMAIN>
 ```
 
 ### 6.2 프로필

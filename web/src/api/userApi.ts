@@ -2,10 +2,14 @@ import client from './client';
 import type {
   UserExam,
   ScoringResult,
+  ScoreAnalysis,
+  HistoryItem,
   SubmitRequest,
   UserExamListResponse,
   UserExamDetailResponse,
   ScoringResultResponse,
+  ScoreAnalysisResponse,
+  HistoryListResponse,
 } from '../types/user';
 
 const USER_ID_HEADER = 'X-User-Id';
@@ -51,6 +55,22 @@ export const submitAnswers = async (examCd: string, request: SubmitRequest): Pro
 // 내 채점 결과 조회
 export const getMyResult = async (examCd: string): Promise<ScoringResult> => {
   const response = await client.get<ScoringResultResponse>(`/api/user/exams/${examCd}/result`, {
+    headers: { [USER_ID_HEADER]: getUserId() },
+  });
+  return response.data.data;
+};
+
+// 성적 비교/분석 조회
+export const getScoreAnalysis = async (examCd: string): Promise<ScoreAnalysis> => {
+  const response = await client.get<ScoreAnalysisResponse>(`/api/user/exams/${examCd}/analysis`, {
+    headers: { [USER_ID_HEADER]: getUserId() },
+  });
+  return response.data.data;
+};
+
+// 채점 이력 조회
+export const getUserHistory = async (): Promise<HistoryItem[]> => {
+  const response = await client.get<HistoryListResponse>('/api/user/history', {
     headers: { [USER_ID_HEADER]: getUserId() },
   });
   return response.data.data;

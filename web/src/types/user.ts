@@ -79,7 +79,51 @@ export interface QuestionResult {
   score: number;
 }
 
+// 성적 분석
+export interface ScoreAnalysis {
+  examCd: string;
+  examNm: string;
+  myTotalScore: number;
+  myAvgScore: number;
+  ranking: number;
+  totalApplicants: number;
+  percentile: number;
+  passYn: string;
+  scoreDistributions: AnalysisScoreDistribution[];
+  subjectComparisons: SubjectComparison[];
+}
+
+export interface AnalysisScoreDistribution {
+  range: string;
+  count: number;
+  percentage: number;
+  isUserInRange: boolean;
+}
+
+export interface SubjectComparison {
+  subjectCd: string;
+  subjectNm: string;
+  myScore: number;
+  avgScore: number;
+  maxScore: number;
+  minScore: number;
+  ranking: number;
+  totalCount: number;
+}
+
+// 채점 이력
+export interface HistoryItem {
+  examCd: string;
+  examNm: string;
+  totalScore: number;
+  avgScore: number;
+  passYn: string;
+  regDt: string;
+}
+
 // API Response 타입
 export type UserExamListResponse = ApiResponse<UserExam[]>;
 export type UserExamDetailResponse = ApiResponse<UserExam>;
 export type ScoringResultResponse = ApiResponse<ScoringResult>;
+export type ScoreAnalysisResponse = ApiResponse<ScoreAnalysis>;
+export type HistoryListResponse = ApiResponse<HistoryItem[]>;

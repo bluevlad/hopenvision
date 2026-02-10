@@ -1,9 +1,12 @@
 package com.hopenvision.user.controller;
 
 import com.hopenvision.exam.dto.ApiResponse;
+import com.hopenvision.user.dto.HistoryDto;
+import com.hopenvision.user.dto.ScoreAnalysisDto;
 import com.hopenvision.user.dto.ScoringResultDto;
 import com.hopenvision.user.dto.UserAnswerDto;
 import com.hopenvision.user.dto.UserExamDto;
+import com.hopenvision.user.service.ScoreAnalysisService;
 import com.hopenvision.user.service.UserExamService;
 import com.hopenvision.user.service.UserScoringService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,6 +25,7 @@ public class UserExamController {
 
     private final UserExamService userExamService;
     private final UserScoringService userScoringService;
+    private final ScoreAnalysisService scoreAnalysisService;
 
     @GetMapping("/exams")
     @Operation(summary = "채점 가능한 시험 목록 조회")
@@ -58,5 +62,22 @@ public class UserExamController {
             @RequestHeader(value = "X-User-Id", defaultValue = "guest") String userId,
             @PathVariable String examCd) {
         return ApiResponse.success(userScoringService.getMyScore(userId, examCd));
+    }
+
+    @GetMapping("/exams/{examCd}/analysis")
+    @Operation(summary = "성적 비교/분석 조회")
+    public ApiResponse<ScoreAnalysisDto> getScoreAnalysis(
+            @Parameter(description = "사용자 ID (임시)")
+            @RequestHeader(value = "X-User-Id", defaultValue = "guest") String userId,
+            @PathVariable String examCd) {
+        return ApiResponse.success(scoreAnalysisService.getScoreAnalysis(userId, examCd));
+    }
+
+    @GetMapping("/history")
+    @Operation(summary = "채점 이력 조회")
+    public ApiResponse<List<HistoryDto.HistoryItem>> getUserHistory(
+            @Parameter(description = "사용자 ID (임시)")
+            @RequestHeader(value = "X-User-Id", defaultValue = "guest") String userId) {
+        return ApiResponse.success(userExamService.getUserHistory(userId));
     }
 }

@@ -35,4 +35,7 @@ public interface UserScoreRepository extends JpaRepository<UserScore, UserScoreI
 
     @Query("SELECT MIN(us.rawScore) FROM UserScore us WHERE us.id.examCd = :examCd AND us.id.subjectCd = :subjectCd")
     java.math.BigDecimal minScoreByExamCdAndSubjectCd(@Param("examCd") String examCd, @Param("subjectCd") String subjectCd);
+
+    @Query("SELECT COUNT(us) FROM UserScore us WHERE us.id.examCd = :examCd AND us.id.subjectCd = :subjectCd AND us.rawScore > :score")
+    Long countByExamCdAndSubjectCdAndScoreGreaterThan(@Param("examCd") String examCd, @Param("subjectCd") String subjectCd, @Param("score") java.math.BigDecimal score);
 }

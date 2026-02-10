@@ -23,11 +23,33 @@ import {
   CloseCircleOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
-import { getMyResult } from '../../api/userApi';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts';
+import { getMyResult, getScoreAnalysis } from '../../api/userApi';
 import type { SubjectResult } from '../../types/user';
 import OMRCard from '../../components/OMRCard';
 
 const { Title, Text } = Typography;
+
+const DISTRIBUTION_COLORS: Record<string, string> = {
+  '90~100': '#52c41a',
+  '80~89': '#73d13d',
+  '70~79': '#95de64',
+  '60~69': '#faad14',
+  '50~59': '#fa8c16',
+  '40~49': '#fa541c',
+  '30~39': '#f5222d',
+  '0~29': '#cf1322',
+};
 
 const UserScoreResult: React.FC = () => {
   const { examCd } = useParams<{ examCd: string }>();
@@ -38,6 +60,12 @@ const UserScoreResult: React.FC = () => {
     queryKey: ['userResult', examCd],
     queryFn: () => getMyResult(examCd!),
     enabled: !!examCd,
+  });
+
+  const { data: analysis } = useQuery({
+    queryKey: ['scoreAnalysis', examCd],
+    queryFn: () => getScoreAnalysis(examCd!),
+    enabled: !!examCd && !!result,
   });
 
   if (isLoading) {
@@ -213,6 +241,151 @@ const UserScoreResult: React.FC = () => {
     </div>
   );
 
+  // 분석 탭
+  const analysisTab = analysis ? (
+    <div>
+      <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title="내 순위"
+              value={analysis.ranking}
+              suffix={`/ ${analysis.totalApplicants}명`}
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title="백분위"
+              value={analysis.percentile}
+              suffix="%"
+              precision={1}
+              valueStyle={{ color: '#722ed1' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card>
+            <Statistic
+              title="상위"
+              value={analysis.totalApplicants > 0
+                ? Math.round((analysis.ranking / analysis.totalApplicants) * 100)
+                : 0}
+              suffix="%"
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      <Card title="점수 분포 (내 위치)" style={{ marginBottom: 24 }}>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={analysis.scoreDistributions.map((d) => ({
+            range: d.range + '점',
+            인원수: d.count,
+            fill: d.isUserInRange ? '#1890ff' : (DISTRIBUTION_COLORS[d.range] || '#d9d9d9'),
+            isUserInRange: d.isUserInRange,
+          }))}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="range" />
+            <YAxis allowDecimals={false} />
+            <Tooltip
+              formatter={(value) => [`${value}명`, '인원수']}
+            />
+            <Bar dataKey="인원수">
+              {analysis.scoreDistributions.map((d, index) => (
+                <Cell
+                  key={`cell-${index}`}
+                  fill={d.isUserInRange ? '#1890ff' : (DISTRIBUTION_COLORS[d.range] || '#d9d9d9')}
+                  stroke={d.isUserInRange ? '#003a8c' : undefined}
+                  strokeWidth={d.isUserInRange ? 2 : 0}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+        <div style={{ textAlign: 'center', color: '#1890ff', marginTop: 8 }}>
+          * 파란색 막대가 내 점수가 속한 구간입니다
+        </div>
+      </Card>
+
+      <Card title="과목별 비교 (내 점수 vs 전체)">
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={analysis.subjectComparisons.map((s) => ({
+            과목: s.subjectNm,
+            '내 점수': s.myScore,
+            평균: s.avgScore,
+            최고: s.maxScore,
+            최저: s.minScore,
+          }))}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="과목" />
+            <YAxis />
+            <Tooltip formatter={(value) => [`${value}점`]} />
+            <Legend />
+            <Bar dataKey="내 점수" fill="#1890ff" />
+            <Bar dataKey="평균" fill="#faad14" />
+            <Bar dataKey="최고" fill="#52c41a" />
+            <Bar dataKey="최저" fill="#f5222d" />
+          </BarChart>
+        </ResponsiveContainer>
+
+        <Divider />
+
+        <Table
+          dataSource={analysis.subjectComparisons}
+          rowKey="subjectCd"
+          pagination={false}
+          size="small"
+          columns={[
+            { title: '과목', dataIndex: 'subjectNm', key: 'subjectNm' },
+            {
+              title: '내 점수',
+              dataIndex: 'myScore',
+              key: 'myScore',
+              align: 'center',
+              render: (v: number) => <Text strong style={{ color: '#1890ff' }}>{v}점</Text>,
+            },
+            {
+              title: '전체 평균',
+              dataIndex: 'avgScore',
+              key: 'avgScore',
+              align: 'center',
+              render: (v: number) => `${v}점`,
+            },
+            {
+              title: '최고점',
+              dataIndex: 'maxScore',
+              key: 'maxScore',
+              align: 'center',
+              render: (v: number) => `${v}점`,
+            },
+            {
+              title: '최저점',
+              dataIndex: 'minScore',
+              key: 'minScore',
+              align: 'center',
+              render: (v: number) => `${v}점`,
+            },
+            {
+              title: '순위',
+              key: 'ranking',
+              align: 'center',
+              render: (_: unknown, record) => `${record.ranking} / ${record.totalCount}명`,
+            },
+          ]}
+        />
+      </Card>
+    </div>
+  ) : (
+    <div style={{ textAlign: 'center', padding: 60 }}>
+      <Spin size="large" />
+      <p style={{ marginTop: 16 }}>분석 데이터를 불러오는 중...</p>
+    </div>
+  );
+
   const detailTabs = result.subjectResults.map((subject) => {
     const answersMap: Record<number, string> = {};
     subject.questionResults.forEach((q) => {
@@ -242,6 +415,11 @@ const UserScoreResult: React.FC = () => {
       key: 'summary',
       label: '성적 요약',
       children: summaryTab,
+    },
+    {
+      key: 'analysis',
+      label: '성적 분석',
+      children: analysisTab,
     },
     ...detailTabs,
   ];

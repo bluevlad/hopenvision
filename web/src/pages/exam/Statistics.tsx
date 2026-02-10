@@ -7,7 +7,6 @@ import {
   Col,
   Statistic,
   Table,
-  Progress,
   Empty,
   Spin,
 } from 'antd';
@@ -19,20 +18,44 @@ import {
   FallOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+} from 'recharts';
 import { examApi } from '../../api/examApi';
 import { statisticsApi } from '../../api/statisticsApi';
 import type { SubjectStatistics } from '../../types/statistics';
 
+const CHART_COLORS = ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#13c2c2', '#eb2f96', '#fa8c16'];
+
+const DISTRIBUTION_COLORS: Record<string, string> = {
+  '90~100': '#52c41a',
+  '80~89': '#73d13d',
+  '70~79': '#95de64',
+  '60~69': '#faad14',
+  '50~59': '#fa8c16',
+  '40~49': '#fa541c',
+  '30~39': '#f5222d',
+  '0~29': '#cf1322',
+};
+
 export default function Statistics() {
   const [selectedExamCd, setSelectedExamCd] = useState<string | undefined>();
 
-  // 시험 목록
   const { data: examListData } = useQuery({
     queryKey: ['exams', { page: 0, size: 100 }],
     queryFn: () => examApi.getExamList({ page: 0, size: 100 }),
   });
 
-  // 통계 조회
   const { data: statsData, isLoading } = useQuery({
     queryKey: ['statistics', selectedExamCd],
     queryFn: () => statisticsApi.getExamStatistics(selectedExamCd!),
@@ -88,6 +111,29 @@ export default function Statistics() {
       render: (value: number | null) => value != null ? `${value}점` : '-',
     },
   ];
+
+  // 점수 분포 차트 데이터
+  const distributionChartData = stats?.scoreDistributions.map((dist) => ({
+    range: dist.range + '점',
+    인원수: dist.count,
+    비율: dist.percentage,
+    fill: DISTRIBUTION_COLORS[dist.range] || '#1890ff',
+  })) || [];
+
+  // 과목별 비교 차트 데이터
+  const subjectChartData = stats?.subjectStatistics.map((sub) => ({
+    과목: sub.subjectNm,
+    평균: sub.avgScore ?? 0,
+    최고: sub.maxScore ?? 0,
+    최저: sub.minScore ?? 0,
+  })) || [];
+
+  // 합격/불합격 파이 차트 데이터
+  const passFailData = stats ? [
+    { name: '합격', value: stats.passedCount },
+    { name: '불합격', value: stats.totalApplicants - stats.passedCount },
+  ] : [];
+  const PIE_COLORS = ['#52c41a', '#ff4d4f'];
 
   return (
     <div>
@@ -200,31 +246,75 @@ export default function Statistics() {
           </Row>
 
           <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={12}>
+            <Col span={16}>
               <Card title="점수 분포">
-                {stats.scoreDistributions.map((dist) => (
-                  <div key={dist.range} style={{ marginBottom: 8 }}>
-                    <Row align="middle">
-                      <Col span={5}>
-                        <span style={{ fontWeight: 500 }}>{dist.range}점</span>
-                      </Col>
-                      <Col span={14}>
-                        <Progress
-                          percent={dist.percentage}
-                          format={() => `${dist.count}명`}
-                          strokeColor={getDistributionColor(dist.range)}
-                        />
-                      </Col>
-                      <Col span={5} style={{ textAlign: 'right' }}>
-                        <span style={{ color: '#999' }}>{dist.percentage}%</span>
-                      </Col>
-                    </Row>
-                  </div>
-                ))}
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={distributionChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="range" />
+                    <YAxis allowDecimals={false} />
+                    <Tooltip
+                      formatter={(value, name) => {
+                        if (name === '인원수') return [`${value}명`, name];
+                        return [`${value}%`, name];
+                      }}
+                    />
+                    <Legend />
+                    <Bar dataKey="인원수" fill="#1890ff">
+                      {distributionChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </Card>
             </Col>
-            <Col span={12}>
-              <Card title="과목별 통계">
+            <Col span={8}>
+              <Card title="합격/불합격 비율">
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={passFailData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      dataKey="value"
+                      label={({ name, value }) => `${name} ${value}명`}
+                    >
+                      {passFailData.map((_entry, index) => (
+                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`${value}명`]} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Card>
+            </Col>
+          </Row>
+
+          <Row gutter={16} style={{ marginBottom: 16 }}>
+            <Col span={24}>
+              <Card title="과목별 통계 비교">
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={subjectChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="과목" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [`${value}점`]} />
+                    <Legend />
+                    <Bar dataKey="평균" fill={CHART_COLORS[0]} />
+                    <Bar dataKey="최고" fill={CHART_COLORS[1]} />
+                    <Bar dataKey="최저" fill={CHART_COLORS[3]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={24}>
+              <Card title="과목별 상세 통계">
                 <Table
                   columns={subjectColumns}
                   dataSource={stats.subjectStatistics}
@@ -239,15 +329,4 @@ export default function Statistics() {
       )}
     </div>
   );
-}
-
-function getDistributionColor(range: string): string {
-  if (range.startsWith('90') || range.startsWith('100')) return '#52c41a';
-  if (range.startsWith('80')) return '#73d13d';
-  if (range.startsWith('70')) return '#95de64';
-  if (range.startsWith('60')) return '#faad14';
-  if (range.startsWith('50')) return '#fa8c16';
-  if (range.startsWith('40')) return '#fa541c';
-  if (range.startsWith('30')) return '#f5222d';
-  return '#cf1322';
 }

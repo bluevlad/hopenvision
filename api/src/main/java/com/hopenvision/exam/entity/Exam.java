@@ -1,5 +1,6 @@
 package com.hopenvision.exam.entity;
 
+import com.hopenvision.config.AuditListener;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -13,6 +14,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "exam_mst")
+@EntityListeners(AuditListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -57,6 +59,11 @@ public class Exam {
     @UpdateTimestamp
     @Column(name = "upd_dt")
     private LocalDateTime updDt;
+
+    @Version
+    @Column(name = "version")
+    @Builder.Default
+    private Long version = 0L;
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

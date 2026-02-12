@@ -46,6 +46,11 @@ springdoc:
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
 
+# Admin API Key 인증
+app:
+  admin:
+    api-key: ${ADMIN_API_KEY:}
+
 # 로깅 설정
 logging:
   level:

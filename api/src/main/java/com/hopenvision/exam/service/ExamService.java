@@ -12,7 +12,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,13 +33,29 @@ public class ExamService {
     public Page<ExamDto.Response> getExamList(ExamDto.SearchRequest request) {
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
 
-        return examRepository.searchExams(
+        Page<Exam> examPage = examRepository.searchExams(
                 request.getKeyword(),
                 request.getExamType(),
                 request.getExamYear(),
                 request.getIsUse(),
                 pageable
-        ).map(this::toResponse);
+        );
+
+        // 배치로 카운트 조회 (N+1 방지)
+        List<String> examCds = examPage.getContent().stream()
+                .map(Exam::getExamCd).collect(Collectors.toList());
+        Map<String, long[]> countsMap = new HashMap<>();
+        if (!examCds.isEmpty()) {
+            List<Object[]> counts = examRepository.findExamCountsByExamCds(examCds);
+            for (Object[] row : counts) {
+                countsMap.put((String) row[0], new long[]{(Long) row[1], (Long) row[2]});
+            }
+        }
+
+        return examPage.map(exam -> {
+            long[] counts = countsMap.getOrDefault(exam.getExamCd(), new long[]{0, 0});
+            return toResponse(exam, counts[0], counts[1]);
+        });
     }
 
     /**
@@ -244,6 +262,12 @@ public class ExamService {
     // ==================== Mapper ====================
 
     private ExamDto.Response toResponse(Exam exam) {
+        return toResponse(exam,
+                examRepository.countSubjectsByExamCd(exam.getExamCd()),
+                examRepository.countApplicantsByExamCd(exam.getExamCd()));
+    }
+
+    private ExamDto.Response toResponse(Exam exam, long subjectCnt, long applicantCnt) {
         return ExamDto.Response.builder()
                 .examCd(exam.getExamCd())
                 .examNm(exam.getExamNm())
@@ -256,8 +280,8 @@ public class ExamService {
                 .isUse(exam.getIsUse())
                 .regDt(exam.getRegDt())
                 .updDt(exam.getUpdDt())
-                .subjectCnt(examRepository.countSubjectsByExamCd(exam.getExamCd()))
-                .applicantCnt(examRepository.countApplicantsByExamCd(exam.getExamCd()))
+                .subjectCnt(subjectCnt)
+                .applicantCnt(applicantCnt)
                 .build();
     }
 

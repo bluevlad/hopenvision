@@ -79,15 +79,34 @@ docker compose --profile all up -d
 
 ```
 com.hopenvision/
-├── config/         # 설정 (CORS, Security 등)
-├── exam/           # 시험/채점 도메인
-├── user/           # 사용자 도메인
+├── config/              # 설정 (CORS, Security 등)
+├── exam/                # 시험/채점 도메인 (DDD)
+│   ├── controller/      # REST API
+│   ├── dto/             # DTO
+│   ├── entity/          # JPA Entity
+│   ├── repository/      # JPA Repository
+│   └── service/         # Business Logic
+├── user/                # 사용자 도메인 (DDD)
+│   ├── controller/
+│   ├── dto/
+│   ├── entity/
+│   ├── repository/
+│   └── service/
 └── HopenvisionApiApplication.java
 ```
 
 ### API 패턴
-- Controller → Service → Repository (JPA)
+- DDD 도메인별: Controller → Service → Repository → Entity
 - DTO ↔ Entity 변환: MapStruct
+- API 문서: http://localhost:8080/swagger-ui.html
+
+### Spring Profiles
+
+| 프로필 | DB | DDL 모드 | 용도 |
+|--------|-----|---------|------|
+| local | H2 인메모리 | create | 로컬 개발 (h2-console 사용 가능) |
+| dev | PostgreSQL | create | 개발 서버 |
+| prod | PostgreSQL | none | 운영 서버 |
 
 ## Do NOT
 
@@ -107,6 +126,8 @@ com.hopenvision/
 - SQL 문법: PostgreSQL 호환만 사용
 - 페이지네이션: `LIMIT/OFFSET` 사용 (ROWNUM 금지)
 - 날짜 함수: `CURRENT_TIMESTAMP`, `NOW()` 사용
+- DDL: 운영은 `validate` (수동 마이그레이션), 개발은 `create`
+- 공유 DB: `database-network` 외부 네트워크 (다른 서비스와 PostgreSQL 공유)
 
 ## Deployment
 

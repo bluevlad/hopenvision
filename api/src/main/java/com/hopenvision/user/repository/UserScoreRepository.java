@@ -38,4 +38,9 @@ public interface UserScoreRepository extends JpaRepository<UserScore, UserScoreI
 
     @Query("SELECT COUNT(us) FROM UserScore us WHERE us.id.examCd = :examCd AND us.id.subjectCd = :subjectCd AND us.rawScore > :score")
     Long countByExamCdAndSubjectCdAndScoreGreaterThan(@Param("examCd") String examCd, @Param("subjectCd") String subjectCd, @Param("score") java.math.BigDecimal score);
+
+    // 과목별 통계 일괄 조회 (N+1 방지)
+    @Query("SELECT us.id.subjectCd, COUNT(us), AVG(us.rawScore), MAX(us.rawScore), MIN(us.rawScore) " +
+           "FROM UserScore us WHERE us.id.examCd = :examCd GROUP BY us.id.subjectCd")
+    List<Object[]> getSubjectStatsBatch(@Param("examCd") String examCd);
 }

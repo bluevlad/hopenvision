@@ -47,4 +47,11 @@ public interface ExamRepository extends JpaRepository<Exam, String> {
     // 시험별 응시자 수 조회
     @Query("SELECT COUNT(a) FROM ExamApplicant a WHERE a.examCd = :examCd")
     long countApplicantsByExamCd(@Param("examCd") String examCd);
+
+    // 시험 목록 + 과목/응시자 카운트 일괄 조회 (N+1 방지)
+    @Query("SELECT e.examCd, " +
+           "(SELECT COUNT(s) FROM ExamSubject s WHERE s.examCd = e.examCd), " +
+           "(SELECT COUNT(a) FROM ExamApplicant a WHERE a.examCd = e.examCd) " +
+           "FROM Exam e WHERE e.examCd IN :examCds")
+    List<Object[]> findExamCountsByExamCds(@Param("examCds") List<String> examCds);
 }

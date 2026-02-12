@@ -5,7 +5,6 @@ import com.hopenvision.exam.entity.Exam;
 import com.hopenvision.exam.entity.ExamSubject;
 import com.hopenvision.exam.repository.ExamRepository;
 import com.hopenvision.exam.repository.ExamSubjectRepository;
-import com.hopenvision.user.entity.UserTotalScore;
 import com.hopenvision.user.repository.UserScoreRepository;
 import com.hopenvision.user.repository.UserTotalScoreRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -17,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -51,14 +52,21 @@ public class StatisticsService {
         // 점수 분포 계산
         List<StatisticsDto.ScoreDistribution> distributions = calculateScoreDistribution(examCd, totalApplicants);
 
-        // 과목별 통계
+        // 과목별 통계 (단일 GROUP BY 쿼리로 일괄 조회)
         List<ExamSubject> subjects = subjectRepository.findByExamCdOrderBySortOrder(examCd);
+        Map<String, Object[]> subjectStatsMap = new HashMap<>();
+        for (Object[] row : userScoreRepository.getSubjectStatsBatch(examCd)) {
+            subjectStatsMap.put((String) row[0], row);
+        }
+
         List<StatisticsDto.SubjectStatistics> subjectStats = subjects.stream()
                 .map(subject -> {
-                    long subjectCount = userScoreRepository.countByExamCdAndSubjectCd(examCd, subject.getSubjectCd());
-                    BigDecimal subAvg = userScoreRepository.avgScoreByExamCdAndSubjectCd(examCd, subject.getSubjectCd());
-                    BigDecimal subMax = userScoreRepository.maxScoreByExamCdAndSubjectCd(examCd, subject.getSubjectCd());
-                    BigDecimal subMin = userScoreRepository.minScoreByExamCdAndSubjectCd(examCd, subject.getSubjectCd());
+                    Object[] stats = subjectStatsMap.get(subject.getSubjectCd());
+                    long subjectCount = stats != null ? (Long) stats[1] : 0;
+                    Double subAvgDouble = stats != null ? (Double) stats[2] : null;
+                    BigDecimal subAvg = subAvgDouble != null ? BigDecimal.valueOf(subAvgDouble) : null;
+                    BigDecimal subMax = stats != null ? (BigDecimal) stats[3] : null;
+                    BigDecimal subMin = stats != null ? (BigDecimal) stats[4] : null;
 
                     return StatisticsDto.SubjectStatistics.builder()
                             .subjectCd(subject.getSubjectCd())
@@ -86,23 +94,14 @@ public class StatisticsService {
     }
 
     private List<StatisticsDto.ScoreDistribution> calculateScoreDistribution(String examCd, long totalApplicants) {
-        List<UserTotalScore> allScores = userTotalScoreRepository.findByExamCdOrderByTotalScoreDesc(examCd);
+        // DB에서 점수 분포를 단일 쿼리로 계산 (메모리 로딩 제거)
+        Object[] distResult = userTotalScoreRepository.getScoreDistribution(examCd);
 
         String[] ranges = { "90~100", "80~89", "70~79", "60~69", "50~59", "40~49", "30~39", "20~29", "10~19", "0~9" };
-        int[][] bounds = { {90, 100}, {80, 89}, {70, 79}, {60, 69}, {50, 59}, {40, 49}, {30, 39}, {20, 29}, {10, 19}, {0, 9} };
-
         List<StatisticsDto.ScoreDistribution> distributions = new ArrayList<>();
 
         for (int i = 0; i < ranges.length; i++) {
-            int low = bounds[i][0];
-            int high = bounds[i][1];
-            long count = allScores.stream()
-                    .filter(s -> s.getTotalScore() != null)
-                    .filter(s -> {
-                        int score = s.getTotalScore().intValue();
-                        return score >= low && score <= high;
-                    })
-                    .count();
+            long count = distResult != null && distResult[i] != null ? ((Number) distResult[i]).longValue() : 0;
 
             BigDecimal percentage = BigDecimal.ZERO;
             if (totalApplicants > 0) {

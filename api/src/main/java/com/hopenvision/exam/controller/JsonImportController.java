@@ -77,8 +77,23 @@ public class JsonImportController {
             @Parameter(description = "답안지 JSON 파일명 (upload 폴더 내)")
             @RequestParam String answerFileName) {
 
-        Path questionFilePath = Paths.get(uploadPath, questionFileName);
-        Path answerFilePath = Paths.get(uploadPath, answerFileName);
+        Path uploadDir = Paths.get(uploadPath).toAbsolutePath().normalize();
+        Path questionFilePath = uploadDir.resolve(questionFileName).normalize();
+        Path answerFilePath = uploadDir.resolve(answerFileName).normalize();
+
+        if (!questionFilePath.startsWith(uploadDir)) {
+            throw new IllegalArgumentException("잘못된 파일 경로입니다: 문제지 파일명에 경로 탐색 문자를 사용할 수 없습니다.");
+        }
+        if (!answerFilePath.startsWith(uploadDir)) {
+            throw new IllegalArgumentException("잘못된 파일 경로입니다: 답안지 파일명에 경로 탐색 문자를 사용할 수 없습니다.");
+        }
+
+        if (!questionFilePath.getFileName().toString().toLowerCase().endsWith(".json")) {
+            throw new IllegalArgumentException("문제지는 JSON 파일만 허용됩니다 (.json)");
+        }
+        if (!answerFilePath.getFileName().toString().toLowerCase().endsWith(".json")) {
+            throw new IllegalArgumentException("답안지는 JSON 파일만 허용됩니다 (.json)");
+        }
 
         if (!questionFilePath.toFile().exists()) {
             throw new IllegalArgumentException("문제지 파일을 찾을 수 없습니다: " + questionFileName);

@@ -1,21 +1,25 @@
 import client from './client';
 import type {
   UserExam,
+  UserProfile,
   ScoringResult,
   ScoreAnalysis,
   HistoryItem,
   SubmitRequest,
+  UserProfileUpsertRequest,
   UserExamListResponse,
   UserExamDetailResponse,
   ScoringResultResponse,
   ScoreAnalysisResponse,
   HistoryListResponse,
+  UserProfileResponse,
+  UserProfileExistsResponse,
 } from '../types/user';
 
 const USER_ID_HEADER = 'X-User-Id';
 
 // 사용자 ID 가져오기 (임시로 localStorage 사용)
-const getUserId = (): string => {
+export const getUserId = (): string => {
   return localStorage.getItem('userId') || 'guest';
 };
 
@@ -73,5 +77,33 @@ export const getUserHistory = async (): Promise<HistoryItem[]> => {
   const response = await client.get<HistoryListResponse>('/api/user/history', {
     headers: { [USER_ID_HEADER]: getUserId() },
   });
+  return response.data.data;
+};
+
+// 내 프로필 조회
+export const getMyProfile = async (): Promise<UserProfile | null> => {
+  const response = await client.get<UserProfileResponse>('/api/user/profile', {
+    headers: { [USER_ID_HEADER]: getUserId() },
+  });
+  return response.data.data;
+};
+
+// 프로필 존재 여부 확인
+export const hasProfile = async (): Promise<boolean> => {
+  const response = await client.get<UserProfileExistsResponse>('/api/user/profile/exists', {
+    headers: { [USER_ID_HEADER]: getUserId() },
+  });
+  return response.data.data;
+};
+
+// 프로필 생성/수정
+export const upsertProfile = async (request: UserProfileUpsertRequest): Promise<UserProfile> => {
+  const response = await client.post<UserProfileResponse>(
+    '/api/user/profile',
+    request,
+    {
+      headers: { [USER_ID_HEADER]: request.userId },
+    }
+  );
   return response.data.data;
 };

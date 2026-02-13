@@ -121,9 +121,28 @@ export interface HistoryItem {
   regDt: string;
 }
 
+// 사용자 프로필
+export interface UserProfile {
+  userId: string;
+  userNm: string;
+  email: string | null;
+  newsletterYn: string;
+  regDt: string;
+  updDt: string;
+}
+
+export interface UserProfileUpsertRequest {
+  userId: string;
+  userNm: string;
+  email?: string;
+  newsletterYn: string;
+}
+
 // API Response 타입
 export type UserExamListResponse = ApiResponse<UserExam[]>;
 export type UserExamDetailResponse = ApiResponse<UserExam>;
 export type ScoringResultResponse = ApiResponse<ScoringResult>;
 export type ScoreAnalysisResponse = ApiResponse<ScoreAnalysis>;
 export type HistoryListResponse = ApiResponse<HistoryItem[]>;
+export type UserProfileResponse = ApiResponse<UserProfile>;
+export type UserProfileExistsResponse = ApiResponse<boolean>;

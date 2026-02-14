@@ -46,12 +46,9 @@ jobs:
           name: backend-build-reports
           path: api/build/reports/
 
-  frontend-build:
-    name: Frontend Build
+  frontend-user-build:
+    name: Frontend User Build
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web
 
     steps:
       - uses: actions/checkout@v4
@@ -61,20 +58,36 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
       - name: Lint
-        run: npm run lint
+        run: npm run lint -w web-user
 
       - name: Build
-        run: npm run build
+        run: npm run build -w web-user
 
-      - name: Upload build artifacts on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
+  frontend-admin-build:
+    name: Frontend Admin Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
         with:
-          name: frontend-build-reports
-          path: web/dist/
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint -w web-admin
+
+      - name: Build
+        run: npm run build -w web-admin

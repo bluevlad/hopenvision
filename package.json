@@ -1,0 +1,13 @@
+{
+  "name": "hopenvision",
+  "private": true,
+  "workspaces": ["web-shared", "web-user", "web-admin"],
+  "scripts": {
+    "dev:user": "npm run dev -w web-user",
+    "dev:admin": "npm run dev -w web-admin",
+    "build": "npm run build -w web-user && npm run build -w web-admin",
+    "build:user": "npm run build -w web-user",
+    "build:admin": "npm run build -w web-admin",
+    "lint": "npm run lint --workspaces --if-present"
+  }
+}

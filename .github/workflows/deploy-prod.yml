@@ -21,6 +21,8 @@ jobs:
           DB_NAME=${{ secrets.DB_NAME || 'hopenvision' }}
           DB_USER=${{ secrets.DB_USER }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          ADMIN_API_KEY=${{ secrets.ADMIN_API_KEY }}
+          CORS_ALLOWED_ORIGINS=https://study.unmong.com,https://admin.unmong.com
           TZ=Asia/Seoul
           EOF
 
@@ -40,9 +42,13 @@ jobs:
 
       - name: Health check
         run: |
-          echo "Checking frontend..."
-          curl -f -s -o /dev/null http://localhost:4060 || (echo "Frontend health check failed" && exit 1)
-          echo "Frontend OK"
+          echo "Checking user frontend..."
+          curl -f -s -o /dev/null http://localhost:4060 || (echo "User frontend health check failed" && exit 1)
+          echo "User frontend OK"
+
+          echo "Checking admin frontend..."
+          curl -f -s -o /dev/null http://localhost:4061 || (echo "Admin frontend health check failed" && exit 1)
+          echo "Admin frontend OK"
 
           echo "Checking backend..."
           curl -f -s -o /dev/null "http://localhost:9050/api/exams?page=0&size=1" || (echo "Backend health check failed" && exit 1)

@@ -17,6 +17,35 @@ HopenVision - 공무원 시험 성적 관리 및 채점 시스템 (Excel 업로�
 - **Spring Boot Version**: 3.2.2
 - **Node.js**: React 19 + Vite 7
 
+## Project Structure
+
+```
+hopenvision/
+├── api/                        # Spring Boot 백엔드
+├── package.json                # 루트 (npm workspaces)
+├── web-shared/                 # @hopenvision/shared (공유 코드)
+│   └── src/
+│       ├── api/client.ts       # Axios 인스턴스 + createApiClient 팩토리
+│       ├── types/common.ts     # ApiResponse, PageResponse
+│       ├── types/exam-constants.ts  # EXAM_TYPES, SUBJECT_TYPES, QUESTION_TYPES
+│       └── index.ts            # barrel export
+├── web-user/                   # 사용자 앱 (채점) - dev:5173, docker:4060
+│   └── src/
+│       ├── api/userApi.ts
+│       ├── components/         # UserLayout, OMRCard, QuickInputCard, UserProfileModal
+│       ├── pages/              # UserExamList, UserAnswerForm, UserScoreResult, UserHistory
+│       └── types/user.ts
+├── web-admin/                  # 관리자 앱 (시험관리) - dev:5174, docker:4061
+│   └── src/
+│       ├── api/                # adminClient.ts, examApi.ts, applicantApi.ts, statisticsApi.ts
+│       ├── auth/               # AuthContext.tsx, AuthGuard.tsx, useAuth.ts, authTypes.ts
+│       ├── components/         # AdminLayout, ApplicantModal
+│       ├── pages/              # ApiKeyLogin, ExamList, ExamForm, AnswerKeyForm, ExcelImport, JsonImport, ApplicantList, Statistics
+│       └── types/              # exam.ts, applicant.ts, statistics.ts
+├── docker-compose.yml          # 개발용
+└── docker-compose.prod.yml     # 운영용
+```
+
 ## Tech Stack
 
 ### Backend (api/)
@@ -33,7 +62,7 @@ HopenVision - 공무원 시험 성적 관리 및 채점 시스템 (Excel 업로�
 | DTO Mapping | MapStruct 1.5.5 |
 | Utility | Lombok |
 
-### Frontend (web/)
+### Frontend (web-user/, web-admin/, web-shared/)
 
 | 항목 | 기술 |
 |------|------|
@@ -45,6 +74,7 @@ HopenVision - 공무원 시험 성적 관리 및 채점 시스템 (Excel 업로�
 | HTTP Client | Axios |
 | Router | React Router 7 |
 | Build Tool | Vite 7 |
+| Monorepo | npm workspaces |
 
 ## Build and Run Commands
 
@@ -57,12 +87,20 @@ cd api
 # Backend 테스트
 ./gradlew test
 
-# Frontend 설치/실행
-cd web
+# Frontend 설치 (루트에서)
 npm install
-npm run dev         # 개발 서버 (Vite)
-npm run build       # 프로덕션 빌드
-npm run lint        # ESLint
+
+# Frontend 개발 서버
+npm run dev:user        # 사용자 앱 (http://localhost:5173)
+npm run dev:admin       # 관리자 앱 (http://localhost:5174)
+
+# Frontend 빌드
+npm run build           # 양쪽 모두 빌드
+npm run build:user      # 사용자 앱만
+npm run build:admin     # 관리자 앱만
+
+# Lint
+npm run lint            # 전체 workspace lint
 
 # Docker (전체 서비스)
 docker compose --profile all up -d
@@ -73,13 +111,14 @@ docker compose --profile all up -d
 | 서비스 | 로컬 | Docker |
 |--------|------|--------|
 | Backend API | 8080 | 9050:8080 |
-| Frontend | 5173 (Vite dev) | 4060:80 |
+| Frontend User | 5173 (Vite dev) | 4060:80 |
+| Frontend Admin | 5174 (Vite dev) | 4061:80 |
 
 ## Architecture Overview
 
 ```
 com.hopenvision/
-├── config/              # 설정 (CORS, Security 등)
+├── config/              # 설정 (CORS, Security, AdminController 등)
 ├── exam/                # 시험/채점 도메인 (DDD)
 │   ├── controller/      # REST API
 │   ├── dto/             # DTO
@@ -99,6 +138,8 @@ com.hopenvision/
 - DDD 도메인별: Controller → Service → Repository → Entity
 - DTO ↔ Entity 변환: MapStruct
 - API 문서: http://localhost:8080/swagger-ui.html
+- 관리자 인증: X-Api-Key 헤더 (SecurityConfig에서 필터링)
+- 관리자 검증: POST /api/admin/verify
 
 ### Spring Profiles
 
@@ -132,9 +173,9 @@ com.hopenvision/
 ## Deployment
 
 - **CI/CD**: GitHub Actions (prod 브랜치 push 시 자동 배포)
-- **Docker Image**: hopenvision-api, hopenvision-web
-- **운영 포트**: Frontend 4060, Backend 9050
-- **도메인**: study.unmong.com
+- **Docker Image**: hopenvision-api, hopenvision-web, hopenvision-admin
+- **운영 포트**: Frontend User 4060, Frontend Admin 4061, Backend 9050
+- **도메인**: study.unmong.com (사용자), admin.unmong.com (관리자)
 - **네트워크**: database-network (외부)
 
 > 로컬 환경 정보는 `CLAUDE.local.md` 참조 (git에 포함되지 않음)

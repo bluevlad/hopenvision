@@ -15,7 +15,15 @@ api/out/
 api/*.jar
 api/*.war
 
-# Web (Node.js / Vite)
+# Web (Node.js / Vite) - Monorepo
+node_modules/
+web-shared/dist/
+web-user/node_modules/
+web-user/dist/
+web-admin/node_modules/
+web-admin/dist/
+
+# Legacy (삭제 예정)
 web/node_modules/
 web/dist/
 web/.env.local
@@ -29,6 +37,7 @@ logs/
 tmp/
 temp/
 temp_*.txt
+nul
 
 # Upload
 upload/

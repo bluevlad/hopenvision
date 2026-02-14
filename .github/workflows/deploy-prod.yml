@@ -25,6 +25,7 @@ jobs:
           CORS_ALLOWED_ORIGINS=https://study.unmong.com,https://admin.unmong.com
           TZ=Asia/Seoul
           EOF
+          sed -i 's/^[[:space:]]*//' .env
 
       - name: Stop existing services
         run: |

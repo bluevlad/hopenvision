@@ -9,6 +9,7 @@ import com.hopenvision.exam.repository.ExamSubjectRepository;
 import com.hopenvision.user.dto.ScoringResultDto;
 import com.hopenvision.user.dto.UserAnswerDto;
 import com.hopenvision.user.entity.*;
+import jakarta.persistence.EntityNotFoundException;
 import com.hopenvision.user.repository.UserAnswerRepository;
 import com.hopenvision.user.repository.UserScoreRepository;
 import com.hopenvision.user.repository.UserTotalScoreRepository;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class UserScoringService {
 
     private final ExamRepository examRepository;
@@ -33,6 +34,7 @@ public class UserScoringService {
     private final UserScoreRepository userScoreRepository;
     private final UserTotalScoreRepository userTotalScoreRepository;
 
+    @Transactional
     public ScoringResultDto submitAndScore(String userId, UserAnswerDto.SubmitRequest request) {
         String examCd = request.getExamCd();
 
@@ -43,7 +45,7 @@ public class UserScoringService {
 
         // 1. 시험 정보 조회
         Exam exam = examRepository.findById(examCd)
-                .orElseThrow(() -> new RuntimeException("시험을 찾을 수 없습니다: " + examCd));
+                .orElseThrow(() -> new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd));
 
         // 2. 과목 정보 조회
         List<ExamSubject> subjects = examSubjectRepository.findByExamCdOrderBySortOrder(examCd);
@@ -193,13 +195,12 @@ public class UserScoringService {
                 .build();
     }
 
-    @Transactional(readOnly = true)
     public ScoringResultDto getMyScore(String userId, String examCd) {
         Exam exam = examRepository.findById(examCd)
-                .orElseThrow(() -> new RuntimeException("시험을 찾을 수 없습니다: " + examCd));
+                .orElseThrow(() -> new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd));
 
         UserTotalScore totalScore = userTotalScoreRepository.findByUserIdAndExamCd(userId, examCd)
-                .orElseThrow(() -> new RuntimeException("채점 결과를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("채점 결과를 찾을 수 없습니다."));
 
         List<UserScore> userScores = userScoreRepository.findByUserIdAndExamCd(userId, examCd);
         List<UserAnswer> userAnswers = userAnswerRepository.findByUserIdAndExamCd(userId, examCd);

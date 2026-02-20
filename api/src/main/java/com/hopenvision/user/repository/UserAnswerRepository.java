@@ -3,6 +3,7 @@ package com.hopenvision.user.repository;
 import com.hopenvision.user.entity.UserAnswer;
 import com.hopenvision.user.entity.UserAnswerId;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -18,8 +19,13 @@ public interface UserAnswerRepository extends JpaRepository<UserAnswer, UserAnsw
     @Query("SELECT ua FROM UserAnswer ua WHERE ua.id.userId = :userId AND ua.id.examCd = :examCd AND ua.id.subjectCd = :subjectCd ORDER BY ua.id.questionNo")
     List<UserAnswer> findByUserIdAndExamCdAndSubjectCd(@Param("userId") String userId, @Param("examCd") String examCd, @Param("subjectCd") String subjectCd);
 
+    @Modifying
     @Query("DELETE FROM UserAnswer ua WHERE ua.id.userId = :userId AND ua.id.examCd = :examCd")
     void deleteByUserIdAndExamCd(@Param("userId") String userId, @Param("examCd") String examCd);
 
     boolean existsByIdUserIdAndIdExamCd(String userId, String examCd);
+
+    // 사용자가 제출한 시험 코드 목록 일괄 조회 (N+1 방지)
+    @Query("SELECT DISTINCT ua.id.examCd FROM UserAnswer ua WHERE ua.id.userId = :userId AND ua.id.examCd IN :examCds")
+    List<String> findSubmittedExamCds(@Param("userId") String userId, @Param("examCds") List<String> examCds);
 }

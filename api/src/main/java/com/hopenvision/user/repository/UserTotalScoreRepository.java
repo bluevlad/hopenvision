@@ -47,6 +47,10 @@ public interface UserTotalScoreRepository extends JpaRepository<UserTotalScore, 
     @Query("SELECT uts FROM UserTotalScore uts WHERE uts.userId = :userId ORDER BY uts.regDt DESC")
     List<UserTotalScore> findByUserIdOrderByRegDtDesc(@Param("userId") String userId);
 
+    // 여러 시험의 응시자 수 일괄 조회 (N+1 방지)
+    @Query("SELECT uts.examCd, COUNT(uts) FROM UserTotalScore uts WHERE uts.examCd IN :examCds GROUP BY uts.examCd")
+    List<Object[]> countByExamCdIn(@Param("examCds") List<String> examCds);
+
     // 점수 분포 계산 (DB에서 직접 집계)
     @Query("SELECT " +
            "SUM(CASE WHEN uts.totalScore >= 90 THEN 1 ELSE 0 END), " +

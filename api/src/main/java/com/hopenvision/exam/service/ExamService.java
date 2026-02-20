@@ -110,23 +110,23 @@ public class ExamService {
 
         exam = examRepository.save(exam);
 
-        // 과목 등록
+        // 과목 일괄 등록
         if (request.getSubjects() != null && !request.getSubjects().isEmpty()) {
-            for (SubjectDto.Request subjectReq : request.getSubjects()) {
-                ExamSubject subject = ExamSubject.builder()
-                        .examCd(exam.getExamCd())
-                        .subjectCd(subjectReq.getSubjectCd())
-                        .subjectNm(subjectReq.getSubjectNm())
-                        .subjectType(subjectReq.getSubjectType())
-                        .questionCnt(subjectReq.getQuestionCnt())
-                        .scorePerQ(subjectReq.getScorePerQ())
-                        .questionType(subjectReq.getQuestionType())
-                        .cutLine(subjectReq.getCutLine())
-                        .sortOrder(subjectReq.getSortOrder())
-                        .isUse(subjectReq.getIsUse() != null ? subjectReq.getIsUse() : "Y")
-                        .build();
-                subjectRepository.save(subject);
-            }
+            List<ExamSubject> subjects = request.getSubjects().stream()
+                    .map(subjectReq -> ExamSubject.builder()
+                            .examCd(exam.getExamCd())
+                            .subjectCd(subjectReq.getSubjectCd())
+                            .subjectNm(subjectReq.getSubjectNm())
+                            .subjectType(subjectReq.getSubjectType())
+                            .questionCnt(subjectReq.getQuestionCnt())
+                            .scorePerQ(subjectReq.getScorePerQ())
+                            .questionType(subjectReq.getQuestionType())
+                            .cutLine(subjectReq.getCutLine())
+                            .sortOrder(subjectReq.getSortOrder())
+                            .isUse(subjectReq.getIsUse() != null ? subjectReq.getIsUse() : "Y")
+                            .build())
+                    .collect(Collectors.toList());
+            subjectRepository.saveAll(subjects);
         }
 
         return toResponse(exam);
@@ -242,25 +242,25 @@ public class ExamService {
     }
 
     /**
-     * 정답 일괄 등록/수정
+     * 정답 일괄 등록/수정 (saveAll 배치 저장)
      */
     @Transactional
     public void saveAnswerKeys(AnswerKeyDto.BulkRequest request) {
         // 기존 정답 삭제
         answerKeyRepository.deleteByExamCdAndSubjectCd(request.getExamCd(), request.getSubjectCd());
 
-        // 새 정답 등록
-        for (AnswerKeyDto.AnswerItem item : request.getAnswers()) {
-            ExamAnswerKey answerKey = ExamAnswerKey.builder()
-                    .examCd(request.getExamCd())
-                    .subjectCd(request.getSubjectCd())
-                    .questionNo(item.getQuestionNo())
-                    .correctAns(item.getCorrectAns())
-                    .score(item.getScore())
-                    .isMultiAns(item.getIsMultiAns() != null ? item.getIsMultiAns() : "N")
-                    .build();
-            answerKeyRepository.save(answerKey);
-        }
+        // 새 정답 일괄 등록
+        List<ExamAnswerKey> answerKeys = request.getAnswers().stream()
+                .map(item -> ExamAnswerKey.builder()
+                        .examCd(request.getExamCd())
+                        .subjectCd(request.getSubjectCd())
+                        .questionNo(item.getQuestionNo())
+                        .correctAns(item.getCorrectAns())
+                        .score(item.getScore())
+                        .isMultiAns(item.getIsMultiAns() != null ? item.getIsMultiAns() : "N")
+                        .build())
+                .collect(Collectors.toList());
+        answerKeyRepository.saveAll(answerKeys);
     }
 
     // ==================== Mapper ====================

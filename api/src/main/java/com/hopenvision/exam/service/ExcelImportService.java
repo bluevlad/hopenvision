@@ -24,6 +24,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ExcelImportService {
 
     private final ExamSubjectRepository examSubjectRepository;
@@ -42,6 +43,9 @@ public class ExcelImportService {
     public ExcelImportResultDto importAnswerKeys(String examCd, MultipartFile file) {
         List<String> errors = new ArrayList<>();
         List<ExcelImportResultDto.ImportedAnswerKey> importedKeys = new ArrayList<>();
+        List<ExamSubject> subjectsToSave = new ArrayList<>();
+        List<ExamAnswerKey> answerKeysToSave = new ArrayList<>();
+        java.util.Set<String> existingSubjectCds = new java.util.HashSet<>();
         int totalRows = 0;
         int successCount = 0;
         int failCount = 0;
@@ -59,7 +63,8 @@ public class ExcelImportService {
 
                 totalRows++;
                 try {
-                    ExcelImportResultDto.ImportedAnswerKey imported = processRow(examCd, row, i + 1);
+                    ExcelImportResultDto.ImportedAnswerKey imported = processRowBatch(
+                            examCd, row, i + 1, subjectsToSave, answerKeysToSave, existingSubjectCds);
                     importedKeys.add(imported);
                     successCount++;
                 } catch (Exception e) {
@@ -70,6 +75,14 @@ public class ExcelImportService {
             }
 
             workbook.close();
+
+            // 배치 저장
+            if (!subjectsToSave.isEmpty()) {
+                examSubjectRepository.saveAll(subjectsToSave);
+            }
+            if (!answerKeysToSave.isEmpty()) {
+                examAnswerKeyRepository.saveAll(answerKeysToSave);
+            }
 
         } catch (IOException e) {
             log.error("Excel 파일 읽기 오류: {}", e.getMessage());
@@ -152,7 +165,11 @@ public class ExcelImportService {
         return true;
     }
 
-    private ExcelImportResultDto.ImportedAnswerKey processRow(String examCd, Row row, int rowNum) {
+    private ExcelImportResultDto.ImportedAnswerKey processRowBatch(
+            String examCd, Row row, int rowNum,
+            List<ExamSubject> subjectsToSave,
+            List<ExamAnswerKey> answerKeysToSave,
+            java.util.Set<String> existingSubjectCds) {
         // 과목코드
         String subjectCode = getCellStringValue(row.getCell(0));
         if (subjectCode == null || subjectCode.trim().isEmpty()) {
@@ -184,22 +201,25 @@ public class ExcelImportService {
             scoreValue = getCellDoubleValue(scoreCell);
         }
 
-        // 과목이 존재하는지 확인하고 없으면 생성
-        ExamSubjectId subjectId = new ExamSubjectId(examCd, subjectCode);
-        if (!examSubjectRepository.existsById(subjectId)) {
-            ExamSubject subject = ExamSubject.builder()
-                    .examCd(examCd)
-                    .subjectCd(subjectCode)
-                    .subjectNm(subjectName)
-                    .subjectType("M")
-                    .questionType("CHOICE")
-                    .questionCnt(0)
-                    .scorePerQ(new BigDecimal("5"))
-                    .build();
-            examSubjectRepository.save(subject);
+        // 과목이 존재하지 않으면 배치에 추가 (중복 방지)
+        if (!existingSubjectCds.contains(subjectCode)) {
+            ExamSubjectId subjectId = new ExamSubjectId(examCd, subjectCode);
+            if (!examSubjectRepository.existsById(subjectId)) {
+                ExamSubject subject = ExamSubject.builder()
+                        .examCd(examCd)
+                        .subjectCd(subjectCode)
+                        .subjectNm(subjectName)
+                        .subjectType("M")
+                        .questionType("CHOICE")
+                        .questionCnt(0)
+                        .scorePerQ(new BigDecimal("5"))
+                        .build();
+                subjectsToSave.add(subject);
+            }
+            existingSubjectCds.add(subjectCode);
         }
 
-        // 정답 저장
+        // 정답을 배치에 추가
         BigDecimal score = scoreValue != null ? BigDecimal.valueOf(scoreValue) : new BigDecimal("2.0");
         ExamAnswerKey answerKey = ExamAnswerKey.builder()
                 .examCd(examCd)
@@ -208,7 +228,7 @@ public class ExcelImportService {
                 .correctAns(String.valueOf(correctAnswer))
                 .score(score)
                 .build();
-        examAnswerKeyRepository.save(answerKey);
+        answerKeysToSave.add(answerKey);
 
         return ExcelImportResultDto.ImportedAnswerKey.builder()
                 .subjectCode(subjectCode)

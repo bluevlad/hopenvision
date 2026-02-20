@@ -29,6 +29,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class JsonImportService {
 
     private final ExamSubjectRepository examSubjectRepository;

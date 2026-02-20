@@ -6,4 +6,5 @@ export { EXAM_TYPES, SUBJECT_TYPES, QUESTION_TYPES } from './types/exam-constant
 
 // API Client
 export { createApiClient, apiClient } from './api/client.js';
+export type { ApiErrorDetail } from './api/client.js';
 export type { AxiosInstance } from 'axios';

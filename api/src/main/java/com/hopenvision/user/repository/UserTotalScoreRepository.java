@@ -15,6 +15,8 @@ public interface UserTotalScoreRepository extends JpaRepository<UserTotalScore, 
 
     Optional<UserTotalScore> findByUserIdAndExamCd(String userId, String examCd);
 
+    boolean existsByUserIdAndExamCd(String userId, String examCd);
+
     @Query("SELECT uts FROM UserTotalScore uts WHERE uts.examCd = :examCd ORDER BY uts.totalScore DESC")
     List<UserTotalScore> findByExamCdOrderByTotalScoreDesc(@Param("examCd") String examCd);
 

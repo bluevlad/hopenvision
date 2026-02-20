@@ -66,6 +66,7 @@ public class ExamService {
                 .orElseThrow(() -> new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd));
 
         List<ExamSubject> subjects = subjectRepository.findByExamCdOrderBySortOrder(examCd);
+        Map<String, Long> answerCntMap = getAnswerCountMap(examCd);
 
         return ExamDto.DetailResponse.builder()
                 .examCd(exam.getExamCd())
@@ -79,7 +80,9 @@ public class ExamService {
                 .isUse(exam.getIsUse())
                 .regDt(exam.getRegDt())
                 .updDt(exam.getUpdDt())
-                .subjects(subjects.stream().map(this::toSubjectResponse).collect(Collectors.toList()))
+                .subjects(subjects.stream()
+                        .map(s -> toSubjectResponse(s, answerCntMap.getOrDefault(s.getSubjectCd(), 0L)))
+                        .collect(Collectors.toList()))
                 .build();
     }
 
@@ -166,9 +169,10 @@ public class ExamService {
      * 과목 목록 조회
      */
     public List<SubjectDto.Response> getSubjectList(String examCd) {
+        Map<String, Long> answerCntMap = getAnswerCountMap(examCd);
         return subjectRepository.findByExamCdOrderBySortOrder(examCd)
                 .stream()
-                .map(this::toSubjectResponse)
+                .map(s -> toSubjectResponse(s, answerCntMap.getOrDefault(s.getSubjectCd(), 0L)))
                 .collect(Collectors.toList());
     }
 
@@ -286,6 +290,10 @@ public class ExamService {
     }
 
     private SubjectDto.Response toSubjectResponse(ExamSubject subject) {
+        return toSubjectResponse(subject, answerKeyRepository.countByExamCdAndSubjectCd(subject.getExamCd(), subject.getSubjectCd()));
+    }
+
+    private SubjectDto.Response toSubjectResponse(ExamSubject subject, long answerCnt) {
         return SubjectDto.Response.builder()
                 .examCd(subject.getExamCd())
                 .subjectCd(subject.getSubjectCd())
@@ -298,8 +306,13 @@ public class ExamService {
                 .sortOrder(subject.getSortOrder())
                 .isUse(subject.getIsUse())
                 .regDt(subject.getRegDt())
-                .answerCnt(answerKeyRepository.countByExamCdAndSubjectCd(subject.getExamCd(), subject.getSubjectCd()))
+                .answerCnt(answerCnt)
                 .build();
+    }
+
+    private Map<String, Long> getAnswerCountMap(String examCd) {
+        return answerKeyRepository.countByExamCdGroupBySubject(examCd).stream()
+                .collect(Collectors.toMap(row -> (String) row[0], row -> (Long) row[1]));
     }
 
     private AnswerKeyDto.Response toAnswerKeyResponse(ExamAnswerKey answerKey) {

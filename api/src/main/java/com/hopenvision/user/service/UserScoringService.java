@@ -36,6 +36,11 @@ public class UserScoringService {
     public ScoringResultDto submitAndScore(String userId, UserAnswerDto.SubmitRequest request) {
         String examCd = request.getExamCd();
 
+        // 0. 중복 제출 방지
+        if (userTotalScoreRepository.existsByUserIdAndExamCd(userId, examCd)) {
+            throw new IllegalStateException("이미 제출한 시험입니다: " + examCd);
+        }
+
         // 1. 시험 정보 조회
         Exam exam = examRepository.findById(examCd)
                 .orElseThrow(() -> new RuntimeException("시험을 찾을 수 없습니다: " + examCd));

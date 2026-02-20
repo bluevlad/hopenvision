@@ -47,9 +47,8 @@ public class ScoreAnalysisService {
                 ? BigDecimal.valueOf(lowerOrEqualCount * 100.0 / totalApplicants).setScale(1, RoundingMode.HALF_UP)
                 : BigDecimal.ZERO;
 
-        // 점수 분포
-        List<UserTotalScore> allScores = userTotalScoreRepository.findByExamCdOrderByTotalScoreDesc(examCd);
-        List<ScoreAnalysisDto.ScoreDistribution> distributions = buildScoreDistributions(allScores, myTotal.getTotalScore());
+        // 점수 분포 (DB 집계 쿼리 사용)
+        List<ScoreAnalysisDto.ScoreDistribution> distributions = buildScoreDistributionsFromDb(examCd, totalApplicants, myTotal.getTotalScore());
 
         // 과목별 비교
         List<UserScore> myScores = userScoreRepository.findByUserIdAndExamCd(userId, examCd);
@@ -94,8 +93,10 @@ public class ScoreAnalysisService {
                 .build();
     }
 
-    private List<ScoreAnalysisDto.ScoreDistribution> buildScoreDistributions(
-            List<UserTotalScore> allScores, BigDecimal myScore) {
+    private List<ScoreAnalysisDto.ScoreDistribution> buildScoreDistributionsFromDb(
+            String examCd, long total, BigDecimal myScore) {
+
+        Object[] dist = userTotalScoreRepository.getScoreDistribution(examCd);
 
         String[][] ranges = {
                 {"90~100", "90", "100"},
@@ -105,23 +106,17 @@ public class ScoreAnalysisService {
                 {"50~59", "50", "59"},
                 {"40~49", "40", "49"},
                 {"30~39", "30", "39"},
-                {"0~29", "0", "29"},
+                {"20~29", "20", "29"},
+                {"10~19", "10", "19"},
+                {"0~9", "0", "9"},
         };
 
-        int total = allScores.size();
         List<ScoreAnalysisDto.ScoreDistribution> distributions = new ArrayList<>();
 
-        for (String[] range : ranges) {
-            BigDecimal low = new BigDecimal(range[1]);
-            BigDecimal high = new BigDecimal(range[2]);
-
-            int count = 0;
-            for (UserTotalScore score : allScores) {
-                BigDecimal s = score.getTotalScore();
-                if (s != null && s.compareTo(low) >= 0 && s.compareTo(high) <= 0) {
-                    count++;
-                }
-            }
+        for (int i = 0; i < ranges.length && i < dist.length; i++) {
+            int count = dist[i] != null ? ((Number) dist[i]).intValue() : 0;
+            BigDecimal low = new BigDecimal(ranges[i][1]);
+            BigDecimal high = new BigDecimal(ranges[i][2]);
 
             boolean isUserInRange = myScore != null
                     && myScore.compareTo(low) >= 0
@@ -130,7 +125,7 @@ public class ScoreAnalysisService {
             double percentage = total > 0 ? Math.round(count * 1000.0 / total) / 10.0 : 0;
 
             distributions.add(ScoreAnalysisDto.ScoreDistribution.builder()
-                    .range(range[0])
+                    .range(ranges[i][0])
                     .count(count)
                     .percentage(percentage)
                     .isUserInRange(isUserInRange)

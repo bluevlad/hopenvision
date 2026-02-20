@@ -15,7 +15,11 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.HexFormat;
 
 @Configuration
 @EnableWebSecurity
@@ -23,6 +27,9 @@ public class SecurityConfig {
 
     @Value("${app.admin.api-key:}")
     private String adminApiKey;
+
+    @Value("${app.user.auth-secret:}")
+    private String userAuthSecret;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -44,9 +51,63 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
                 .anyRequest().permitAll()
             )
-            .addFilterBefore(new ApiKeyAuthFilter(adminApiKey), UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(new ApiKeyAuthFilter(adminApiKey), UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(new UserIdAuthFilter(userAuthSecret), ApiKeyAuthFilter.class);
 
         return http.build();
+    }
+
+    /**
+     * X-User-Id HMAC 서명 검증 필터
+     * USER_AUTH_SECRET이 설정된 경우 X-User-Signature 헤더로 서명 검증
+     */
+    static class UserIdAuthFilter extends OncePerRequestFilter {
+
+        private final String authSecret;
+
+        UserIdAuthFilter(String authSecret) {
+            this.authSecret = authSecret;
+        }
+
+        @Override
+        protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                        FilterChain filterChain) throws ServletException, IOException {
+            String userId = request.getHeader("X-User-Id");
+
+            // X-User-Id가 없으면 스킵
+            if (userId == null || userId.isBlank()) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // auth-secret이 미설정이면 검증 스킵 (개발 환경 호환)
+            if (authSecret == null || authSecret.isBlank()) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
+            // HMAC 서명 검증
+            String signature = request.getHeader("X-User-Signature");
+            if (signature == null || !verifyHmac(userId, signature)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"error\":\"Invalid user signature\"}");
+                return;
+            }
+
+            filterChain.doFilter(request, response);
+        }
+
+        private boolean verifyHmac(String userId, String signature) {
+            try {
+                Mac mac = Mac.getInstance("HmacSHA256");
+                mac.init(new SecretKeySpec(authSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+                String expected = HexFormat.of().formatHex(mac.doFinal(userId.getBytes(StandardCharsets.UTF_8)));
+                return expected.equalsIgnoreCase(signature);
+            } catch (Exception e) {
+                return false;
+            }
+        }
     }
 
     /**

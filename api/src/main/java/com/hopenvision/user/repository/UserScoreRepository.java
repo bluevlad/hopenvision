@@ -43,4 +43,10 @@ public interface UserScoreRepository extends JpaRepository<UserScore, UserScoreI
     @Query("SELECT us.id.subjectCd, COUNT(us), AVG(us.rawScore), MAX(us.rawScore), MIN(us.rawScore) " +
            "FROM UserScore us WHERE us.id.examCd = :examCd GROUP BY us.id.subjectCd")
     List<Object[]> getSubjectStatsBatch(@Param("examCd") String examCd);
+
+    // 과목별 통계 + 특정 사용자 점수보다 높은 수 일괄 조회 (ScoreAnalysis N+1 방지)
+    @Query("SELECT us.id.subjectCd, COUNT(us), AVG(us.rawScore), MAX(us.rawScore), MIN(us.rawScore), " +
+           "SUM(CASE WHEN us.rawScore > (SELECT us2.rawScore FROM UserScore us2 WHERE us2.id.userId = :userId AND us2.id.examCd = :examCd AND us2.id.subjectCd = us.id.subjectCd) THEN 1 ELSE 0 END) " +
+           "FROM UserScore us WHERE us.id.examCd = :examCd GROUP BY us.id.subjectCd")
+    List<Object[]> getSubjectStatsWithRanking(@Param("examCd") String examCd, @Param("userId") String userId);
 }

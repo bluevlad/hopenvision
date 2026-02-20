@@ -9,18 +9,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserProfileService {
 
     private final UserProfileRepository userProfileRepository;
 
-    @Transactional(readOnly = true)
     public UserProfileDto.Response getProfile(String userId) {
         return userProfileRepository.findById(userId)
                 .map(this::toResponse)
                 .orElse(null);
     }
 
-    @Transactional(readOnly = true)
     public boolean hasProfile(String userId) {
         return userProfileRepository.existsById(userId);
     }

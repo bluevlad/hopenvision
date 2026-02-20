@@ -9,6 +9,7 @@ import com.hopenvision.user.entity.UserScore;
 import com.hopenvision.user.entity.UserTotalScore;
 import com.hopenvision.user.repository.UserScoreRepository;
 import com.hopenvision.user.repository.UserTotalScoreRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,10 +33,10 @@ public class ScoreAnalysisService {
 
     public ScoreAnalysisDto getScoreAnalysis(String userId, String examCd) {
         Exam exam = examRepository.findById(examCd)
-                .orElseThrow(() -> new RuntimeException("시험을 찾을 수 없습니다: " + examCd));
+                .orElseThrow(() -> new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd));
 
         UserTotalScore myTotal = userTotalScoreRepository.findByUserIdAndExamCd(userId, examCd)
-                .orElseThrow(() -> new RuntimeException("채점 결과를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("채점 결과를 찾을 수 없습니다."));
 
         Long totalApplicants = userTotalScoreRepository.countByExamCd(examCd);
         Long higherCount = userTotalScoreRepository.countByExamCdAndScoreGreaterThan(examCd, myTotal.getTotalScore());
@@ -50,22 +51,30 @@ public class ScoreAnalysisService {
         // 점수 분포 (DB 집계 쿼리 사용)
         List<ScoreAnalysisDto.ScoreDistribution> distributions = buildScoreDistributionsFromDb(examCd, totalApplicants, myTotal.getTotalScore());
 
-        // 과목별 비교
+        // 과목별 비교 (GROUP BY 배치 쿼리로 N+1 방지)
         List<UserScore> myScores = userScoreRepository.findByUserIdAndExamCd(userId, examCd);
         List<ExamSubject> subjects = examSubjectRepository.findByExamCdOrderBySortOrder(examCd);
         Map<String, ExamSubject> subjectMap = subjects.stream()
                 .collect(Collectors.toMap(ExamSubject::getSubjectCd, s -> s));
 
+        // 과목별 통계 + 순위를 단일 쿼리로 일괄 조회
+        Map<String, Object[]> subjectStatsMap = new java.util.HashMap<>();
+        for (Object[] row : userScoreRepository.getSubjectStatsWithRanking(examCd, userId)) {
+            subjectStatsMap.put((String) row[0], row);
+        }
+
         List<ScoreAnalysisDto.SubjectComparison> subjectComparisons = new ArrayList<>();
         for (UserScore myScore : myScores) {
             String subjectCd = myScore.getId().getSubjectCd();
             ExamSubject subject = subjectMap.get(subjectCd);
+            Object[] stats = subjectStatsMap.get(subjectCd);
 
-            BigDecimal avgScore = userScoreRepository.avgScoreByExamCdAndSubjectCd(examCd, subjectCd);
-            BigDecimal maxScore = userScoreRepository.maxScoreByExamCdAndSubjectCd(examCd, subjectCd);
-            BigDecimal minScore = userScoreRepository.minScoreByExamCdAndSubjectCd(examCd, subjectCd);
-            Long subjectCount = userScoreRepository.countByExamCdAndSubjectCd(examCd, subjectCd);
-            Long subjectHigher = userScoreRepository.countByExamCdAndSubjectCdAndScoreGreaterThan(examCd, subjectCd, myScore.getRawScore());
+            Long subjectCount = stats != null ? (Long) stats[1] : 0L;
+            Double avgDouble = stats != null ? (Double) stats[2] : null;
+            BigDecimal avgScore = avgDouble != null ? BigDecimal.valueOf(avgDouble) : null;
+            BigDecimal maxScore = stats != null ? (BigDecimal) stats[3] : null;
+            BigDecimal minScore = stats != null ? (BigDecimal) stats[4] : null;
+            Long subjectHigher = stats != null && stats[5] != null ? ((Number) stats[5]).longValue() : 0L;
 
             subjectComparisons.add(ScoreAnalysisDto.SubjectComparison.builder()
                     .subjectCd(subjectCd)

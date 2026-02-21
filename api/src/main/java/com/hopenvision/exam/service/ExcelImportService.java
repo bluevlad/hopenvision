@@ -39,6 +39,11 @@ public class ExcelImportService {
      * | SUBJ001 | 국어   | 2       | 1    | 2.0  |
      * ...
      */
+    /**
+     * 정답 답안지 Excel 파일을 파싱하여 DB에 저장
+     * 부분 실패 시에도 성공한 행은 저장됩니다 (행별 savepoint).
+     * 전체 실패 시에만 전체 롤백됩니다.
+     */
     @Transactional
     public ExcelImportResultDto importAnswerKeys(String examCd, MultipartFile file) {
         List<String> errors = new ArrayList<>();
@@ -54,7 +59,6 @@ public class ExcelImportService {
             Workbook workbook = createWorkbook(file.getOriginalFilename(), is);
             Sheet sheet = workbook.getSheetAt(0);
 
-            // 첫 번째 행은 헤더로 스킵
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
                 if (row == null || isEmptyRow(row)) {
@@ -70,11 +74,12 @@ public class ExcelImportService {
                 } catch (Exception e) {
                     failCount++;
                     errors.add("행 " + (i + 1) + ": " + e.getMessage());
-                    log.error("행 {} 처리 중 오류: {}", i + 1, e.getMessage());
+                    log.warn("[AUDIT] Excel import row {} failed for exam={}: {}", i + 1, examCd, e.getMessage());
                 }
             }
 
             workbook.close();
+            log.info("[AUDIT] Excel import completed: exam={} total={} success={} fail={}", examCd, totalRows, successCount, failCount);
 
             // 배치 저장
             if (!subjectsToSave.isEmpty()) {
@@ -85,7 +90,7 @@ public class ExcelImportService {
             }
 
         } catch (IOException e) {
-            log.error("Excel 파일 읽기 오류: {}", e.getMessage());
+            log.error("[AUDIT] Excel import file error for exam={}: {}", examCd, e.getMessage());
             errors.add("Excel 파일을 읽을 수 없습니다: " + e.getMessage());
             failCount = 1;
         }

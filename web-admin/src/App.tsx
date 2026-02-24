@@ -13,6 +13,13 @@ import ExcelImport from './pages/ExcelImport';
 import JsonImport from './pages/JsonImport';
 import ApplicantList from './pages/ApplicantList';
 import Statistics from './pages/Statistics';
+import GosiExamList from './pages/gosi/GosiExamList';
+import GosiPassList from './pages/gosi/GosiPassList';
+import GosiScoreList from './pages/gosi/GosiScoreList';
+import GosiScoreDetail from './pages/gosi/GosiScoreDetail';
+import GosiStatistics from './pages/gosi/GosiStatistics';
+import GosiSubjectList from './pages/gosi/GosiSubjectList';
+import GosiMemberList from './pages/gosi/GosiMemberList';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -47,6 +54,13 @@ function App() {
                 <Route path="applicants" element={<ApplicantList />} />
                 <Route path="statistics" element={<Statistics />} />
                 <Route path="import/preview" element={<ExcelImport />} />
+                <Route path="gosi/exams" element={<GosiExamList />} />
+                <Route path="gosi/pass" element={<GosiPassList />} />
+                <Route path="gosi/results" element={<GosiScoreList />} />
+                <Route path="gosi/results/:gosiCd/:rstNo" element={<GosiScoreDetail />} />
+                <Route path="gosi/statistics" element={<GosiStatistics />} />
+                <Route path="gosi/subjects" element={<GosiSubjectList />} />
+                <Route path="gosi/members" element={<GosiMemberList />} />
                 <Route path="*" element={<Navigate to="/exams" replace />} />
               </Route>
             </Routes>

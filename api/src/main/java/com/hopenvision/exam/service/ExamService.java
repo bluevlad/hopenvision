@@ -108,13 +108,13 @@ public class ExamService {
                 .isUse(request.getIsUse() != null ? request.getIsUse() : "Y")
                 .build();
 
-        exam = examRepository.save(exam);
+        Exam savedExam = examRepository.save(exam);
 
         // 과목 일괄 등록
         if (request.getSubjects() != null && !request.getSubjects().isEmpty()) {
             List<ExamSubject> subjects = request.getSubjects().stream()
                     .map(subjectReq -> ExamSubject.builder()
-                            .examCd(exam.getExamCd())
+                            .examCd(savedExam.getExamCd())
                             .subjectCd(subjectReq.getSubjectCd())
                             .subjectNm(subjectReq.getSubjectNm())
                             .subjectType(subjectReq.getSubjectType())
@@ -129,7 +129,7 @@ public class ExamService {
             subjectRepository.saveAll(subjects);
         }
 
-        return toResponse(exam);
+        return toResponse(savedExam);
     }
 
     /**

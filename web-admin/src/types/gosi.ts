@@ -141,6 +141,39 @@ export interface GosiVodResponse {
   isuse: string;
 }
 
+// 분석 - 점수 분포
+export interface GosiScoreDistribution {
+  range: string;
+  count: number;
+}
+
+// 분석 - 년도별 추이
+export interface GosiYearlyTrend {
+  gosiYear: string;
+  avgScore: number;
+  passRate: number;
+  totalCnt: number;
+}
+
+// 분석 - 과목별 성적
+export interface GosiSubjectScore {
+  subjectCd: string;
+  subjectNm: string;
+  avgScore: number;
+  maxScore: number;
+  minScore: number;
+  totalCnt: number;
+}
+
+// 분석 - 지역별 성적
+export interface GosiAreaScore {
+  gosiArea: string;
+  gosiAreaNm: string;
+  avgScore: number;
+  passRate: number;
+  totalCnt: number;
+}
+
 // 회원
 export interface GosiMemberResponse {
   userId: string;

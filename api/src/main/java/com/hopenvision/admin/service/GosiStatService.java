@@ -3,6 +3,8 @@ package com.hopenvision.admin.service;
 import com.hopenvision.admin.dto.GosiStatDto;
 import com.hopenvision.admin.entity.GosiSbjMst;
 import com.hopenvision.admin.entity.GosiStatMst;
+import com.hopenvision.admin.repository.GosiRstMstRepository;
+import com.hopenvision.admin.repository.GosiRstSbjRepository;
 import com.hopenvision.admin.repository.GosiSbjMstRepository;
 import com.hopenvision.admin.repository.GosiStatMstRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,6 +28,8 @@ public class GosiStatService {
 
     private final GosiStatMstRepository gosiStatMstRepository;
     private final GosiSbjMstRepository gosiSbjMstRepository;
+    private final GosiRstMstRepository gosiRstMstRepository;
+    private final GosiRstSbjRepository gosiRstSbjRepository;
 
     /**
      * 통계 목록 조회 (페이징)
@@ -71,6 +77,69 @@ public class GosiStatService {
                 .passCnt(entity.getPassCnt())
                 .passRate(entity.getPassRate())
                 .build();
+    }
+
+    /**
+     * 점수 분포 조회
+     */
+    public List<GosiStatDto.ScoreDistributionResponse> getScoreDistribution(String gosiCd, String gosiType, String gosiArea) {
+        return gosiRstMstRepository.findScoreDistribution(gosiCd, gosiType, gosiArea).stream()
+                .map(row -> GosiStatDto.ScoreDistributionResponse.builder()
+                        .range((String) row[0])
+                        .count(((Number) row[1]).longValue())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 년도별 추이 조회
+     */
+    public List<GosiStatDto.YearlyTrendResponse> getYearlyTrend(String gosiType) {
+        return gosiRstMstRepository.findYearlyTrend(gosiType).stream()
+                .map(row -> GosiStatDto.YearlyTrendResponse.builder()
+                        .gosiYear((String) row[0])
+                        .avgScore(toBigDecimal(row[1]))
+                        .passRate(toBigDecimal(row[2]))
+                        .totalCnt(((Number) row[3]).longValue())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 과목별 성적 비교
+     */
+    public List<GosiStatDto.SubjectScoreResponse> getSubjectScoreComparison(String gosiCd) {
+        return gosiRstSbjRepository.findSubjectScoreComparison(gosiCd).stream()
+                .map(row -> GosiStatDto.SubjectScoreResponse.builder()
+                        .subjectCd((String) row[0])
+                        .subjectNm((String) row[1])
+                        .avgScore(toBigDecimal(row[2]))
+                        .maxScore(toBigDecimal(row[3]))
+                        .minScore(toBigDecimal(row[4]))
+                        .totalCnt(((Number) row[5]).longValue())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 지역별 성적 비교
+     */
+    public List<GosiStatDto.AreaScoreResponse> getAreaScoreComparison(String gosiCd, String gosiType) {
+        return gosiStatMstRepository.findAreaScoreComparison(gosiCd, gosiType).stream()
+                .map(row -> GosiStatDto.AreaScoreResponse.builder()
+                        .gosiArea((String) row[0])
+                        .gosiAreaNm((String) row[1])
+                        .avgScore(toBigDecimal(row[2]))
+                        .passRate(toBigDecimal(row[3]))
+                        .totalCnt(((Number) row[4]).intValue())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private BigDecimal toBigDecimal(Object value) {
+        if (value == null) return BigDecimal.ZERO;
+        if (value instanceof BigDecimal) return ((BigDecimal) value).setScale(2, RoundingMode.HALF_UP);
+        return BigDecimal.valueOf(((Number) value).doubleValue()).setScale(2, RoundingMode.HALF_UP);
     }
 
     private GosiStatDto.SbjMstResponse toSbjMstResponse(GosiSbjMst entity) {

@@ -52,4 +52,53 @@ public class GosiStatDto {
         private int page = 0;
         private int size = 20;
     }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ScoreDistributionResponse {
+        private String range;
+        private Long count;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class YearlyTrendResponse {
+        private String gosiYear;
+        private BigDecimal avgScore;
+        private BigDecimal passRate;
+        private Long totalCnt;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SubjectScoreResponse {
+        private String subjectCd;
+        private String subjectNm;
+        private BigDecimal avgScore;
+        private BigDecimal maxScore;
+        private BigDecimal minScore;
+        private Long totalCnt;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class AreaScoreResponse {
+        private String gosiArea;
+        private String gosiAreaNm;
+        private BigDecimal avgScore;
+        private BigDecimal passRate;
+        private Integer totalCnt;
+    }
 }

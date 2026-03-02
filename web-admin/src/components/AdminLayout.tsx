@@ -37,6 +37,7 @@ const menuItems = [
       { key: '/gosi/pass', label: '정답 관리' },
       { key: '/gosi/results', label: '성적 관리' },
       { key: '/gosi/statistics', label: '통계' },
+      { key: '/gosi/analytics', label: '성적 분석' },
       { key: '/gosi/subjects', label: '과목/VOD' },
       { key: '/gosi/members', label: '회원 관리' },
     ],
@@ -60,6 +61,7 @@ export default function AdminLayout() {
     if (path.startsWith('/gosi/pass')) return '/gosi/pass';
     if (path.startsWith('/gosi/results')) return '/gosi/results';
     if (path.startsWith('/gosi/statistics')) return '/gosi/statistics';
+    if (path.startsWith('/gosi/analytics')) return '/gosi/analytics';
     if (path.startsWith('/gosi/subjects')) return '/gosi/subjects';
     if (path.startsWith('/gosi/members')) return '/gosi/members';
     if (path.startsWith('/exams')) return '/exams';

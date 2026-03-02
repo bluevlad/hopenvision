@@ -23,4 +23,14 @@ public interface GosiStatMstRepository extends JpaRepository<GosiStatMst, GosiSt
             Pageable pageable);
 
     List<GosiStatMst> findByGosiCdOrderByGosiTypeAscGosiAreaAsc(String gosiCd);
+
+    @Query("SELECT s.gosiArea, s.gosiAreaNm, AVG(s.avgScore), AVG(s.passRate), SUM(s.totalCnt) " +
+           "FROM GosiStatMst s WHERE s.gosiCd = :gosiCd " +
+           "AND s.gosiSubjectCd = 'ALL' " +
+           "AND (:gosiType IS NULL OR :gosiType = '' OR s.gosiType = :gosiType) " +
+           "GROUP BY s.gosiArea, s.gosiAreaNm " +
+           "ORDER BY s.gosiArea")
+    List<Object[]> findAreaScoreComparison(
+            @Param("gosiCd") String gosiCd,
+            @Param("gosiType") String gosiType);
 }

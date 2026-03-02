@@ -18,6 +18,7 @@ import GosiPassList from './pages/gosi/GosiPassList';
 import GosiScoreList from './pages/gosi/GosiScoreList';
 import GosiScoreDetail from './pages/gosi/GosiScoreDetail';
 import GosiStatistics from './pages/gosi/GosiStatistics';
+import GosiAnalytics from './pages/gosi/GosiAnalytics';
 import GosiSubjectList from './pages/gosi/GosiSubjectList';
 import GosiMemberList from './pages/gosi/GosiMemberList';
 import './App.css';
@@ -59,6 +60,7 @@ function App() {
                 <Route path="gosi/results" element={<GosiScoreList />} />
                 <Route path="gosi/results/:gosiCd/:rstNo" element={<GosiScoreDetail />} />
                 <Route path="gosi/statistics" element={<GosiStatistics />} />
+                <Route path="gosi/analytics" element={<GosiAnalytics />} />
                 <Route path="gosi/subjects" element={<GosiSubjectList />} />
                 <Route path="gosi/members" element={<GosiMemberList />} />
                 <Route path="*" element={<Navigate to="/exams" replace />} />

@@ -13,6 +13,10 @@ import type {
   GosiSbjMstResponse,
   GosiVodResponse,
   GosiMemberResponse,
+  GosiScoreDistribution,
+  GosiYearlyTrend,
+  GosiSubjectScore,
+  GosiAreaScore,
 } from '../types/gosi';
 
 export const gosiApi = {
@@ -90,6 +94,34 @@ export const gosiApi = {
 
   getSbjMstList: async (gosiCd: string): Promise<ApiResponse<GosiSbjMstResponse[]>> => {
     const response = await client.get('/api/gosi/statistics/subjects', { params: { gosiCd } });
+    return response.data;
+  },
+
+  // === 성적 분석 ===
+  getScoreDistribution: async (params: {
+    gosiCd: string;
+    gosiType?: string;
+    gosiArea?: string;
+  }): Promise<ApiResponse<GosiScoreDistribution[]>> => {
+    const response = await client.get('/api/gosi/statistics/analytics/score-distribution', { params });
+    return response.data;
+  },
+
+  getYearlyTrend: async (gosiType?: string): Promise<ApiResponse<GosiYearlyTrend[]>> => {
+    const response = await client.get('/api/gosi/statistics/analytics/yearly-trend', { params: { gosiType } });
+    return response.data;
+  },
+
+  getSubjectComparison: async (gosiCd: string): Promise<ApiResponse<GosiSubjectScore[]>> => {
+    const response = await client.get('/api/gosi/statistics/analytics/subject-comparison', { params: { gosiCd } });
+    return response.data;
+  },
+
+  getAreaComparison: async (params: {
+    gosiCd: string;
+    gosiType?: string;
+  }): Promise<ApiResponse<GosiAreaScore[]>> => {
+    const response = await client.get('/api/gosi/statistics/analytics/area-comparison', { params });
     return response.data;
   },
 

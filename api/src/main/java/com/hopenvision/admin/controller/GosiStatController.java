@@ -58,4 +58,45 @@ public class GosiStatController {
         List<GosiStatDto.SbjMstResponse> result = gosiStatService.getSbjMstList(gosiCd);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
+
+    // === 성적 분석 ===
+
+    @Operation(summary = "점수 분포 조회", description = "시험별 점수 분포를 10점 구간으로 조회합니다.")
+    @GetMapping("/analytics/score-distribution")
+    public ResponseEntity<ApiResponse<List<GosiStatDto.ScoreDistributionResponse>>> getScoreDistribution(
+            @Parameter(description = "시험코드", required = true) @RequestParam String gosiCd,
+            @Parameter(description = "시험유형") @RequestParam(required = false) String gosiType,
+            @Parameter(description = "지역") @RequestParam(required = false) String gosiArea
+    ) {
+        List<GosiStatDto.ScoreDistributionResponse> result = gosiStatService.getScoreDistribution(gosiCd, gosiType, gosiArea);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @Operation(summary = "년도별 추이 조회", description = "년도별 평균점수와 합격률 추이를 조회합니다.")
+    @GetMapping("/analytics/yearly-trend")
+    public ResponseEntity<ApiResponse<List<GosiStatDto.YearlyTrendResponse>>> getYearlyTrend(
+            @Parameter(description = "시험유형") @RequestParam(required = false) String gosiType
+    ) {
+        List<GosiStatDto.YearlyTrendResponse> result = gosiStatService.getYearlyTrend(gosiType);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @Operation(summary = "과목별 성적 비교", description = "시험별 과목별 평균/최고/최저 점수를 비교합니다.")
+    @GetMapping("/analytics/subject-comparison")
+    public ResponseEntity<ApiResponse<List<GosiStatDto.SubjectScoreResponse>>> getSubjectComparison(
+            @Parameter(description = "시험코드", required = true) @RequestParam String gosiCd
+    ) {
+        List<GosiStatDto.SubjectScoreResponse> result = gosiStatService.getSubjectScoreComparison(gosiCd);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @Operation(summary = "지역별 성적 비교", description = "시험별 지역별 평균점수와 합격률을 비교합니다.")
+    @GetMapping("/analytics/area-comparison")
+    public ResponseEntity<ApiResponse<List<GosiStatDto.AreaScoreResponse>>> getAreaComparison(
+            @Parameter(description = "시험코드", required = true) @RequestParam String gosiCd,
+            @Parameter(description = "시험유형") @RequestParam(required = false) String gosiType
+    ) {
+        List<GosiStatDto.AreaScoreResponse> result = gosiStatService.getAreaScoreComparison(gosiCd, gosiType);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
 }

@@ -17,9 +17,9 @@ public interface QuestionBankItemRepository extends JpaRepository<QuestionBankIt
             "(:groupId IS NULL OR i.groupId = :groupId) " +
             "AND (:subjectCd IS NULL OR i.subjectCd = :subjectCd) " +
             "AND (:difficulty IS NULL OR i.difficulty = :difficulty) " +
-            "AND (:keyword IS NULL OR i.questionTitle LIKE CONCAT('%', :keyword, '%') " +
-            "     OR i.questionText LIKE CONCAT('%', :keyword, '%') " +
-            "     OR i.tags LIKE CONCAT('%', :keyword, '%')) " +
+            "AND (:keyword IS NULL OR i.questionTitle LIKE CONCAT('%', CAST(:keyword AS string), '%') " +
+            "     OR i.questionText LIKE CONCAT('%', CAST(:keyword AS string), '%') " +
+            "     OR i.tags LIKE CONCAT('%', CAST(:keyword AS string), '%')) " +
             "AND (:isUse IS NULL OR i.isUse = :isUse) " +
             "ORDER BY i.groupId, i.questionNo")
     Page<QuestionBankItem> searchItems(

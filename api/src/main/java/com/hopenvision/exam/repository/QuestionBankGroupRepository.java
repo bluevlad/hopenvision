@@ -18,7 +18,7 @@ public interface QuestionBankGroupRepository extends JpaRepository<QuestionBankG
     @Query("SELECT g FROM QuestionBankGroup g WHERE " +
             "(:category IS NULL OR g.category = :category) " +
             "AND (:examYear IS NULL OR g.examYear = :examYear) " +
-            "AND (:keyword IS NULL OR g.groupNm LIKE CONCAT('%', :keyword, '%') OR g.groupCd LIKE CONCAT('%', :keyword, '%')) " +
+            "AND (:keyword IS NULL OR g.groupNm LIKE CONCAT('%', CAST(:keyword AS string), '%') OR g.groupCd LIKE CONCAT('%', CAST(:keyword AS string), '%')) " +
             "AND (:isUse IS NULL OR g.isUse = :isUse) " +
             "ORDER BY g.regDt DESC")
     Page<QuestionBankGroup> searchGroups(

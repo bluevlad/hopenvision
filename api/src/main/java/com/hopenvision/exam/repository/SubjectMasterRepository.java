@@ -19,7 +19,7 @@ public interface SubjectMasterRepository extends JpaRepository<SubjectMaster, St
 
     @Query("SELECT s FROM SubjectMaster s WHERE s.isUse = :isUse " +
             "AND (:category IS NULL OR s.category = :category) " +
-            "AND (:keyword IS NULL OR s.subjectNm LIKE CONCAT('%', :keyword, '%') OR s.subjectCd LIKE CONCAT('%', :keyword, '%')) " +
+            "AND (:keyword IS NULL OR s.subjectNm LIKE CONCAT('%', CAST(:keyword AS string), '%') OR s.subjectCd LIKE CONCAT('%', CAST(:keyword AS string), '%')) " +
             "ORDER BY s.category, s.sortOrder")
     Page<SubjectMaster> searchSubjects(
             @Param("keyword") String keyword,
@@ -29,7 +29,7 @@ public interface SubjectMasterRepository extends JpaRepository<SubjectMaster, St
 
     @Query("SELECT s FROM SubjectMaster s WHERE " +
             "(:category IS NULL OR s.category = :category) " +
-            "AND (:keyword IS NULL OR s.subjectNm LIKE CONCAT('%', :keyword, '%') OR s.subjectCd LIKE CONCAT('%', :keyword, '%')) " +
+            "AND (:keyword IS NULL OR s.subjectNm LIKE CONCAT('%', CAST(:keyword AS string), '%') OR s.subjectCd LIKE CONCAT('%', CAST(:keyword AS string), '%')) " +
             "ORDER BY s.category, s.sortOrder")
     Page<SubjectMaster> searchSubjectsAll(
             @Param("keyword") String keyword,

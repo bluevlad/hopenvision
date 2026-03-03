@@ -37,16 +37,22 @@ public class SubjectMasterService {
     public Page<SubjectMasterDto.Response> searchSubjects(SubjectMasterDto.SearchRequest request) {
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
 
+        String keyword = blankToNull(request.getKeyword());
+        String category = blankToNull(request.getCategory());
+        String isUse = blankToNull(request.getIsUse());
+
         Page<SubjectMaster> page;
-        if (request.getIsUse() != null && !request.getIsUse().isBlank()) {
-            page = subjectMasterRepository.searchSubjects(
-                    request.getKeyword(), request.getCategory(), request.getIsUse(), pageable);
+        if (isUse != null) {
+            page = subjectMasterRepository.searchSubjects(keyword, category, isUse, pageable);
         } else {
-            page = subjectMasterRepository.searchSubjectsAll(
-                    request.getKeyword(), request.getCategory(), pageable);
+            page = subjectMasterRepository.searchSubjectsAll(keyword, category, pageable);
         }
 
         return page.map(this::toResponse);
+    }
+
+    private String blankToNull(String value) {
+        return (value != null && !value.isBlank()) ? value : null;
     }
 
     public SubjectMasterDto.Response getSubjectDetail(String subjectCd) {

@@ -34,8 +34,8 @@ public class QuestionBankService {
     public Page<QuestionBankDto.GroupResponse> getGroupList(QuestionBankDto.GroupSearchRequest request) {
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
         Page<QuestionBankGroup> page = groupRepository.searchGroups(
-                request.getKeyword(), request.getCategory(),
-                request.getExamYear(), request.getIsUse(), pageable);
+                blankToNull(request.getKeyword()), blankToNull(request.getCategory()),
+                blankToNull(request.getExamYear()), blankToNull(request.getIsUse()), pageable);
 
         return page.map(group -> {
             long itemCount = itemRepository.countByGroupId(group.getGroupId());
@@ -115,9 +115,9 @@ public class QuestionBankService {
     public Page<QuestionBankDto.ItemResponse> getItemList(QuestionBankDto.ItemSearchRequest request) {
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
         Page<QuestionBankItem> page = itemRepository.searchItems(
-                request.getGroupId(), request.getSubjectCd(),
-                request.getDifficulty(), request.getKeyword(),
-                request.getIsUse(), pageable);
+                request.getGroupId(), blankToNull(request.getSubjectCd()),
+                blankToNull(request.getDifficulty()), blankToNull(request.getKeyword()),
+                blankToNull(request.getIsUse()), pageable);
 
         return page.map(this::toItemResponse);
     }
@@ -223,6 +223,10 @@ public class QuestionBankService {
                 .imageFile(request.getImageFile())
                 .isUse(request.getIsUse() != null ? request.getIsUse() : "Y")
                 .build();
+    }
+
+    private String blankToNull(String value) {
+        return (value != null && !value.isBlank()) ? value : null;
     }
 
     private QuestionBankDto.GroupResponse toGroupResponse(QuestionBankGroup group, Long itemCount) {

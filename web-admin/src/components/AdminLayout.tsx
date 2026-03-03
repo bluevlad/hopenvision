@@ -7,6 +7,7 @@ import {
   BarChartOutlined,
   LogoutOutlined,
   TrophyOutlined,
+  DatabaseOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../auth/useAuth';
 
@@ -27,6 +28,16 @@ const menuItems = [
     key: '/statistics',
     icon: <BarChartOutlined />,
     label: '통계',
+  },
+  {
+    key: 'master',
+    icon: <DatabaseOutlined />,
+    label: '기초 데이터',
+    children: [
+      { key: '/subjects', label: '과목 관리' },
+      { key: '/question-bank/groups', label: '문제은행 그룹' },
+      { key: '/question-bank/items', label: '문제은행 문제' },
+    ],
   },
   {
     key: 'gosi',
@@ -57,6 +68,9 @@ export default function AdminLayout() {
 
   const getSelectedKey = () => {
     const path = location.pathname;
+    if (path.startsWith('/subjects')) return '/subjects';
+    if (path.startsWith('/question-bank/groups')) return '/question-bank/groups';
+    if (path.startsWith('/question-bank/items')) return '/question-bank/items';
     if (path.startsWith('/gosi/exams')) return '/gosi/exams';
     if (path.startsWith('/gosi/pass')) return '/gosi/pass';
     if (path.startsWith('/gosi/results')) return '/gosi/results';
@@ -72,6 +86,7 @@ export default function AdminLayout() {
 
   const getOpenKeys = () => {
     const path = location.pathname;
+    if (path.startsWith('/subjects') || path.startsWith('/question-bank')) return ['master'];
     if (path.startsWith('/gosi')) return ['gosi'];
     return [];
   };

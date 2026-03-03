@@ -77,6 +77,7 @@ public class ExamService {
                 .examDate(exam.getExamDate())
                 .totalScore(exam.getTotalScore())
                 .passScore(exam.getPassScore())
+                .examCategory(exam.getExamCategory())
                 .isUse(exam.getIsUse())
                 .regDt(exam.getRegDt())
                 .updDt(exam.getUpdDt())
@@ -105,6 +106,7 @@ public class ExamService {
                 .examDate(request.getExamDate())
                 .totalScore(request.getTotalScore())
                 .passScore(request.getPassScore())
+                .examCategory(request.getExamCategory() != null ? request.getExamCategory() : "ACTUAL")
                 .isUse(request.getIsUse() != null ? request.getIsUse() : "Y")
                 .build();
 
@@ -147,6 +149,9 @@ public class ExamService {
         exam.setExamDate(request.getExamDate());
         exam.setTotalScore(request.getTotalScore());
         exam.setPassScore(request.getPassScore());
+        if (request.getExamCategory() != null) {
+            exam.setExamCategory(request.getExamCategory());
+        }
         exam.setIsUse(request.getIsUse());
 
         return toResponse(examRepository.save(exam));
@@ -281,6 +286,7 @@ public class ExamService {
                 .examDate(exam.getExamDate())
                 .totalScore(exam.getTotalScore())
                 .passScore(exam.getPassScore())
+                .examCategory(exam.getExamCategory())
                 .isUse(exam.getIsUse())
                 .regDt(exam.getRegDt())
                 .updDt(exam.getUpdDt())

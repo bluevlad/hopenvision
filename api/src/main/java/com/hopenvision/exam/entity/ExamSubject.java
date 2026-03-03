@@ -54,6 +54,9 @@ public class ExamSubject {
     @Builder.Default
     private Integer sortOrder = 1;
 
+    @Column(name = "master_subject_cd", length = 20)
+    private String masterSubjectCd;
+
     @Column(name = "is_use", length = 1)
     @Builder.Default
     private String isUse = "Y";

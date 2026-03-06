@@ -36,23 +36,21 @@ jobs:
           docker compose -f docker-compose.prod.yml build --no-cache
           docker compose -f docker-compose.prod.yml up -d
 
-      - name: Wait for services to be ready
-        run: |
-          echo "Waiting for services to start..."
-          sleep 60
-
       - name: Health check
         run: |
+          echo "Waiting for services to start..."
+          sleep 30
+
           echo "Checking user frontend..."
-          curl -f -s -o /dev/null http://localhost:4060 || (echo "User frontend health check failed" && exit 1)
+          curl -f -s -o /dev/null --retry 5 --retry-delay 5 --retry-connrefused http://localhost:4060
           echo "User frontend OK"
 
           echo "Checking admin frontend..."
-          curl -f -s -o /dev/null http://localhost:4061 || (echo "Admin frontend health check failed" && exit 1)
+          curl -f -s -o /dev/null --retry 5 --retry-delay 5 --retry-connrefused http://localhost:4061
           echo "Admin frontend OK"
 
           echo "Checking backend..."
-          curl -f -s -o /dev/null "http://localhost:9050/api/exams?page=0&size=1" || (echo "Backend health check failed" && exit 1)
+          curl -f -s -o /dev/null --retry 10 --retry-delay 10 --retry-connrefused "http://localhost:9050/api/exams?page=0&size=1"
           echo "Backend OK"
 
           echo "All services are healthy."

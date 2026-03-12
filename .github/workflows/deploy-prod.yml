@@ -60,7 +60,10 @@ jobs:
             fi
             if [ $i -eq 20 ]; then
               echo "Backend health check failed after 20 attempts"
-              docker logs hopenvision-api --tail 50
+              echo "=== Container status ==="
+              docker ps -a --filter name=hopenvision-api --format "{{.Status}}"
+              echo "=== Last 200 lines of backend logs ==="
+              docker logs hopenvision-api --tail 200
               exit 1
             fi
             echo "Attempt $i: backend not ready, waiting 10s..."

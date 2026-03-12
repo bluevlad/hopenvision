@@ -32,6 +32,7 @@ function extractErrorDetail(error: AxiosError): ApiErrorDetail {
 
 export function createApiClient(options?: {
   getApiKey?: () => string | null;
+  getToken?: () => string | null;
   onUnauthorized?: () => void;
 }): AxiosInstance {
   const client = axios.create({
@@ -44,6 +45,13 @@ export function createApiClient(options?: {
 
   client.interceptors.request.use(
     (config) => {
+      if (options?.getToken) {
+        const token = options.getToken();
+        if (token) {
+          config.headers['Authorization'] = `Bearer ${token}`;
+          return config;
+        }
+      }
       if (options?.getApiKey) {
         const apiKey = options.getApiKey();
         if (apiKey) {

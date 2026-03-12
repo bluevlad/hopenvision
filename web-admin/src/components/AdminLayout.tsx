@@ -49,7 +49,7 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { token } = theme.useToken();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleMenuClick = ({ key }: { key: string }) => {
     navigate(key);
@@ -124,6 +124,21 @@ export default function AdminLayout() {
         >
           <h3 style={{ margin: 0 }}>시험 관리 시스템</h3>
           <Space>
+            {user && (
+              <Space size="small">
+                {user.picture && (
+                  <img
+                    src={user.picture}
+                    alt={user.name}
+                    style={{ width: 28, height: 28, borderRadius: '50%' }}
+                    referrerPolicy="no-referrer"
+                  />
+                )}
+                <span style={{ fontSize: 13, color: token.colorTextSecondary }}>
+                  {user.name}
+                </span>
+              </Space>
+            )}
             <Button icon={<LogoutOutlined />} onClick={handleLogout}>
               로그아웃
             </Button>

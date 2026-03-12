@@ -42,19 +42,30 @@ jobs:
       - name: Health check
         run: |
           echo "Waiting for services to start..."
-          sleep 30
+          sleep 10
 
           echo "Checking user frontend..."
-          curl -f -s -o /dev/null --retry 5 --retry-delay 5 --retry-connrefused http://localhost:4060
+          curl -f -s -o /dev/null --retry 5 --retry-delay 5 --retry-all-errors http://localhost:4060
           echo "User frontend OK"
 
           echo "Checking admin frontend..."
-          curl -f -s -o /dev/null --retry 5 --retry-delay 5 --retry-connrefused http://localhost:4061
+          curl -f -s -o /dev/null --retry 5 --retry-delay 5 --retry-all-errors http://localhost:4061
           echo "Admin frontend OK"
 
-          echo "Checking backend..."
-          curl -f -s -o /dev/null --retry 10 --retry-delay 10 --retry-all-errors "http://localhost:9050/api/exams?page=0&size=1"
-          echo "Backend OK"
+          echo "Checking backend (waiting for Spring Boot startup)..."
+          for i in $(seq 1 20); do
+            if curl -f -s -o /dev/null "http://localhost:9050/api/exams?page=0&size=1" 2>/dev/null; then
+              echo "Backend OK (attempt $i)"
+              break
+            fi
+            if [ $i -eq 20 ]; then
+              echo "Backend health check failed after 20 attempts"
+              docker logs hopenvision-api --tail 50
+              exit 1
+            fi
+            echo "Attempt $i: backend not ready, waiting 10s..."
+            sleep 10
+          done
 
           echo "All services are healthy."
 

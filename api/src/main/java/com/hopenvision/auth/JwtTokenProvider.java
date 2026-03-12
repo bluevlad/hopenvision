@@ -20,6 +20,9 @@ public class JwtTokenProvider {
             @Value("${app.jwt.secret:hopenvision-default-jwt-secret-change-in-production}") String secret,
             @Value("${app.jwt.expiration-hours:24}") long expirationHours) {
         // Ensure the secret is at least 32 bytes for HMAC-SHA256
+        if (secret == null || secret.isBlank()) {
+            secret = "hopenvision-default-jwt-secret-change-in-production";
+        }
         String paddedSecret = secret;
         while (paddedSecret.getBytes(StandardCharsets.UTF_8).length < 32) {
             paddedSecret = paddedSecret + paddedSecret;

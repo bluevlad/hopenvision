@@ -22,6 +22,9 @@ jobs:
           DB_USER=${{ secrets.DB_USER }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           ADMIN_API_KEY=${{ secrets.ADMIN_API_KEY }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          SUPER_ADMIN_EMAILS=${{ secrets.SUPER_ADMIN_EMAILS }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
           CORS_ALLOWED_ORIGINS=https://study.unmong.com,https://admin.unmong.com,http://study.unmong.com:4060,http://study.unmong.com:4061
           TZ=Asia/Seoul
           EOF
@@ -50,7 +53,7 @@ jobs:
           echo "Admin frontend OK"
 
           echo "Checking backend..."
-          curl -f -s -o /dev/null --retry 10 --retry-delay 10 --retry-connrefused "http://localhost:9050/api/exams?page=0&size=1"
+          curl -f -s -o /dev/null --retry 10 --retry-delay 10 --retry-all-errors "http://localhost:9050/api/exams?page=0&size=1"
           echo "Backend OK"
 
           echo "All services are healthy."

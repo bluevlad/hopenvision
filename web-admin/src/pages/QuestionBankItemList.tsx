@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Table, Button, Space, Input, Select, Modal, Form, Tag, message, Popconfirm,
@@ -6,7 +7,7 @@ import {
 } from 'antd';
 import {
   PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined, ReloadOutlined,
-  EyeOutlined,
+  EyeOutlined, UploadOutlined,
 } from '@ant-design/icons';
 import { DIFFICULTY_LEVELS } from '@hopenvision/shared';
 import { questionBankApi } from '../api/questionBankApi';
@@ -19,6 +20,7 @@ import type {
 const { Title } = Typography;
 
 export default function QuestionBankItemList() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useState({
     groupId: undefined as number | undefined,
@@ -277,6 +279,9 @@ export default function QuestionBankItemList() {
         </Button>
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
           문제 등록
+        </Button>
+        <Button icon={<UploadOutlined />} onClick={() => navigate('/question-bank/bulk-import')}>
+          일괄 등록
         </Button>
       </Space>
 

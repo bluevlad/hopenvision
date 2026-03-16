@@ -37,6 +37,7 @@ const menuItems = [
       { key: '/subjects', label: '과목 관리' },
       { key: '/question-bank/groups', label: '문제은행 그룹' },
       { key: '/question-bank/items', label: '문제은행 문제' },
+      { key: '/question-bank/bulk-import', label: '문제 일괄등록' },
     ],
   },
   {
@@ -70,6 +71,7 @@ export default function AdminLayout() {
     const path = location.pathname;
     if (path.startsWith('/subjects')) return '/subjects';
     if (path.startsWith('/question-bank/groups')) return '/question-bank/groups';
+    if (path.startsWith('/question-bank/bulk-import')) return '/question-bank/bulk-import';
     if (path.startsWith('/question-bank/items')) return '/question-bank/items';
     if (path.startsWith('/gosi/exams')) return '/gosi/exams';
     if (path.startsWith('/gosi/pass')) return '/gosi/pass';

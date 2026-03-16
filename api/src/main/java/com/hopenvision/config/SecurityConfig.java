@@ -60,7 +60,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
                 .anyRequest().permitAll()
             )
-            .addFilterBefore(new ApiKeyAuthFilter(adminApiKey, jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(new PathTraversalFilter(), UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(new ApiKeyAuthFilter(adminApiKey, jwtTokenProvider), PathTraversalFilter.class)
             .addFilterBefore(new UserIdAuthFilter(userAuthSecret), ApiKeyAuthFilter.class);
 
         return http.build();

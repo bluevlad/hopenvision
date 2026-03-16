@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   Card,
   Button,
   Space,
+  Tag,
   Typography,
   Spin,
   Alert,
@@ -26,6 +27,7 @@ import { getExamDetail, submitAnswers } from '../api/userApi';
 import type { SubmitRequest, SubjectAnswer, SubjectInfo } from '../types/user';
 import OMRCard from '../components/OMRCard';
 import QuickInputCard from '../components/QuickInputCard';
+import SubjectSelectModal from '../components/SubjectSelectModal';
 
 const { Title, Text } = Typography;
 
@@ -39,6 +41,7 @@ const UserAnswerForm: React.FC = () => {
   const [answers, setAnswers] = useState<AnswersState>({});
   const [activeTab, setActiveTab] = useState<string>('');
   const [inputMode, setInputMode] = useState<InputMode>('omr');
+  const [selectedSubjectCds, setSelectedSubjectCds] = useState<string[] | null>(null);
 
   const { data: exam, isLoading, error } = useQuery({
     queryKey: ['userExam', examCd],
@@ -46,7 +49,34 @@ const UserAnswerForm: React.FC = () => {
     enabled: !!examCd,
   });
 
-  const effectiveActiveTab = activeTab || (exam?.subjects?.[0]?.subjectCd ?? '');
+  // 선택 과목이 있는지 확인
+  const hasElective = exam?.subjects.some((s) => s.subjectType === 'S') ?? false;
+  // 모달 표시 조건: 선택 과목이 있고 아직 과목 선택을 하지 않은 경우
+  const showSelectModal = !!exam && !exam.hasSubmitted && hasElective && selectedSubjectCds === null;
+  // 과목 선택이 완료되었는지 (선택 과목이 없으면 바로 완료)
+  const subjectSelectionDone = !hasElective || selectedSubjectCds !== null;
+
+  // 선택된 과목만 필터링
+  const activeSubjects = useMemo(() => {
+    if (!exam) return [];
+    if (!hasElective) return exam.subjects;
+    if (!selectedSubjectCds) return [];
+    return exam.subjects.filter((s) => selectedSubjectCds.includes(s.subjectCd));
+  }, [exam, hasElective, selectedSubjectCds]);
+
+  const handleSubjectConfirm = useCallback((subjectCds: string[]) => {
+    setSelectedSubjectCds(subjectCds);
+    // 첫 번째 과목을 활성 탭으로 설정
+    if (subjectCds.length > 0) {
+      setActiveTab(subjectCds[0]);
+    }
+  }, []);
+
+  const handleSubjectCancel = useCallback(() => {
+    navigate('/');
+  }, [navigate]);
+
+  const effectiveActiveTab = activeTab || (activeSubjects[0]?.subjectCd ?? '');
 
   const submitMutation = useMutation({
     mutationFn: (request: SubmitRequest) => submitAnswers(examCd!, request),
@@ -70,12 +100,12 @@ const UserAnswerForm: React.FC = () => {
   };
 
   const progressInfo = useMemo(() => {
-    if (!exam) return { total: 0, answered: 0, percentage: 0 };
+    if (!exam || activeSubjects.length === 0) return { total: 0, answered: 0, percentage: 0 };
 
     let total = 0;
     let answered = 0;
 
-    exam.subjects.forEach((subject: SubjectInfo) => {
+    activeSubjects.forEach((subject: SubjectInfo) => {
       total += subject.questionCnt;
       const subjectAnswers = answers[subject.subjectCd] || {};
       answered += Object.values(subjectAnswers).filter((v) => v).length;
@@ -86,12 +116,12 @@ const UserAnswerForm: React.FC = () => {
       answered,
       percentage: total > 0 ? Math.round((answered / total) * 100) : 0,
     };
-  }, [exam, answers]);
+  }, [exam, activeSubjects, answers]);
 
   const handleSubmit = () => {
     if (!exam) return;
 
-    const unansweredSubjects = exam.subjects.filter((subject: SubjectInfo) => {
+    const unansweredSubjects = activeSubjects.filter((subject: SubjectInfo) => {
       const subjectAnswers = answers[subject.subjectCd] || {};
       const answeredCount = Object.values(subjectAnswers).filter((v) => v).length;
       return answeredCount < subject.questionCnt;
@@ -137,7 +167,7 @@ const UserAnswerForm: React.FC = () => {
   const doSubmit = () => {
     if (!exam) return;
 
-    const subjects: SubjectAnswer[] = exam.subjects.map((subject: SubjectInfo) => {
+    const subjects: SubjectAnswer[] = activeSubjects.map((subject: SubjectInfo) => {
       const subjectAnswers = answers[subject.subjectCd] || {};
       return {
         subjectCd: subject.subjectCd,
@@ -205,9 +235,22 @@ const UserAnswerForm: React.FC = () => {
     );
   }
 
+  // 과목 선택 모달 (선택 과목이 있을 때만)
+  if (!subjectSelectionDone) {
+    return (
+      <SubjectSelectModal
+        open={showSelectModal}
+        examNm={exam.examNm}
+        subjects={exam.subjects}
+        onConfirm={handleSubjectConfirm}
+        onCancel={handleSubjectCancel}
+      />
+    );
+  }
+
   const InputComponent = inputMode === 'omr' ? OMRCard : QuickInputCard;
 
-  const tabItems = exam.subjects.map((subject: SubjectInfo) => {
+  const tabItems = activeSubjects.map((subject: SubjectInfo) => {
     const subjectAnswers = answers[subject.subjectCd] || {};
     const answeredCount = Object.values(subjectAnswers).filter((v) => v).length;
 
@@ -215,6 +258,11 @@ const UserAnswerForm: React.FC = () => {
       key: subject.subjectCd,
       label: (
         <span>
+          {subject.subjectType === 'M' ? (
+            <Tag color="blue" style={{ marginRight: 4, fontSize: 11 }}>필수</Tag>
+          ) : (
+            <Tag color="orange" style={{ marginRight: 4, fontSize: 11 }}>선택</Tag>
+          )}
           {subject.subjectNm}
           <Text
             type={answeredCount === subject.questionCnt ? 'success' : 'secondary'}

@@ -71,13 +71,27 @@ const UserExamList: React.FC = () => {
       ),
     },
     {
-      title: '과목수',
+      title: '과목 구성',
       key: 'subjects',
-      width: 80,
-      align: 'center' as const,
-      render: (_: unknown, record: UserExam) => (
-        <Text>{record.subjects.length}과목</Text>
-      ),
+      width: 220,
+      render: (_: unknown, record: UserExam) => {
+        const mandatory = record.subjects.filter((s) => s.subjectType === 'M');
+        const elective = record.subjects.filter((s) => s.subjectType === 'S');
+        return (
+          <Space direction="vertical" size={2}>
+            <Text style={{ fontSize: 13 }}>
+              <Tag color="blue" style={{ marginRight: 4 }}>필수</Tag>
+              {mandatory.map((s) => s.subjectNm).join(', ')}
+            </Text>
+            {elective.length > 0 && (
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                <Tag style={{ marginRight: 4 }}>선택</Tag>
+                {elective.length}과목 중 2과목 선택
+              </Text>
+            )}
+          </Space>
+        );
+      },
     },
     {
       title: '응시자수',

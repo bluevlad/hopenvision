@@ -47,3 +47,9 @@ upload/
 .env.*
 !.env.example
 !.env.*.example
+
+# Scripts data (HWPX, PDF, 파싱 결과)
+scripts/data/
+
+# Local Docker Compose (개발 PC 전용)
+docker-compose.local.yml

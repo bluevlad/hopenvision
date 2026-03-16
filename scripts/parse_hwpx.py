@@ -494,7 +494,8 @@ def process_directory(
 
         if not sc:
             stem = hwpx_file.stem
-            for name, code in subject_mapping.items():
+            # 긴 키부터 매칭하여 "화학" vs "화학공학" 등의 모호성 방지
+            for name, code in sorted(subject_mapping.items(), key=lambda x: len(x[0]), reverse=True):
                 if name in stem:
                     sc = code
                     sn = name

@@ -5,6 +5,7 @@ import com.hopenvision.user.dto.HistoryDto;
 import com.hopenvision.user.dto.ScoreAnalysisDto;
 import com.hopenvision.user.dto.ScoringResultDto;
 import com.hopenvision.user.dto.UserAnswerDto;
+import com.hopenvision.user.dto.ExamQuestionDto;
 import com.hopenvision.user.dto.UserExamDto;
 import com.hopenvision.user.service.ScoreAnalysisService;
 import com.hopenvision.user.service.UserExamService;
@@ -55,6 +56,14 @@ public class UserExamController {
             @RequestHeader(value = "X-User-Id", defaultValue = "guest") String userId,
             @PathVariable String examCd) {
         return ApiResponse.success(userExamService.getExamDetail(validateUserId(userId), examCd));
+    }
+
+    @GetMapping("/exams/{examCd}/subjects/{subjectCd}/questions")
+    @Operation(summary = "모의고사 문제 조회 (정답 제외)")
+    public ApiResponse<ExamQuestionDto> getSubjectQuestions(
+            @PathVariable String examCd,
+            @PathVariable String subjectCd) {
+        return ApiResponse.success(userExamService.getSubjectQuestions(examCd, subjectCd));
     }
 
     @PostMapping("/exams/{examCd}/submit")

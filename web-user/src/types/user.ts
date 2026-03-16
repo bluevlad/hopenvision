@@ -23,6 +23,25 @@ export interface SubjectInfo {
   scorePerQ: number;
   questionType: string;
   cutLine: number;
+  timeLimit: number;
+  groupId: number | null;
+}
+
+// 모의고사 문제 조회
+export interface ExamQuestionData {
+  subjectCd: string;
+  subjectNm: string;
+  timeLimit: number;
+  questionCnt: number;
+  questions: QuestionItem[];
+}
+
+export interface QuestionItem {
+  questionNo: number;
+  questionText: string;
+  contextText: string | null;
+  choices: string[];
+  imageUrl: string | null;
 }
 
 // 답안 제출 요청
@@ -146,3 +165,4 @@ export type ScoreAnalysisResponse = ApiResponse<ScoreAnalysis>;
 export type HistoryListResponse = ApiResponse<HistoryItem[]>;
 export type UserProfileResponse = ApiResponse<UserProfile>;
 export type UserProfileExistsResponse = ApiResponse<boolean>;
+export type ExamQuestionResponse = ApiResponse<ExamQuestionData>;

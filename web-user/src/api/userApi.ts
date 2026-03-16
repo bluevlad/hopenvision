@@ -2,6 +2,7 @@ import { apiClient as client } from '@hopenvision/shared';
 import type {
   UserExam,
   UserProfile,
+  ExamQuestionData,
   ScoringResult,
   ScoreAnalysis,
   HistoryItem,
@@ -9,6 +10,7 @@ import type {
   UserProfileUpsertRequest,
   UserExamListResponse,
   UserExamDetailResponse,
+  ExamQuestionResponse,
   ScoringResultResponse,
   ScoreAnalysisResponse,
   HistoryListResponse,
@@ -41,6 +43,14 @@ export const getExamDetail = async (examCd: string): Promise<UserExam> => {
   const response = await client.get<UserExamDetailResponse>(`/api/user/exams/${examCd}`, {
     headers: { [USER_ID_HEADER]: getUserId() },
   });
+  return response.data.data;
+};
+
+// 모의고사 문제 조회
+export const getSubjectQuestions = async (examCd: string, subjectCd: string): Promise<ExamQuestionData> => {
+  const response = await client.get<ExamQuestionResponse>(
+    `/api/user/exams/${examCd}/subjects/${subjectCd}/questions`,
+  );
   return response.data.data;
 };
 

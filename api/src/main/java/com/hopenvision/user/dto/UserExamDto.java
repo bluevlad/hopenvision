@@ -37,5 +37,7 @@ public class UserExamDto {
         private BigDecimal scorePerQ;
         private String questionType;
         private BigDecimal cutLine;
+        private Integer timeLimit;
+        private Long groupId;
     }
 }

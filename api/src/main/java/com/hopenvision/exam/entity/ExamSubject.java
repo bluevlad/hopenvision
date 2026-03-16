@@ -54,6 +54,13 @@ public class ExamSubject {
     @Builder.Default
     private Integer sortOrder = 1;
 
+    @Column(name = "group_id")
+    private Long groupId;
+
+    @Column(name = "time_limit")
+    @Builder.Default
+    private Integer timeLimit = 22;
+
     @Column(name = "is_use", length = 1)
     @Builder.Default
     private String isUse = "Y";

@@ -15,6 +15,7 @@ import {
   EyeOutlined,
   UserOutlined,
   TrophyOutlined,
+  FormOutlined,
 } from '@ant-design/icons';
 import { getAvailableExams } from '../api/userApi';
 import type { UserExam } from '../types/user';
@@ -122,7 +123,7 @@ const UserExamList: React.FC = () => {
     {
       title: '작업',
       key: 'action',
-      width: 150,
+      width: 220,
       align: 'center' as const,
       render: (_: unknown, record: UserExam) => (
         <Space>
@@ -137,15 +138,25 @@ const UserExamList: React.FC = () => {
               </Button>
             </Tooltip>
           ) : (
-            <Tooltip title="답안 입력">
-              <Button
-                type="primary"
-                icon={<EditOutlined />}
-                onClick={() => navigate(`/exams/${record.examCd}/answer`)}
-              >
-                응시
-              </Button>
-            </Tooltip>
+            <>
+              <Tooltip title="문제를 보면서 시간 제한 내 응시">
+                <Button
+                  type="primary"
+                  icon={<FormOutlined />}
+                  onClick={() => navigate(`/exams/${record.examCd}/mock`)}
+                >
+                  모의고사
+                </Button>
+              </Tooltip>
+              <Tooltip title="답안 번호만 빠르게 입력하여 채점">
+                <Button
+                  icon={<EditOutlined />}
+                  onClick={() => navigate(`/exams/${record.examCd}/answer`)}
+                >
+                  답안채점
+                </Button>
+              </Tooltip>
+            </>
           )}
         </Space>
       ),

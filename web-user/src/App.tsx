@@ -7,6 +7,7 @@ import UserExamList from './pages/UserExamList';
 import UserAnswerForm from './pages/UserAnswerForm';
 import UserScoreResult from './pages/UserScoreResult';
 import UserHistory from './pages/UserHistory';
+import MockExamPage from './pages/MockExamPage';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -28,6 +29,7 @@ function App() {
               <Route index element={<UserExamList />} />
               <Route path="history" element={<UserHistory />} />
               <Route path="exams/:examCd/answer" element={<UserAnswerForm />} />
+              <Route path="exams/:examCd/mock" element={<MockExamPage />} />
               <Route path="exams/:examCd/result" element={<UserScoreResult />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>

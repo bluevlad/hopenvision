@@ -6,6 +6,7 @@ import {
   UserOutlined,
   FormOutlined,
   HistoryOutlined,
+  QuestionCircleOutlined,
 } from '@ant-design/icons';
 import { getUserId, getMyProfile, hasProfile as checkHasProfile } from '../api/userApi';
 import type { UserProfile } from '../types/user';
@@ -136,6 +137,15 @@ export default function UserLayout() {
         >
           <h3 style={{ margin: 0 }}>공무원 시험 채점 시스템</h3>
           <Space>
+            <Button
+              type="text"
+              icon={<QuestionCircleOutlined />}
+              href="/help/user-guide.html"
+              target="_blank"
+              rel="noopener"
+            >
+              도움말
+            </Button>
             {profile ? (
               <Dropdown menu={dropdownItems} placement="bottomRight">
                 <Button icon={<UserOutlined />}>{displayName}</Button>

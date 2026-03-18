@@ -25,6 +25,9 @@ public class QuestionSetItem {
     @Column(name = "item_id", nullable = false)
     private Long itemId;
 
+    @Column(name = "subject_cd", length = 20, nullable = false)
+    private String subjectCd;
+
     @Column(name = "question_no")
     private Integer questionNo;
 
@@ -42,4 +45,8 @@ public class QuestionSetItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "item_id", insertable = false, updatable = false)
     private QuestionBankItem bankItem;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "subject_cd", insertable = false, updatable = false)
+    private SubjectMaster subject;
 }

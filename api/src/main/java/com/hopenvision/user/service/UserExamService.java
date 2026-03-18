@@ -3,9 +3,11 @@ package com.hopenvision.user.service;
 import com.hopenvision.exam.entity.Exam;
 import com.hopenvision.exam.entity.ExamSubject;
 import com.hopenvision.exam.entity.QuestionBankItem;
+import com.hopenvision.exam.entity.QuestionSetItem;
 import com.hopenvision.exam.repository.ExamRepository;
 import com.hopenvision.exam.repository.ExamSubjectRepository;
 import com.hopenvision.exam.repository.QuestionBankItemRepository;
+import com.hopenvision.exam.repository.QuestionSetItemRepository;
 import com.hopenvision.user.dto.ExamQuestionDto;
 import com.hopenvision.user.dto.HistoryDto;
 import com.hopenvision.user.dto.UserExamDto;
@@ -28,6 +30,7 @@ public class UserExamService {
     private final ExamRepository examRepository;
     private final ExamSubjectRepository examSubjectRepository;
     private final QuestionBankItemRepository questionBankItemRepository;
+    private final QuestionSetItemRepository questionSetItemRepository;
     private final UserAnswerRepository userAnswerRepository;
     private final UserTotalScoreRepository userTotalScoreRepository;
 
@@ -127,12 +130,34 @@ public class UserExamService {
                 .orElseThrow(() -> new EntityNotFoundException(
                         "과목을 찾을 수 없습니다: " + examCd + "/" + subjectCd));
 
-        if (subject.getGroupId() == null) {
-            throw new EntityNotFoundException("해당 과목에 연결된 문제은행이 없습니다: " + subjectCd);
-        }
+        // 시험에 연결된 문제세트에서 먼저 조회
+        Exam exam = examRepository.findById(examCd).orElse(null);
+        List<QuestionBankItem> items;
 
-        List<QuestionBankItem> items = questionBankItemRepository
-                .findByGroupIdAndSubjectCdOrderByQuestionNo(subject.getGroupId(), subjectCd);
+        if (exam != null && exam.getQuestionSetId() != null) {
+            // 문제세트에서 해당 과목 문제 로딩
+            List<QuestionSetItem> setItems = questionSetItemRepository
+                    .findBySetIdAndSubjectCdOrderBySortOrder(exam.getQuestionSetId(), subjectCd);
+            if (setItems.isEmpty()) {
+                throw new EntityNotFoundException("문제세트에 해당 과목의 문제가 없습니다: " + subjectCd);
+            }
+            List<Long> itemIds = setItems.stream()
+                    .map(QuestionSetItem::getItemId)
+                    .collect(Collectors.toList());
+            items = questionBankItemRepository.findAllById(itemIds);
+            // 세트 내 정렬 순서 유지
+            Map<Long, Integer> orderMap = new HashMap<>();
+            for (int i = 0; i < setItems.size(); i++) {
+                orderMap.put(setItems.get(i).getItemId(), i);
+            }
+            items.sort(Comparator.comparingInt(item -> orderMap.getOrDefault(item.getItemId(), 999)));
+        } else if (subject.getGroupId() != null) {
+            // 기존 방식: groupId로 문제은행에서 로딩
+            items = questionBankItemRepository
+                    .findByGroupIdAndSubjectCdOrderByQuestionNo(subject.getGroupId(), subjectCd);
+        } else {
+            throw new EntityNotFoundException("해당 과목에 연결된 문제가 없습니다: " + subjectCd);
+        }
 
         List<ExamQuestionDto.QuestionItem> questions = items.stream()
                 .map(item -> {

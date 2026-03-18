@@ -14,7 +14,6 @@ export const questionSetApi = {
   // 세트 목록 조회
   getSetList: async (params: {
     keyword?: string;
-    subjectCd?: string;
     category?: string;
     isUse?: string;
     page?: number;
@@ -67,7 +66,7 @@ export const questionSetApi = {
   },
 
   // 시험에 배치
-  deployToExam: async (setId: number, examCd: string): Promise<ApiResponse<{ deployedCount: number; examCd: string }>> => {
+  deployToExam: async (setId: number, examCd: string): Promise<ApiResponse<{ deployedCount: number; examCd: string; subjectCount: number; subjects: string[] }>> => {
     const response = await client.post(`${BASE_PATH}/${setId}/deploy/${examCd}`);
     return response.data;
   },

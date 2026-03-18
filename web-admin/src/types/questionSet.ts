@@ -1,17 +1,23 @@
+export interface SubjectSummary {
+  subjectCd: string;
+  subjectNm: string;
+  itemCount: number;
+}
+
 export interface QuestionSetResponse {
   setId: number;
   setCd: string;
   setNm: string;
-  subjectCd: string;
-  subjectNm: string;
   questionCnt: number;
   totalScore: number;
+  subjectCnt: number;
   category: string | null;
   difficultyLevel: string | null;
   description: string | null;
   isUse: string;
   regDt: string;
   updDt: string;
+  subjectSummaries: SubjectSummary[];
 }
 
 export interface QuestionSetDetailResponse extends QuestionSetResponse {
@@ -21,7 +27,6 @@ export interface QuestionSetDetailResponse extends QuestionSetResponse {
 export interface QuestionSetRequest {
   setCd: string;
   setNm: string;
-  subjectCd: string;
   category?: string;
   difficultyLevel?: string;
   description?: string;
@@ -32,6 +37,8 @@ export interface QuestionSetItemResponse {
   setItemId: number;
   setId: number;
   itemId: number;
+  subjectCd: string;
+  subjectNm: string;
   questionNo: number;
   score: number | null;
   sortOrder: number;
@@ -45,6 +52,7 @@ export interface QuestionSetItemResponse {
 
 export interface QuestionSetItemRequest {
   itemId: number;
+  subjectCd: string;
   questionNo?: number;
   score?: number;
   sortOrder?: number;

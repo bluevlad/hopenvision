@@ -12,7 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +28,7 @@ public class QuestionSetService {
     private final ExamQuestionRepository examQuestionRepository;
     private final ExamAnswerKeyRepository examAnswerKeyRepository;
     private final ExamRepository examRepository;
+    private final ExamSubjectRepository examSubjectRepository;
 
     /**
      * 세트 목록 조회 (페이징, 검색)
@@ -37,7 +38,6 @@ public class QuestionSetService {
 
         Page<QuestionSet> page = setRepository.searchSets(
                 request.getKeyword(),
-                request.getSubjectCd(),
                 request.getCategory(),
                 request.getIsUse(),
                 pageable
@@ -54,22 +54,22 @@ public class QuestionSetService {
                 .orElseThrow(() -> new EntityNotFoundException("문제세트를 찾을 수 없습니다: " + setId));
 
         List<QuestionSetItem> items = setItemRepository.findBySetIdOrderBySortOrder(setId);
-        String subjectNm = getSubjectName(set.getSubjectCd());
+        List<QuestionSetDto.SubjectSummary> summaries = getSubjectSummaries(setId);
 
         return QuestionSetDto.DetailResponse.builder()
                 .setId(set.getSetId())
                 .setCd(set.getSetCd())
                 .setNm(set.getSetNm())
-                .subjectCd(set.getSubjectCd())
-                .subjectNm(subjectNm)
                 .questionCnt(set.getQuestionCnt())
                 .totalScore(set.getTotalScore())
+                .subjectCnt(set.getSubjectCnt())
                 .category(set.getCategory())
                 .difficultyLevel(set.getDifficultyLevel())
                 .description(set.getDescription())
                 .isUse(set.getIsUse())
                 .regDt(set.getRegDt())
                 .updDt(set.getUpdDt())
+                .subjectSummaries(summaries)
                 .items(items.stream()
                         .map(this::toItemResponse)
                         .collect(Collectors.toList()))
@@ -88,7 +88,6 @@ public class QuestionSetService {
         QuestionSet set = QuestionSet.builder()
                 .setCd(request.getSetCd())
                 .setNm(request.getSetNm())
-                .subjectCd(request.getSubjectCd())
                 .category(request.getCategory())
                 .difficultyLevel(request.getDifficultyLevel())
                 .description(request.getDescription())
@@ -107,7 +106,6 @@ public class QuestionSetService {
                 .orElseThrow(() -> new EntityNotFoundException("문제세트를 찾을 수 없습니다: " + setId));
 
         set.setSetNm(request.getSetNm());
-        set.setSubjectCd(request.getSubjectCd());
         set.setCategory(request.getCategory());
         set.setDifficultyLevel(request.getDifficultyLevel());
         set.setDescription(request.getDescription());
@@ -141,6 +139,7 @@ public class QuestionSetService {
 
         QuestionSetItem item = QuestionSetItem.builder()
                 .itemId(request.getItemId())
+                .subjectCd(request.getSubjectCd())
                 .questionNo(request.getQuestionNo())
                 .score(request.getScore())
                 .sortOrder(request.getSortOrder() != null ? request.getSortOrder() : set.getItems().size() + 1)
@@ -165,13 +164,13 @@ public class QuestionSetService {
             throw new IllegalArgumentException("해당 세트에 속하지 않는 항목입니다.");
         }
 
+        item.setSubjectCd(request.getSubjectCd());
         item.setQuestionNo(request.getQuestionNo());
         item.setScore(request.getScore());
         item.setSortOrder(request.getSortOrder());
 
         setItemRepository.save(item);
 
-        // 세트 통계 재계산
         QuestionSet set = setRepository.findById(setId).orElseThrow();
         recalculateSetStats(set);
         setRepository.save(set);
@@ -193,83 +192,105 @@ public class QuestionSetService {
 
         setItemRepository.deleteById(setItemId);
 
-        // 세트 통계 재계산
         QuestionSet set = setRepository.findById(setId).orElseThrow();
         recalculateSetStats(set);
         setRepository.save(set);
     }
 
     /**
-     * 세트를 시험에 배치 (exam_question + exam_answer_key 일괄 복사)
+     * 문제세트를 시험에 연결 (exam_mst.question_set_id 설정 + 과목별 exam_question/answer_key 일괄 생성)
      */
     @Transactional
-    public int deployToExam(Long setId, String examCd) {
+    public Map<String, Object> deployToExam(Long setId, String examCd) {
         QuestionSet set = setRepository.findById(setId)
                 .orElseThrow(() -> new EntityNotFoundException("문제세트를 찾을 수 없습니다: " + setId));
 
-        if (!examRepository.existsById(examCd)) {
-            throw new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd);
-        }
+        Exam exam = examRepository.findById(examCd)
+                .orElseThrow(() -> new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd));
 
         List<QuestionSetItem> setItems = setItemRepository.findBySetIdOrderBySortOrder(setId);
         if (setItems.isEmpty()) {
             throw new IllegalStateException("문제세트에 항목이 없습니다.");
         }
 
-        String subjectCd = set.getSubjectCd();
+        // 시험에 문제세트 연결
+        exam.setQuestionSetId(set.getSetId());
+        examRepository.save(exam);
 
-        // 기존 해당 과목의 문제/정답 삭제
-        examQuestionRepository.deleteByExamCdAndSubjectCd(examCd, subjectCd);
-        examAnswerKeyRepository.deleteByExamCdAndSubjectCd(examCd, subjectCd);
+        // 과목별로 그룹핑
+        Map<String, List<QuestionSetItem>> itemsBySubject = setItems.stream()
+                .collect(Collectors.groupingBy(QuestionSetItem::getSubjectCd, LinkedHashMap::new, Collectors.toList()));
 
-        int deployed = 0;
-        for (QuestionSetItem setItem : setItems) {
-            QuestionBankItem bankItem = bankItemRepository.findById(setItem.getItemId()).orElse(null);
-            if (bankItem == null) continue;
+        int totalDeployed = 0;
+        List<String> deployedSubjects = new ArrayList<>();
 
-            int questionNo = setItem.getQuestionNo() != null ? setItem.getQuestionNo() : deployed + 1;
+        for (Map.Entry<String, List<QuestionSetItem>> entry : itemsBySubject.entrySet()) {
+            String subjectCd = entry.getKey();
+            List<QuestionSetItem> subjectItems = entry.getValue();
 
-            // exam_question 생성
-            ExamQuestion examQuestion = ExamQuestion.builder()
-                    .examCd(examCd)
-                    .subjectCd(subjectCd)
-                    .questionNo(questionNo)
-                    .questionText(bankItem.getQuestionText())
-                    .contextText(bankItem.getContextText())
-                    .choice1(bankItem.getChoice1())
-                    .choice2(bankItem.getChoice2())
-                    .choice3(bankItem.getChoice3())
-                    .choice4(bankItem.getChoice4())
-                    .choice5(bankItem.getChoice5())
-                    .imageFile(bankItem.getImageFile())
-                    .category(bankItem.getCategory())
-                    .difficulty(bankItem.getDifficulty())
-                    .title(bankItem.getQuestionTitle())
-                    .explanation(bankItem.getExplanation())
-                    .correctionNote(bankItem.getCorrectionNote())
-                    .build();
-            examQuestionRepository.save(examQuestion);
+            // 기존 해당 과목의 문제/정답 삭제
+            examQuestionRepository.deleteByExamCdAndSubjectCd(examCd, subjectCd);
+            examAnswerKeyRepository.deleteByExamCdAndSubjectCd(examCd, subjectCd);
 
-            // exam_answer_key 생성
-            ExamAnswerKey answerKey = ExamAnswerKey.builder()
-                    .examCd(examCd)
-                    .subjectCd(subjectCd)
-                    .questionNo(questionNo)
-                    .correctAns(bankItem.getCorrectAns())
-                    .score(setItem.getScore() != null ? setItem.getScore() : bankItem.getScore())
-                    .isMultiAns(bankItem.getIsMultiAns())
-                    .build();
-            examAnswerKeyRepository.save(answerKey);
+            int deployed = 0;
+            for (QuestionSetItem setItem : subjectItems) {
+                QuestionBankItem bankItem = bankItemRepository.findById(setItem.getItemId()).orElse(null);
+                if (bankItem == null) continue;
 
-            // 문제은행 사용횟수 증가
-            bankItem.setUseCount(bankItem.getUseCount() + 1);
-            bankItemRepository.save(bankItem);
+                int questionNo = setItem.getQuestionNo() != null ? setItem.getQuestionNo() : deployed + 1;
 
-            deployed++;
+                // exam_question 생성
+                ExamQuestion examQuestion = ExamQuestion.builder()
+                        .examCd(examCd)
+                        .subjectCd(subjectCd)
+                        .questionNo(questionNo)
+                        .questionText(bankItem.getQuestionText())
+                        .contextText(bankItem.getContextText())
+                        .choice1(bankItem.getChoice1())
+                        .choice2(bankItem.getChoice2())
+                        .choice3(bankItem.getChoice3())
+                        .choice4(bankItem.getChoice4())
+                        .choice5(bankItem.getChoice5())
+                        .imageFile(bankItem.getImageFile())
+                        .category(bankItem.getCategory())
+                        .difficulty(bankItem.getDifficulty())
+                        .title(bankItem.getQuestionTitle())
+                        .explanation(bankItem.getExplanation())
+                        .correctionNote(bankItem.getCorrectionNote())
+                        .build();
+                examQuestionRepository.save(examQuestion);
+
+                // exam_answer_key 생성
+                ExamAnswerKey answerKey = ExamAnswerKey.builder()
+                        .examCd(examCd)
+                        .subjectCd(subjectCd)
+                        .questionNo(questionNo)
+                        .correctAns(bankItem.getCorrectAns())
+                        .score(setItem.getScore() != null ? setItem.getScore() : bankItem.getScore())
+                        .isMultiAns(bankItem.getIsMultiAns())
+                        .build();
+                examAnswerKeyRepository.save(answerKey);
+
+                // 문제은행 사용횟수 증가
+                bankItem.setUseCount(bankItem.getUseCount() + 1);
+                bankItemRepository.save(bankItem);
+
+                deployed++;
+            }
+
+            totalDeployed += deployed;
+            deployedSubjects.add(subjectCd);
         }
 
-        log.info("문제세트 {} → 시험 {} 배치 완료: {}문항", set.getSetCd(), examCd, deployed);
-        return deployed;
+        log.info("문제세트 {} → 시험 {} 배치 완료: {}과목, {}문항", set.getSetCd(), examCd, deployedSubjects.size(), totalDeployed);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("examCd", examCd);
+        result.put("questionSetId", set.getSetId());
+        result.put("deployedCount", totalDeployed);
+        result.put("subjectCount", deployedSubjects.size());
+        result.put("subjects", deployedSubjects);
+        return result;
     }
 
     // ==================== 내부 헬퍼 ====================
@@ -277,6 +298,12 @@ public class QuestionSetService {
     private void recalculateSetStats(QuestionSet set) {
         List<QuestionSetItem> items = set.getItems();
         set.setQuestionCnt(items.size());
+
+        long subjectCount = items.stream()
+                .map(QuestionSetItem::getSubjectCd)
+                .distinct()
+                .count();
+        set.setSubjectCnt((int) subjectCount);
 
         int total = 0;
         for (QuestionSetItem item : items) {
@@ -292,34 +319,55 @@ public class QuestionSetService {
         set.setTotalScore(total);
     }
 
+    private List<QuestionSetDto.SubjectSummary> getSubjectSummaries(Long setId) {
+        List<Object[]> counts = setItemRepository.countItemsBySubjectCd(setId);
+        if (counts.isEmpty()) return Collections.emptyList();
+
+        List<String> subjectCds = counts.stream().map(r -> (String) r[0]).collect(Collectors.toList());
+        Map<String, String> nameMap = subjectMasterRepository.findAllById(subjectCds).stream()
+                .collect(Collectors.toMap(SubjectMaster::getSubjectCd, SubjectMaster::getSubjectNm));
+
+        return counts.stream()
+                .map(row -> QuestionSetDto.SubjectSummary.builder()
+                        .subjectCd((String) row[0])
+                        .subjectNm(nameMap.getOrDefault((String) row[0], (String) row[0]))
+                        .itemCount((Long) row[1])
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     // ==================== Mapper ====================
 
     private QuestionSetDto.Response toResponse(QuestionSet set) {
-        String subjectNm = getSubjectName(set.getSubjectCd());
+        List<QuestionSetDto.SubjectSummary> summaries = getSubjectSummaries(set.getSetId());
         return QuestionSetDto.Response.builder()
                 .setId(set.getSetId())
                 .setCd(set.getSetCd())
                 .setNm(set.getSetNm())
-                .subjectCd(set.getSubjectCd())
-                .subjectNm(subjectNm)
                 .questionCnt(set.getQuestionCnt())
                 .totalScore(set.getTotalScore())
+                .subjectCnt(set.getSubjectCnt())
                 .category(set.getCategory())
                 .difficultyLevel(set.getDifficultyLevel())
                 .description(set.getDescription())
                 .isUse(set.getIsUse())
                 .regDt(set.getRegDt())
                 .updDt(set.getUpdDt())
+                .subjectSummaries(summaries)
                 .build();
     }
 
     private QuestionSetDto.ItemResponse toItemResponse(QuestionSetItem item) {
         QuestionBankItem bankItem = bankItemRepository.findById(item.getItemId()).orElse(null);
+        String subjectNm = subjectMasterRepository.findById(item.getSubjectCd())
+                .map(SubjectMaster::getSubjectNm).orElse("");
 
         return QuestionSetDto.ItemResponse.builder()
                 .setItemId(item.getSetItemId())
                 .setId(item.getSetId())
                 .itemId(item.getItemId())
+                .subjectCd(item.getSubjectCd())
+                .subjectNm(subjectNm)
                 .questionNo(item.getQuestionNo())
                 .score(item.getScore())
                 .sortOrder(item.getSortOrder())
@@ -330,11 +378,5 @@ public class QuestionSetService {
                 .questionType(bankItem != null ? bankItem.getQuestionType() : null)
                 .bankScore(bankItem != null ? bankItem.getScore() : null)
                 .build();
-    }
-
-    private String getSubjectName(String subjectCd) {
-        return subjectMasterRepository.findById(subjectCd)
-                .map(SubjectMaster::getSubjectNm)
-                .orElse("");
     }
 }

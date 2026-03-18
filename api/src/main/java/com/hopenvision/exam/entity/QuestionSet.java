@@ -29,9 +29,6 @@ public class QuestionSet {
     @Column(name = "set_nm", length = 200, nullable = false)
     private String setNm;
 
-    @Column(name = "subject_cd", length = 20, nullable = false)
-    private String subjectCd;
-
     @Column(name = "question_cnt")
     @Builder.Default
     private Integer questionCnt = 0;
@@ -39,6 +36,10 @@ public class QuestionSet {
     @Column(name = "total_score")
     @Builder.Default
     private Integer totalScore = 0;
+
+    @Column(name = "subject_cnt")
+    @Builder.Default
+    private Integer subjectCnt = 0;
 
     @Column(name = "category", length = 50)
     private String category;
@@ -62,13 +63,9 @@ public class QuestionSet {
     private LocalDateTime updDt;
 
     @OneToMany(mappedBy = "questionSet", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("sortOrder ASC")
+    @OrderBy("subjectCd ASC, sortOrder ASC")
     @Builder.Default
     private List<QuestionSetItem> items = new ArrayList<>();
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subject_cd", insertable = false, updatable = false)
-    private SubjectMaster subject;
 
     public void addItem(QuestionSetItem item) {
         items.add(item);

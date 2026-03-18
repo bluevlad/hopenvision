@@ -30,7 +30,6 @@ public class QuestionSetController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<QuestionSetDto.Response>>> getSetList(
             @Parameter(description = "검색어 (세트명, 세트코드)") @RequestParam(required = false) String keyword,
-            @Parameter(description = "과목코드") @RequestParam(required = false) String subjectCd,
             @Parameter(description = "카테고리 (시험유형)") @RequestParam(required = false) String category,
             @Parameter(description = "사용여부") @RequestParam(required = false) String isUse,
             @Parameter(description = "페이지 번호 (0부터 시작)") @RequestParam(defaultValue = "0") int page,
@@ -38,7 +37,6 @@ public class QuestionSetController {
     ) {
         QuestionSetDto.SearchRequest request = QuestionSetDto.SearchRequest.builder()
                 .keyword(keyword)
-                .subjectCd(subjectCd)
                 .category(category)
                 .isUse(isUse)
                 .page(page)

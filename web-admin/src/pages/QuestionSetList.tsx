@@ -44,7 +44,6 @@ export default function QuestionSetList() {
 
   const [searchParams, setSearchParams] = useState({
     keyword: '',
-    subjectCd: '',
     category: '',
     isUse: '',
     page: 0,
@@ -54,13 +53,11 @@ export default function QuestionSetList() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSet, setEditingSet] = useState<QuestionSetResponse | null>(null);
 
-  // 세트 목록 조회
   const { data, isLoading } = useQuery({
     queryKey: ['questionSets', searchParams],
     queryFn: () => questionSetApi.getSetList(searchParams),
   });
 
-  // 세트 등록
   const createMutation = useMutation({
     mutationFn: questionSetApi.createSet,
     onSuccess: () => {
@@ -73,7 +70,6 @@ export default function QuestionSetList() {
     },
   });
 
-  // 세트 수정
   const updateMutation = useMutation({
     mutationFn: ({ setId, data }: { setId: number; data: QuestionSetRequest }) =>
       questionSetApi.updateSet(setId, data),
@@ -87,7 +83,6 @@ export default function QuestionSetList() {
     },
   });
 
-  // 세트 삭제
   const deleteMutation = useMutation({
     mutationFn: questionSetApi.deleteSet,
     onSuccess: () => {
@@ -104,7 +99,7 @@ export default function QuestionSetList() {
   };
 
   const handleReset = () => {
-    setSearchParams({ keyword: '', subjectCd: '', category: '', isUse: '', page: 0, size: 10 });
+    setSearchParams({ keyword: '', category: '', isUse: '', page: 0, size: 10 });
   };
 
   const handleOpenCreate = () => {
@@ -119,7 +114,6 @@ export default function QuestionSetList() {
     form.setFieldsValue({
       setCd: record.setCd,
       setNm: record.setNm,
-      subjectCd: record.subjectCd,
       category: record.category,
       difficultyLevel: record.difficultyLevel,
       description: record.description,
@@ -156,9 +150,22 @@ export default function QuestionSetList() {
     },
     {
       title: '과목',
-      key: 'subject',
-      width: 100,
-      render: (_, record) => record.subjectNm || record.subjectCd,
+      key: 'subjects',
+      width: 180,
+      render: (_, record) => {
+        if (!record.subjectSummaries || record.subjectSummaries.length === 0) {
+          return <Tag>미설정</Tag>;
+        }
+        return (
+          <Space size={[0, 4]} wrap>
+            {record.subjectSummaries.map((s) => (
+              <Tag key={s.subjectCd} color="blue">
+                {s.subjectNm} ({s.itemCount})
+              </Tag>
+            ))}
+          </Space>
+        );
+      },
     },
     {
       title: '카테고리',
@@ -187,14 +194,6 @@ export default function QuestionSetList() {
       render: (value) => `${value}점`,
     },
     {
-      title: '난이도',
-      dataIndex: 'difficultyLevel',
-      key: 'difficultyLevel',
-      width: 80,
-      align: 'center',
-      render: (value) => DIFFICULTY_OPTIONS.find((d) => d.value === value)?.label || value || '-',
-    },
-    {
       title: '사용여부',
       dataIndex: 'isUse',
       key: 'isUse',
@@ -213,19 +212,10 @@ export default function QuestionSetList() {
       align: 'center',
       render: (_, record) => (
         <Space size="small">
-          <Button
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => navigate(`/question-sets/${record.setId}`)}
-          >
+          <Button size="small" icon={<EyeOutlined />} onClick={() => navigate(`/question-sets/${record.setId}`)}>
             상세
           </Button>
-          <Button
-            type="primary"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleOpenEdit(record)}
-          >
+          <Button type="primary" size="small" icon={<EditOutlined />} onClick={() => handleOpenEdit(record)}>
             수정
           </Button>
           <Popconfirm
@@ -234,9 +224,7 @@ export default function QuestionSetList() {
             okText="삭제"
             cancelText="취소"
           >
-            <Button danger size="small" icon={<DeleteOutlined />}>
-              삭제
-            </Button>
+            <Button danger size="small" icon={<DeleteOutlined />}>삭제</Button>
           </Popconfirm>
         </Space>
       ),
@@ -290,11 +278,7 @@ export default function QuestionSetList() {
 
       <Card
         title={<span>문제세트 (총 <strong>{data?.data?.totalElements || 0}</strong>건)</span>}
-        extra={
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreate}>
-            세트 등록
-          </Button>
-        }
+        extra={<Button type="primary" icon={<PlusOutlined />} onClick={handleOpenCreate}>세트 등록</Button>}
       >
         <Table
           columns={columns}
@@ -329,22 +313,17 @@ export default function QuestionSetList() {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item name="setCd" label="세트코드" rules={[{ required: true, message: '세트코드를 입력하세요' }]}>
-                <Input placeholder="예: SET_KOREAN_2024" disabled={!!editingSet} />
+                <Input placeholder="예: SET_2024_9LEVEL_1" disabled={!!editingSet} />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item name="setNm" label="세트명" rules={[{ required: true, message: '세트명을 입력하세요' }]}>
-                <Input placeholder="예: 2024 국어 모의고사 세트" />
+                <Input placeholder="예: 2024 9급 1차 문제세트" />
               </Form.Item>
             </Col>
           </Row>
 
           <Row gutter={16}>
-            <Col span={8}>
-              <Form.Item name="subjectCd" label="과목코드" rules={[{ required: true, message: '과목코드를 입력하세요' }]}>
-                <Input placeholder="과목코드" disabled={!!editingSet} />
-              </Form.Item>
-            </Col>
             <Col span={8}>
               <Form.Item name="category" label="카테고리">
                 <Select allowClear options={EXAM_TYPES} placeholder="선택" />
@@ -355,10 +334,7 @@ export default function QuestionSetList() {
                 <Select allowClear options={DIFFICULTY_OPTIONS} placeholder="선택" />
               </Form.Item>
             </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
+            <Col span={8}>
               <Form.Item name="isUse" label="사용여부">
                 <Select options={[{ value: 'Y', label: '사용' }, { value: 'N', label: '미사용' }]} />
               </Form.Item>

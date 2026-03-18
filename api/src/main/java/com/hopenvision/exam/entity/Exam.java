@@ -46,6 +46,9 @@ public class Exam {
     @Column(name = "pass_score", precision = 5, scale = 2)
     private BigDecimal passScore;
 
+    @Column(name = "question_set_id")
+    private Long questionSetId;
+
     @Column(name = "is_use", length = 1)
     @Builder.Default
     private String isUse = "Y";
@@ -57,6 +60,10 @@ public class Exam {
     @UpdateTimestamp
     @Column(name = "upd_dt")
     private LocalDateTime updDt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_set_id", insertable = false, updatable = false)
+    private QuestionSet questionSet;
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

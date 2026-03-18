@@ -26,6 +26,7 @@ public class ExamService {
     private final ExamRepository examRepository;
     private final ExamSubjectRepository subjectRepository;
     private final ExamAnswerKeyRepository answerKeyRepository;
+    private final QuestionSetRepository questionSetRepository;
 
     /**
      * 시험 목록 조회 (페이징, 검색)
@@ -68,6 +69,13 @@ public class ExamService {
         List<ExamSubject> subjects = subjectRepository.findByExamCdOrderBySortOrder(examCd);
         Map<String, Long> answerCntMap = getAnswerCountMap(examCd);
 
+        String questionSetNm = null;
+        if (exam.getQuestionSetId() != null) {
+            questionSetNm = questionSetRepository.findById(exam.getQuestionSetId())
+                    .map(com.hopenvision.exam.entity.QuestionSet::getSetNm)
+                    .orElse(null);
+        }
+
         return ExamDto.DetailResponse.builder()
                 .examCd(exam.getExamCd())
                 .examNm(exam.getExamNm())
@@ -77,6 +85,8 @@ public class ExamService {
                 .examDate(exam.getExamDate())
                 .totalScore(exam.getTotalScore())
                 .passScore(exam.getPassScore())
+                .questionSetId(exam.getQuestionSetId())
+                .questionSetNm(questionSetNm)
                 .isUse(exam.getIsUse())
                 .regDt(exam.getRegDt())
                 .updDt(exam.getUpdDt())
@@ -272,6 +282,12 @@ public class ExamService {
     }
 
     private ExamDto.Response toResponse(Exam exam, long subjectCnt, long applicantCnt) {
+        String questionSetNm = null;
+        if (exam.getQuestionSetId() != null) {
+            questionSetNm = questionSetRepository.findById(exam.getQuestionSetId())
+                    .map(com.hopenvision.exam.entity.QuestionSet::getSetNm)
+                    .orElse(null);
+        }
         return ExamDto.Response.builder()
                 .examCd(exam.getExamCd())
                 .examNm(exam.getExamNm())
@@ -281,6 +297,8 @@ public class ExamService {
                 .examDate(exam.getExamDate())
                 .totalScore(exam.getTotalScore())
                 .passScore(exam.getPassScore())
+                .questionSetId(exam.getQuestionSetId())
+                .questionSetNm(questionSetNm)
                 .isUse(exam.getIsUse())
                 .regDt(exam.getRegDt())
                 .updDt(exam.getUpdDt())

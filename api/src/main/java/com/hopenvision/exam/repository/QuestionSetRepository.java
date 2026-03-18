@@ -19,13 +19,11 @@ public interface QuestionSetRepository extends JpaRepository<QuestionSet, Long> 
 
     @Query("SELECT qs FROM QuestionSet qs WHERE " +
            "(:keyword IS NULL OR :keyword = '' OR qs.setNm LIKE %:keyword% OR qs.setCd LIKE %:keyword%) " +
-           "AND (:subjectCd IS NULL OR :subjectCd = '' OR qs.subjectCd = :subjectCd) " +
            "AND (:category IS NULL OR :category = '' OR qs.category = :category) " +
            "AND (:isUse IS NULL OR :isUse = '' OR qs.isUse = :isUse) " +
            "ORDER BY qs.regDt DESC")
     Page<QuestionSet> searchSets(
             @Param("keyword") String keyword,
-            @Param("subjectCd") String subjectCd,
             @Param("category") String category,
             @Param("isUse") String isUse,
             Pageable pageable

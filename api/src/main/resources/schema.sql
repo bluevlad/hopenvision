@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS exam_mst (
     exam_date       DATE,
     total_score     NUMERIC(5,2) DEFAULT 100,
     pass_score      NUMERIC(5,2),
+    question_set_id INTEGER,
     is_use          CHAR(1) DEFAULT 'Y',
     reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     upd_dt          TIMESTAMP
@@ -277,14 +278,14 @@ COMMENT ON COLUMN user_total_score.total_ranking IS '전체 순위';
 COMMENT ON COLUMN user_total_score.pass_yn IS '합격여부 (Y/N)';
 COMMENT ON COLUMN user_total_score.cut_fail_yn IS '과락여부 (Y:과락있음, N:없음)';
 
--- 15. 문제세트 테이블
+-- 15. 문제세트 테이블 (시험 단위, 여러 과목 포함)
 CREATE TABLE IF NOT EXISTS question_set (
     set_id          SERIAL PRIMARY KEY,
     set_cd          VARCHAR(50) UNIQUE NOT NULL,
     set_nm          VARCHAR(200) NOT NULL,
-    subject_cd      VARCHAR(20) NOT NULL,
     question_cnt    INTEGER DEFAULT 0,
     total_score     INTEGER DEFAULT 0,
+    subject_cnt     INTEGER DEFAULT 0,
     category        VARCHAR(50),
     difficulty_level VARCHAR(10),
     description     TEXT,
@@ -293,19 +294,20 @@ CREATE TABLE IF NOT EXISTS question_set (
     upd_dt          TIMESTAMP
 );
 
-COMMENT ON TABLE question_set IS '문제세트';
+COMMENT ON TABLE question_set IS '문제세트 (시험 단위)';
 COMMENT ON COLUMN question_set.set_cd IS '세트코드';
 COMMENT ON COLUMN question_set.set_nm IS '세트명';
-COMMENT ON COLUMN question_set.subject_cd IS '소속 과목코드';
-COMMENT ON COLUMN question_set.question_cnt IS '문제 수';
+COMMENT ON COLUMN question_set.question_cnt IS '총 문제 수';
 COMMENT ON COLUMN question_set.total_score IS '총 배점';
+COMMENT ON COLUMN question_set.subject_cnt IS '과목 수';
 COMMENT ON COLUMN question_set.difficulty_level IS '평균 난이도';
 
--- 16. 문제세트 항목 테이블
+-- 16. 문제세트 항목 테이블 (과목별 문제 귀속)
 CREATE TABLE IF NOT EXISTS question_set_item (
     set_item_id     SERIAL PRIMARY KEY,
     set_id          INTEGER NOT NULL REFERENCES question_set(set_id) ON DELETE CASCADE,
     item_id         INTEGER NOT NULL REFERENCES question_bank_item(item_id),
+    subject_cd      VARCHAR(20) NOT NULL,
     question_no     INTEGER,
     score           NUMERIC(5,2),
     sort_order      INTEGER DEFAULT 1
@@ -314,8 +316,11 @@ CREATE TABLE IF NOT EXISTS question_set_item (
 COMMENT ON TABLE question_set_item IS '문제세트 항목';
 COMMENT ON COLUMN question_set_item.set_id IS '세트 ID';
 COMMENT ON COLUMN question_set_item.item_id IS '문제은행 항목 ID';
-COMMENT ON COLUMN question_set_item.question_no IS '세트 내 문항 번호';
+COMMENT ON COLUMN question_set_item.subject_cd IS '과목코드';
+COMMENT ON COLUMN question_set_item.question_no IS '과목 내 문항 번호';
 COMMENT ON COLUMN question_set_item.score IS '배점 (오버라이드)';
+
+CREATE INDEX IF NOT EXISTS idx_question_set_item_subject ON question_set_item(set_id, subject_cd);
 
 -- ============================================
 -- 인덱스 생성

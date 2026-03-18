@@ -63,6 +63,59 @@ jobs:
             );
 
             CREATE INDEX IF NOT EXISTS idx_question_set_item_subject ON question_set_item(set_id, subject_cd);
+
+            -- v4.1: exam_subject.group_id 연결 (그룹코드 패턴: examCd-subjectNm)
+            UPDATE exam_subject es
+            SET group_id = qbg.group_id
+            FROM question_bank_group qbg
+            WHERE qbg.group_cd = es.exam_cd || '-' || es.subject_nm
+              AND es.group_id IS NULL;
+
+            -- v4.2: 시험별 문제세트 자동 생성 + 항목 연결
+            DO \$\$
+            DECLARE
+              v_exam RECORD;
+              v_set_id INTEGER;
+              v_item RECORD;
+              v_sort INTEGER;
+              v_q_cnt INTEGER;
+              v_s_cnt INTEGER;
+            BEGIN
+              FOR v_exam IN SELECT DISTINCT exam_cd FROM exam_subject WHERE group_id IS NOT NULL LOOP
+                -- 이미 세트가 있으면 스킵
+                IF NOT EXISTS (SELECT 1 FROM question_set WHERE set_cd = v_exam.exam_cd) THEN
+                  -- 시험 정보 조회
+                  INSERT INTO question_set (set_cd, set_nm, category, is_use, reg_dt)
+                  SELECT v_exam.exam_cd,
+                         (SELECT exam_nm FROM exam_mst WHERE exam_cd = v_exam.exam_cd),
+                         (SELECT exam_type FROM exam_mst WHERE exam_cd = v_exam.exam_cd),
+                         'Y', CURRENT_TIMESTAMP
+                  RETURNING set_id INTO v_set_id;
+
+                  v_sort := 0;
+                  -- 각 과목의 문제은행 항목을 세트에 연결
+                  FOR v_item IN
+                    SELECT qi.item_id, qi.subject_cd, qi.question_no, qi.score
+                    FROM exam_subject es
+                    JOIN question_bank_item qi ON qi.group_id = es.group_id AND qi.subject_cd = es.subject_cd
+                    WHERE es.exam_cd = v_exam.exam_cd AND es.group_id IS NOT NULL
+                    ORDER BY es.sort_order, qi.question_no
+                  LOOP
+                    v_sort := v_sort + 1;
+                    INSERT INTO question_set_item (set_id, item_id, subject_cd, question_no, score, sort_order)
+                    VALUES (v_set_id, v_item.item_id, v_item.subject_cd, v_item.question_no, v_item.score, v_sort);
+                  END LOOP;
+
+                  -- 통계 업데이트
+                  SELECT COUNT(*) INTO v_q_cnt FROM question_set_item WHERE set_id = v_set_id;
+                  SELECT COUNT(DISTINCT subject_cd) INTO v_s_cnt FROM question_set_item WHERE set_id = v_set_id;
+                  UPDATE question_set SET question_cnt = v_q_cnt, subject_cnt = v_s_cnt, total_score = v_q_cnt * 5 WHERE set_id = v_set_id;
+
+                  -- 시험에 문제세트 연결
+                  UPDATE exam_mst SET question_set_id = v_set_id WHERE exam_cd = v_exam.exam_cd;
+                END IF;
+              END LOOP;
+            END \$\$;
           " || echo "Migration skipped or already applied"
 
       - name: Stop existing services

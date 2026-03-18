@@ -125,8 +125,7 @@ public class QuestionSetController {
             @Parameter(description = "세트 ID") @PathVariable Long setId,
             @Parameter(description = "시험코드") @PathVariable String examCd
     ) {
-        int count = questionSetService.deployToExam(setId, examCd);
-        return ResponseEntity.ok(ApiResponse.success("시험에 배치되었습니다.",
-                Map.of("deployedCount", count, "examCd", examCd)));
+        Map<String, Object> result = questionSetService.deployToExam(setId, examCd);
+        return ResponseEntity.ok(ApiResponse.success("시험에 배치되었습니다.", result));
     }
 }

@@ -7,6 +7,7 @@ import {
   BarChartOutlined,
   LogoutOutlined,
   TrophyOutlined,
+  BookOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../auth/useAuth';
 
@@ -27,6 +28,16 @@ const menuItems = [
     key: '/statistics',
     icon: <BarChartOutlined />,
     label: '통계',
+  },
+  {
+    key: 'content',
+    icon: <BookOutlined />,
+    label: '콘텐츠 관리',
+    children: [
+      { key: '/subjects', label: '과목 관리' },
+      { key: '/question-bank', label: '문제은행' },
+      { key: '/question-sets', label: '문제세트' },
+    ],
   },
   {
     key: 'gosi',
@@ -64,6 +75,9 @@ export default function AdminLayout() {
     if (path.startsWith('/gosi/analytics')) return '/gosi/analytics';
     if (path.startsWith('/gosi/subjects')) return '/gosi/subjects';
     if (path.startsWith('/gosi/members')) return '/gosi/members';
+    if (path.startsWith('/question-sets')) return '/question-sets';
+    if (path.startsWith('/question-bank')) return '/question-bank';
+    if (path.startsWith('/subjects')) return '/subjects';
     if (path.startsWith('/exams')) return '/exams';
     if (path.startsWith('/applicants')) return '/applicants';
     if (path.startsWith('/statistics')) return '/statistics';
@@ -72,6 +86,9 @@ export default function AdminLayout() {
 
   const getOpenKeys = () => {
     const path = location.pathname;
+    if (path.startsWith('/question-sets')) return ['content'];
+    if (path.startsWith('/question-bank')) return ['content'];
+    if (path.startsWith('/subjects')) return ['content'];
     if (path.startsWith('/gosi')) return ['gosi'];
     return [];
   };

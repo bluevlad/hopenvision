@@ -30,6 +30,41 @@ jobs:
           EOF
           sed -i '' 's/^[[:space:]]*//' .env
 
+      - name: Run DB migrations
+        run: |
+          source .env
+          docker exec postgresql psql -U "$DB_USER" -d "$DB_NAME" -c "
+            -- v4.0: 문제세트 다과목 구조 + 시험 연결
+            ALTER TABLE exam_mst ADD COLUMN IF NOT EXISTS question_set_id INTEGER;
+
+            CREATE TABLE IF NOT EXISTS question_set (
+              set_id SERIAL PRIMARY KEY,
+              set_cd VARCHAR(50) UNIQUE NOT NULL,
+              set_nm VARCHAR(200) NOT NULL,
+              question_cnt INTEGER DEFAULT 0,
+              total_score INTEGER DEFAULT 0,
+              subject_cnt INTEGER DEFAULT 0,
+              category VARCHAR(50),
+              difficulty_level VARCHAR(10),
+              description TEXT,
+              is_use CHAR(1) DEFAULT 'Y',
+              reg_dt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              upd_dt TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS question_set_item (
+              set_item_id SERIAL PRIMARY KEY,
+              set_id INTEGER NOT NULL REFERENCES question_set(set_id) ON DELETE CASCADE,
+              item_id INTEGER NOT NULL,
+              subject_cd VARCHAR(20) NOT NULL,
+              question_no INTEGER,
+              score NUMERIC(5,2),
+              sort_order INTEGER DEFAULT 1
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_question_set_item_subject ON question_set_item(set_id, subject_cd);
+          " || echo "Migration skipped or already applied"
+
       - name: Stop existing services
         run: |
           docker compose -f docker-compose.prod.yml down --timeout 30 || true

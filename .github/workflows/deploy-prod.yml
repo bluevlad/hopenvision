@@ -33,7 +33,7 @@ jobs:
       - name: Run DB migrations
         run: |
           source .env
-          docker exec postgresql psql -U "$DB_USER" -d "$DB_NAME" -c "
+          docker exec -e PGPASSWORD="$DB_PASSWORD" postgresql psql -U "$DB_USER" -d "$DB_NAME" -c "
             -- v4.0: 문제세트 다과목 구조 + 시험 연결
             ALTER TABLE exam_mst ADD COLUMN IF NOT EXISTS question_set_id INTEGER;
 

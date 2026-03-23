@@ -37,6 +37,10 @@ jobs:
             -- v4.0: 문제세트 다과목 구조 + 시험 연결
             ALTER TABLE exam_mst ADD COLUMN IF NOT EXISTS question_set_id INTEGER;
 
+            -- v4.0.1: exam_subject 누락 컬럼 추가 (group_id, time_limit)
+            ALTER TABLE exam_subject ADD COLUMN IF NOT EXISTS group_id BIGINT;
+            ALTER TABLE exam_subject ADD COLUMN IF NOT EXISTS time_limit INTEGER DEFAULT 22;
+
             CREATE TABLE IF NOT EXISTS question_set (
               set_id SERIAL PRIMARY KEY,
               set_cd VARCHAR(50) UNIQUE NOT NULL,

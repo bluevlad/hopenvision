@@ -241,7 +241,8 @@ const MockExamPage: React.FC = () => {
           phase: idx === 0 ? 'active' : 'waiting',
         };
       });
-      setTimers(initial);
+      // 비동기로 실행하여 cascading render 방지
+      queueMicrotask(() => setTimers(initial));
     }
   }, [activeSubjects, timers, sessionRecovered]);
 
@@ -270,15 +271,6 @@ const MockExamPage: React.FC = () => {
     };
   }, [currentSubject, timers, examStarted]);
 
-  // 시간 초과 시 자동 다음 과목
-  useEffect(() => {
-    if (!currentSubject || allCompleted || !examStarted) return;
-    const timerState = timers[currentSubject.subjectCd];
-    if (timerState?.phase === 'completed' && timerState.remaining <= 0) {
-      handleCompleteSubject();
-    }
-  }, [timers, currentSubject, allCompleted, examStarted]);
-
   // --- 핸들러 ---
   const handleSubjectConfirm = useCallback((subjectCds: string[]) => {
     setSelectedSubjectCds(subjectCds);
@@ -301,7 +293,7 @@ const MockExamPage: React.FC = () => {
     }));
   };
 
-  const handleCompleteSubject = () => {
+  const handleCompleteSubject = useCallback(() => {
     if (!currentSubject) return;
     const subjectCd = currentSubject.subjectCd;
 
@@ -324,7 +316,17 @@ const MockExamPage: React.FC = () => {
       setReviewMode(true);
       message.success('모든 과목 응시가 완료되었습니다. 남은 시간 내에 답안을 수정할 수 있습니다.');
     }
-  };
+  }, [currentSubject, currentSubjectIdx, activeSubjects]);
+
+  // 시간 초과 시 자동 다음 과목
+  useEffect(() => {
+    if (!currentSubject || allCompleted || !examStarted) return;
+    const timerState = timers[currentSubject.subjectCd];
+    if (timerState?.phase === 'completed' && timerState.remaining <= 0) {
+      // 비동기로 실행하여 cascading render 방지
+      queueMicrotask(() => handleCompleteSubject());
+    }
+  }, [timers, currentSubject, allCompleted, examStarted, handleCompleteSubject]);
 
   const handleReviewSubjectChange = (idx: number) => {
     if (!reviewMode) return;

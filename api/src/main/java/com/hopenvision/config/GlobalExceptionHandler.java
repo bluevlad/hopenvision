@@ -9,6 +9,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.stream.Collectors;
 
@@ -52,6 +53,13 @@ public class GlobalExceptionHandler {
         log.warn("Validation Error: {}", message);
         return ResponseEntity.badRequest()
                 .body(ApiResponse.error(message));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNoResourceFound(NoResourceFoundException e) {
+        log.warn("Not Found Path: {}", e.getResourcePath());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("요청한 경로를 찾을 수 없습니다: " + e.getResourcePath()));
     }
 
     @ExceptionHandler(Exception.class)

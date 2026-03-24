@@ -9,6 +9,7 @@ export interface ExamResponse {
   passScore: number | null;
   questionSetId: number | null;
   questionSetNm: string | null;
+  examStatus: string | null;
   isUse: string;
   regDt: string;
   updDt: string;

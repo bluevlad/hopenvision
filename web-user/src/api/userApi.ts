@@ -90,6 +90,22 @@ export const getUserHistory = async (): Promise<HistoryItem[]> => {
   return response.data.data;
 };
 
+// 성적 추이 조회 (회차별)
+export const getScoreTrend = async () => {
+  const response = await client.get('/api/user/history/trend', {
+    headers: { [USER_ID_HEADER]: getUserId() },
+  });
+  return response.data.data;
+};
+
+// 약점 과목 진단
+export const getWeaknessAnalysis = async (examCd: string) => {
+  const response = await client.get(`/api/user/exams/${examCd}/weakness`, {
+    headers: { [USER_ID_HEADER]: getUserId() },
+  });
+  return response.data.data;
+};
+
 // 내 프로필 조회
 export const getMyProfile = async (): Promise<UserProfile | null> => {
   const response = await client.get<UserProfileResponse>('/api/user/profile', {

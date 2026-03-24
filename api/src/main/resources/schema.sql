@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS exam_mst (
     total_score     NUMERIC(5,2) DEFAULT 100,
     pass_score      NUMERIC(5,2),
     question_set_id INTEGER,
+    exam_status     VARCHAR(20) DEFAULT 'DRAFT',
     is_use          CHAR(1) DEFAULT 'Y',
     reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     upd_dt          TIMESTAMP
@@ -35,6 +36,8 @@ CREATE TABLE IF NOT EXISTS exam_subject (
     question_type   VARCHAR(20) DEFAULT 'CHOICE',
     cut_line        NUMERIC(5,2) DEFAULT 40,
     sort_order      INTEGER DEFAULT 1,
+    group_id        BIGINT,
+    time_limit      INTEGER DEFAULT 22,
     is_use          CHAR(1) DEFAULT 'Y',
     reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (exam_cd, subject_cd),
@@ -321,6 +324,21 @@ COMMENT ON COLUMN question_set_item.question_no IS '과목 내 문항 번호';
 COMMENT ON COLUMN question_set_item.score IS '배점 (오버라이드)';
 
 CREATE INDEX IF NOT EXISTS idx_question_set_item_subject ON question_set_item(set_id, subject_cd);
+
+-- 17. 시험 공지사항 테이블
+CREATE TABLE IF NOT EXISTS exam_notice (
+    notice_id       SERIAL PRIMARY KEY,
+    exam_cd         VARCHAR(50) NOT NULL,
+    title           VARCHAR(200) NOT NULL,
+    content         TEXT,
+    is_pinned       CHAR(1) DEFAULT 'N',
+    is_use          CHAR(1) DEFAULT 'Y',
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP,
+    FOREIGN KEY (exam_cd) REFERENCES exam_mst(exam_cd) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE exam_notice IS '시험 공지사항';
 
 -- ============================================
 -- 인덱스 생성

@@ -49,6 +49,10 @@ public class Exam {
     @Column(name = "question_set_id")
     private Long questionSetId;
 
+    @Column(name = "exam_status", length = 20)
+    @Builder.Default
+    private String examStatus = "DRAFT";
+
     @Column(name = "is_use", length = 1)
     @Builder.Default
     private String isUse = "Y";

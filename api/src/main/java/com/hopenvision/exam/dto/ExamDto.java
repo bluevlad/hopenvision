@@ -60,6 +60,7 @@ public class ExamDto {
         private BigDecimal passScore;
         private Long questionSetId;
         private String questionSetNm;
+        private String examStatus;
         private String isUse;
         private LocalDateTime regDt;
         private LocalDateTime updDt;
@@ -83,6 +84,7 @@ public class ExamDto {
         private BigDecimal passScore;
         private Long questionSetId;
         private String questionSetNm;
+        private String examStatus;
         private String isUse;
         private LocalDateTime regDt;
         private LocalDateTime updDt;

@@ -3,6 +3,10 @@ package com.hopenvision.exam.service;
 import com.hopenvision.exam.dto.*;
 import com.hopenvision.exam.entity.*;
 import com.hopenvision.exam.repository.*;
+import com.hopenvision.user.entity.*;
+import com.hopenvision.user.repository.UserAnswerRepository;
+import com.hopenvision.user.repository.UserScoreRepository;
+import com.hopenvision.user.repository.UserTotalScoreRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +31,9 @@ public class ExamService {
     private final ExamSubjectRepository subjectRepository;
     private final ExamAnswerKeyRepository answerKeyRepository;
     private final QuestionSetRepository questionSetRepository;
+    private final UserAnswerRepository userAnswerRepository;
+    private final UserScoreRepository userScoreRepository;
+    private final UserTotalScoreRepository userTotalScoreRepository;
 
     /**
      * 시험 목록 조회 (페이징, 검색)
@@ -218,6 +225,102 @@ public class ExamService {
 
         exam.setExamStatus(newStatus);
         return toResponse(examRepository.save(exam));
+    }
+
+    /**
+     * 재채점 실행 (A-007, A-013)
+     * 정답 변경 후 해당 시험의 모든 응시자 점수를 재계산
+     */
+    @Transactional
+    public int rescoreExam(String examCd) {
+        Exam exam = examRepository.findById(examCd)
+                .orElseThrow(() -> new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd));
+
+        List<ExamSubject> subjects = subjectRepository.findByExamCdOrderBySortOrder(examCd);
+        Map<String, ExamSubject> subjectMap = subjects.stream()
+                .collect(Collectors.toMap(ExamSubject::getSubjectCd, s -> s));
+
+        // 정답 조회
+        List<ExamAnswerKey> answerKeys = answerKeyRepository.findByExamCdOrderBySubjectCdAscQuestionNoAsc(examCd);
+        Map<String, Map<Integer, ExamAnswerKey>> answerKeyMap = new HashMap<>();
+        for (ExamAnswerKey key : answerKeys) {
+            answerKeyMap.computeIfAbsent(key.getSubjectCd(), k -> new HashMap<>())
+                    .put(key.getQuestionNo(), key);
+        }
+
+        // 기존 총점 목록
+        List<UserTotalScore> totalScores = userTotalScoreRepository.findByExamCdOrderByTotalScoreDesc(examCd);
+        int rescored = 0;
+
+        for (UserTotalScore ts : totalScores) {
+            String userId = ts.getUserId();
+            List<UserAnswer> answers = userAnswerRepository.findByUserIdAndExamCd(userId, examCd);
+
+            // 과목별 재집계
+            Map<String, List<UserAnswer>> bySubject = answers.stream()
+                    .collect(Collectors.groupingBy(ua -> ua.getId().getSubjectCd()));
+
+            java.math.BigDecimal newTotalScore = java.math.BigDecimal.ZERO;
+            boolean hasCutFail = false;
+            int subjectCount = 0;
+
+            for (Map.Entry<String, List<UserAnswer>> entry : bySubject.entrySet()) {
+                String subjectCd = entry.getKey();
+                ExamSubject subject = subjectMap.get(subjectCd);
+                if (subject == null) continue;
+
+                Map<Integer, ExamAnswerKey> subjectKeys = answerKeyMap.getOrDefault(subjectCd, Map.of());
+                java.math.BigDecimal subjectScore = java.math.BigDecimal.ZERO;
+                int correctCnt = 0;
+                int wrongCnt = 0;
+
+                for (UserAnswer ua : entry.getValue()) {
+                    ExamAnswerKey key = subjectKeys.get(ua.getId().getQuestionNo());
+                    String correctAns = key != null ? key.getCorrectAns() : "";
+                    boolean isCorrect = correctAns.equals(ua.getUserAns());
+
+                    ua.setIsCorrect(isCorrect ? "Y" : "N");
+
+                    if (isCorrect && key != null) {
+                        java.math.BigDecimal score = key.getScore() != null ? key.getScore() : subject.getScorePerQ();
+                        subjectScore = subjectScore.add(score);
+                        correctCnt++;
+                    } else {
+                        wrongCnt++;
+                    }
+                }
+
+                // UserScore 업데이트
+                UserScore userScore = userScoreRepository.findByUserIdAndExamCd(userId, examCd).stream()
+                        .filter(us -> subjectCd.equals(us.getId().getSubjectCd()))
+                        .findFirst().orElse(null);
+                if (userScore != null) {
+                    userScore.setRawScore(subjectScore);
+                    userScore.setCorrectCnt(correctCnt);
+                    userScore.setWrongCnt(wrongCnt);
+                }
+
+                java.math.BigDecimal cutLine = subject.getCutLine() != null ? subject.getCutLine() : java.math.BigDecimal.valueOf(40);
+                if (subjectScore.compareTo(cutLine) < 0) hasCutFail = true;
+
+                newTotalScore = newTotalScore.add(subjectScore);
+                subjectCount++;
+            }
+
+            // UserTotalScore 업데이트
+            java.math.BigDecimal avgScore = subjectCount > 0
+                    ? newTotalScore.divide(java.math.BigDecimal.valueOf(subjectCount), 2, java.math.RoundingMode.HALF_UP)
+                    : java.math.BigDecimal.ZERO;
+
+            ts.setTotalScore(newTotalScore);
+            ts.setAvgScore(avgScore);
+            ts.setCutFailYn(hasCutFail ? "Y" : "N");
+            ts.setPassYn(!hasCutFail && exam.getPassScore() != null && avgScore.compareTo(exam.getPassScore()) >= 0 ? "Y" : "N");
+
+            rescored++;
+        }
+
+        return rescored;
     }
 
     // ==================== 과목 관련 ====================

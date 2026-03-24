@@ -1,6 +1,8 @@
 package com.hopenvision.user.controller;
 
 import com.hopenvision.exam.dto.ApiResponse;
+import com.hopenvision.exam.dto.StatisticsDto;
+import com.hopenvision.exam.service.StatisticsService;
 import com.hopenvision.user.dto.HistoryDto;
 import com.hopenvision.user.dto.ScoreAnalysisDto;
 import com.hopenvision.user.dto.ScoringResultDto;
@@ -30,6 +32,7 @@ public class UserExamController {
     private final UserExamService userExamService;
     private final UserScoringService userScoringService;
     private final ScoreAnalysisService scoreAnalysisService;
+    private final StatisticsService statisticsService;
 
     private static final java.util.regex.Pattern USER_ID_PATTERN =
             java.util.regex.Pattern.compile("^[a-zA-Z0-9_-]{1,50}$");
@@ -101,5 +104,22 @@ public class UserExamController {
             @Parameter(description = "사용자 ID")
             @RequestHeader(value = "X-User-Id", defaultValue = "guest") String userId) {
         return ApiResponse.success(userExamService.getUserHistory(validateUserId(userId)));
+    }
+
+    @GetMapping("/history/trend")
+    @Operation(summary = "성적 추이 조회", description = "회차별 과목 점수 변화를 조회합니다.")
+    public ApiResponse<List<StatisticsDto.ScoreTrendItem>> getScoreTrend(
+            @Parameter(description = "사용자 ID")
+            @RequestHeader(value = "X-User-Id", defaultValue = "guest") String userId) {
+        return ApiResponse.success(statisticsService.getScoreTrend(validateUserId(userId)));
+    }
+
+    @GetMapping("/exams/{examCd}/weakness")
+    @Operation(summary = "약점 과목 진단", description = "과목별 정답률 기반 약점을 분석합니다.")
+    public ApiResponse<List<StatisticsDto.WeaknessAnalysis>> getWeaknessAnalysis(
+            @Parameter(description = "사용자 ID")
+            @RequestHeader(value = "X-User-Id", defaultValue = "guest") String userId,
+            @PathVariable String examCd) {
+        return ApiResponse.success(statisticsService.getWeaknessAnalysis(validateUserId(userId), examCd));
     }
 }

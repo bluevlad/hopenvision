@@ -43,4 +43,10 @@ public interface UserAnswerRepository extends JpaRepository<UserAnswer, UserAnsw
            "GROUP BY ua.id.subjectCd, ua.id.questionNo, ua.userAns " +
            "ORDER BY ua.id.subjectCd, ua.id.questionNo, ua.userAns")
     List<Object[]> getChoiceDistributions(@Param("examCd") String examCd);
+
+    // 특정 과목 문항별 정답 여부 (변별력 계산용): [userId, questionNo, isCorrect]
+    @Query("SELECT ua.id.userId, ua.id.questionNo, ua.isCorrect " +
+           "FROM UserAnswer ua WHERE ua.id.examCd = :examCd AND ua.id.subjectCd = :subjectCd " +
+           "ORDER BY ua.id.userId, ua.id.questionNo")
+    List<Object[]> getAnswersByExamAndSubject(@Param("examCd") String examCd, @Param("subjectCd") String subjectCd);
 }

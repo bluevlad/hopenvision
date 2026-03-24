@@ -68,3 +68,11 @@ export interface ExamDashboardItem {
   submittedCount: number;
   submissionRate: number;
 }
+
+export interface DiscriminationDetail {
+  questionNo: number;
+  correctRate: number;
+  difficulty: string;
+  discriminationIndex: number;
+  discriminationLevel: string;
+}

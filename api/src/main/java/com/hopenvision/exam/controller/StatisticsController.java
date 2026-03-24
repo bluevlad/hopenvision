@@ -37,6 +37,35 @@ public class StatisticsController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    @Operation(summary = "성적 추이 조회", description = "사용자의 회차별 과목 점수 변화를 조회합니다.")
+    @GetMapping("/trend")
+    public ResponseEntity<ApiResponse<java.util.List<StatisticsDto.ScoreTrendItem>>> getScoreTrend(
+            @Parameter(description = "사용자 ID") @RequestHeader(value = "X-User-Id", defaultValue = "guest") String userId
+    ) {
+        var result = statisticsService.getScoreTrend(userId);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @Operation(summary = "약점 과목 진단", description = "사용자의 과목별 정답률 기반 약점을 분석합니다.")
+    @GetMapping("/exams/{examCd}/weakness")
+    public ResponseEntity<ApiResponse<java.util.List<StatisticsDto.WeaknessAnalysis>>> getWeaknessAnalysis(
+            @Parameter(description = "사용자 ID") @RequestHeader(value = "X-User-Id", defaultValue = "guest") String userId,
+            @Parameter(description = "시험코드") @PathVariable String examCd
+    ) {
+        var result = statisticsService.getWeaknessAnalysis(userId, examCd);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @Operation(summary = "문항 변별력 분석", description = "과목별 문항의 변별력 지수를 산출합니다.")
+    @GetMapping("/exams/{examCd}/subjects/{subjectCd}/discrimination")
+    public ResponseEntity<ApiResponse<java.util.List<StatisticsDto.DiscriminationDetail>>> getDiscriminationIndex(
+            @Parameter(description = "시험코드") @PathVariable String examCd,
+            @Parameter(description = "과목코드") @PathVariable String subjectCd
+    ) {
+        var result = statisticsService.getDiscriminationIndex(examCd, subjectCd);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
     @Operation(summary = "응시 현황 대시보드", description = "사용 중인 시험들의 응시 현황을 조회합니다.")
     @GetMapping("/dashboard")
     public ResponseEntity<ApiResponse<java.util.List<StatisticsDto.ExamDashboardItem>>> getDashboard() {

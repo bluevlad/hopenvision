@@ -85,6 +85,16 @@ public class ExamController {
         return ResponseEntity.ok(ApiResponse.success("시험이 삭제되었습니다.", null));
     }
 
+    @Operation(summary = "시험 재채점", description = "정답 변경 후 전체 응시자의 점수를 재계산합니다.")
+    @PostMapping("/{examCd}/rescore")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> rescoreExam(
+            @Parameter(description = "시험코드") @PathVariable String examCd
+    ) {
+        int rescored = examService.rescoreExam(examCd);
+        return ResponseEntity.ok(ApiResponse.success("재채점이 완료되었습니다.",
+                java.util.Map.of("examCd", examCd, "rescoredCount", rescored)));
+    }
+
     @Operation(summary = "시험 상태 변경", description = "시험 상태를 변경합니다. (DRAFT→REGISTRATION→IN_PROGRESS→GRADING→PUBLISHED→CLOSED)")
     @PutMapping("/{examCd}/status")
     public ResponseEntity<ApiResponse<ExamDto.Response>> updateExamStatus(

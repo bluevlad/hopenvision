@@ -117,4 +117,58 @@ public class StatisticsDto {
         private long submittedCount;
         private BigDecimal submissionRate;
     }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ScoreTrendItem {
+        private String examCd;
+        private String examNm;
+        private BigDecimal totalScore;
+        private BigDecimal avgScore;
+        private String passYn;
+        private String regDt;
+        private List<SubjectScoreItem> subjectScores;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SubjectScoreItem {
+        private String subjectCd;
+        private String subjectNm;
+        private BigDecimal score;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class WeaknessAnalysis {
+        private String subjectCd;
+        private String subjectNm;
+        private BigDecimal correctRate;
+        private String level;
+        private int correctCnt;
+        private int wrongCnt;
+        private int totalQuestions;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class DiscriminationDetail {
+        private int questionNo;
+        private BigDecimal correctRate;
+        private String difficulty;
+        private BigDecimal discriminationIndex;
+        private String discriminationLevel;
+    }
 }

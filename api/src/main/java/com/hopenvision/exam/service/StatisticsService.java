@@ -8,6 +8,8 @@ import com.hopenvision.exam.repository.ExamAnswerKeyRepository;
 import com.hopenvision.exam.repository.ExamApplicantRepository;
 import com.hopenvision.exam.repository.ExamRepository;
 import com.hopenvision.exam.repository.ExamSubjectRepository;
+import com.hopenvision.user.entity.UserScore;
+import com.hopenvision.user.entity.UserTotalScore;
 import com.hopenvision.user.repository.UserAnswerRepository;
 import com.hopenvision.user.repository.UserScoreRepository;
 import com.hopenvision.user.repository.UserTotalScoreRepository;
@@ -321,6 +323,170 @@ public class StatisticsService {
                     .applicantCount(applicantCount)
                     .submittedCount(submittedCount)
                     .submissionRate(submissionRate)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * 성적 추이 — 사용자의 회차별 과목 점수 변화 (S-014, T-009)
+     */
+    public List<StatisticsDto.ScoreTrendItem> getScoreTrend(String userId) {
+        List<UserTotalScore> totals = userTotalScoreRepository.findByUserIdOrderByRegDtDesc(userId);
+        if (totals.isEmpty()) return List.of();
+
+        List<StatisticsDto.ScoreTrendItem> result = new ArrayList<>();
+
+        for (UserTotalScore ts : totals) {
+            Exam exam = examRepository.findById(ts.getExamCd()).orElse(null);
+            if (exam == null) continue;
+
+            List<UserScore> userScores = userScoreRepository.findByUserIdAndExamCd(userId, ts.getExamCd());
+            List<ExamSubject> subjects = subjectRepository.findByExamCdOrderBySortOrder(ts.getExamCd());
+            Map<String, String> subjectNames = subjects.stream()
+                    .collect(Collectors.toMap(ExamSubject::getSubjectCd, ExamSubject::getSubjectNm));
+
+            List<StatisticsDto.SubjectScoreItem> subjectScores = new ArrayList<>();
+            for (UserScore us : userScores) {
+                subjectScores.add(StatisticsDto.SubjectScoreItem.builder()
+                        .subjectCd(us.getId().getSubjectCd())
+                        .subjectNm(subjectNames.getOrDefault(us.getId().getSubjectCd(), us.getId().getSubjectCd()))
+                        .score(us.getRawScore())
+                        .build());
+            }
+
+            result.add(StatisticsDto.ScoreTrendItem.builder()
+                    .examCd(ts.getExamCd())
+                    .examNm(exam.getExamNm())
+                    .totalScore(ts.getTotalScore())
+                    .avgScore(ts.getAvgScore())
+                    .passYn(ts.getPassYn())
+                    .regDt(ts.getRegDt() != null ? ts.getRegDt().toString() : null)
+                    .subjectScores(subjectScores)
+                    .build());
+        }
+
+        // 오래된 순으로 정렬 (차트에서 왼→오 시간 흐름)
+        Collections.reverse(result);
+        return result;
+    }
+
+    /**
+     * 약점 과목 진단 — 과목별 정답률 분석 (T-013)
+     */
+    public List<StatisticsDto.WeaknessAnalysis> getWeaknessAnalysis(String userId, String examCd) {
+        examRepository.findById(examCd)
+                .orElseThrow(() -> new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd));
+
+        List<UserScore> userScores = userScoreRepository.findByUserIdAndExamCd(userId, examCd);
+        List<ExamSubject> subjects = subjectRepository.findByExamCdOrderBySortOrder(examCd);
+        Map<String, ExamSubject> subjectMap = subjects.stream()
+                .collect(Collectors.toMap(ExamSubject::getSubjectCd, s -> s));
+
+        List<StatisticsDto.WeaknessAnalysis> result = new ArrayList<>();
+        for (UserScore us : userScores) {
+            ExamSubject subject = subjectMap.get(us.getId().getSubjectCd());
+            int total = (us.getCorrectCnt() != null ? us.getCorrectCnt() : 0) + (us.getWrongCnt() != null ? us.getWrongCnt() : 0);
+            BigDecimal correctRate = total > 0
+                    ? BigDecimal.valueOf(us.getCorrectCnt()).multiply(BigDecimal.valueOf(100))
+                            .divide(BigDecimal.valueOf(total), 2, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
+
+            String level;
+            if (correctRate.compareTo(BigDecimal.valueOf(80)) >= 0) level = "강점";
+            else if (correctRate.compareTo(BigDecimal.valueOf(60)) >= 0) level = "보통";
+            else if (correctRate.compareTo(BigDecimal.valueOf(40)) >= 0) level = "주의";
+            else level = "약점";
+
+            result.add(StatisticsDto.WeaknessAnalysis.builder()
+                    .subjectCd(us.getId().getSubjectCd())
+                    .subjectNm(subject != null ? subject.getSubjectNm() : us.getId().getSubjectCd())
+                    .correctRate(correctRate)
+                    .level(level)
+                    .correctCnt(us.getCorrectCnt() != null ? us.getCorrectCnt() : 0)
+                    .wrongCnt(us.getWrongCnt() != null ? us.getWrongCnt() : 0)
+                    .totalQuestions(total)
+                    .build());
+        }
+        result.sort(Comparator.comparing(StatisticsDto.WeaknessAnalysis::getCorrectRate));
+        return result;
+    }
+
+    /**
+     * 문항 변별력 지수 산출 (T-007)
+     * 상위 27% 정답률 - 하위 27% 정답률
+     */
+    public List<StatisticsDto.DiscriminationDetail> getDiscriminationIndex(String examCd, String subjectCd) {
+        // 해당 과목 응시자의 총점 기준으로 상/하위 27% 구분
+        List<UserScore> allScores = userScoreRepository.findByExamCdAndSubjectCdOrderByScore(examCd, subjectCd);
+        if (allScores.size() < 4) return List.of(); // 최소 4명 필요
+
+        int n27 = Math.max(1, (int) Math.round(allScores.size() * 0.27));
+        Set<String> topUsers = new HashSet<>();
+        for (UserScore us : allScores.subList(0, n27)) {
+            topUsers.add(us.getId().getUserId());
+        }
+        Set<String> bottomUsers = new HashSet<>();
+        for (UserScore us : allScores.subList(allScores.size() - n27, allScores.size())) {
+            bottomUsers.add(us.getId().getUserId());
+        }
+
+        // 문항별 정답 데이터
+        List<Object[]> answers = userAnswerRepository.getAnswersByExamAndSubject(examCd, subjectCd);
+        // questionNo -> {top correct, top total, bottom correct, bottom total}
+        Map<Integer, int[]> qStats = new HashMap<>();
+
+        for (Object[] row : answers) {
+            String uid = (String) row[0];
+            int qNo = ((Number) row[1]).intValue();
+            boolean correct = "Y".equals(row[2]);
+
+            qStats.computeIfAbsent(qNo, k -> new int[4]);
+            int[] stats = qStats.get(qNo);
+
+            if (topUsers.contains(uid)) {
+                stats[1]++;
+                if (correct) stats[0]++;
+            }
+            if (bottomUsers.contains(uid)) {
+                stats[3]++;
+                if (correct) stats[2]++;
+            }
+        }
+
+        // 전체 정답률도 계산
+        List<Object[]> correctRates = userAnswerRepository.getQuestionCorrectRates(examCd);
+        Map<String, long[]> rateMap = new HashMap<>();
+        for (Object[] row : correctRates) {
+            if (subjectCd.equals(row[0])) {
+                rateMap.put(row[1].toString(), new long[]{((Number) row[2]).longValue(), ((Number) row[3]).longValue()});
+            }
+        }
+
+        List<Integer> questionNos = new ArrayList<>(qStats.keySet());
+        Collections.sort(questionNos);
+
+        return questionNos.stream().map(qNo -> {
+            int[] stats = qStats.get(qNo);
+            BigDecimal topRate = stats[1] > 0 ? BigDecimal.valueOf(stats[0]).divide(BigDecimal.valueOf(stats[1]), 4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+            BigDecimal bottomRate = stats[3] > 0 ? BigDecimal.valueOf(stats[2]).divide(BigDecimal.valueOf(stats[3]), 4, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+            BigDecimal di = topRate.subtract(bottomRate).setScale(2, RoundingMode.HALF_UP);
+
+            long[] rates = rateMap.getOrDefault(String.valueOf(qNo), new long[]{0, 1});
+            BigDecimal cr = BigDecimal.valueOf(rates[0]).multiply(BigDecimal.valueOf(100))
+                    .divide(BigDecimal.valueOf(Math.max(1, rates[1])), 2, RoundingMode.HALF_UP);
+
+            String difficulty = cr.compareTo(BigDecimal.valueOf(70)) >= 0 ? "상(쉬움)" :
+                    cr.compareTo(BigDecimal.valueOf(40)) >= 0 ? "중(보통)" : "하(어려움)";
+
+            String diLevel = di.compareTo(BigDecimal.valueOf(0.4)) >= 0 ? "우수" :
+                    di.compareTo(BigDecimal.valueOf(0.2)) >= 0 ? "양호" : "부적절";
+
+            return StatisticsDto.DiscriminationDetail.builder()
+                    .questionNo(qNo)
+                    .correctRate(cr)
+                    .difficulty(difficulty)
+                    .discriminationIndex(di)
+                    .discriminationLevel(diLevel)
                     .build();
         }).collect(Collectors.toList());
     }

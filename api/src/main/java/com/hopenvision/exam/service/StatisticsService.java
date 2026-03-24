@@ -5,6 +5,7 @@ import com.hopenvision.exam.entity.Exam;
 import com.hopenvision.exam.entity.ExamAnswerKey;
 import com.hopenvision.exam.entity.ExamSubject;
 import com.hopenvision.exam.repository.ExamAnswerKeyRepository;
+import com.hopenvision.exam.repository.ExamApplicantRepository;
 import com.hopenvision.exam.repository.ExamRepository;
 import com.hopenvision.exam.repository.ExamSubjectRepository;
 import com.hopenvision.user.repository.UserAnswerRepository;
@@ -30,6 +31,7 @@ public class StatisticsService {
     private final ExamRepository examRepository;
     private final ExamSubjectRepository subjectRepository;
     private final ExamAnswerKeyRepository answerKeyRepository;
+    private final ExamApplicantRepository applicantRepository;
     private final UserTotalScoreRepository userTotalScoreRepository;
     private final UserScoreRepository userScoreRepository;
     private final UserAnswerRepository userAnswerRepository;
@@ -238,5 +240,88 @@ public class StatisticsService {
         }
 
         return result;
+    }
+
+    /**
+     * 직렬별 통계 (T-008)
+     */
+    public List<StatisticsDto.AreaStatistics> getAreaStatistics(String examCd) {
+        examRepository.findById(examCd)
+                .orElseThrow(() -> new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd));
+
+        List<Object[]> rows = applicantRepository.getAreaStatistics(examCd);
+        List<StatisticsDto.AreaStatistics> result = new ArrayList<>();
+
+        for (Object[] row : rows) {
+            String area = (String) row[0];
+            long count = ((Number) row[1]).longValue();
+            Double avgDouble = row[2] != null ? ((Number) row[2]).doubleValue() : null;
+            BigDecimal avg = avgDouble != null ? BigDecimal.valueOf(avgDouble).setScale(2, RoundingMode.HALF_UP) : null;
+            BigDecimal max = row[3] != null ? new BigDecimal(row[3].toString()) : null;
+            BigDecimal min = row[4] != null ? new BigDecimal(row[4].toString()) : null;
+            long passed = row[5] != null ? ((Number) row[5]).longValue() : 0;
+
+            BigDecimal passRate = BigDecimal.ZERO;
+            if (count > 0) {
+                passRate = BigDecimal.valueOf(passed)
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP);
+            }
+
+            result.add(StatisticsDto.AreaStatistics.builder()
+                    .applyArea(area)
+                    .applicantCount(count)
+                    .avgScore(avg)
+                    .maxScore(max)
+                    .minScore(min)
+                    .passedCount(passed)
+                    .passRate(passRate)
+                    .build());
+        }
+
+        return result;
+    }
+
+    /**
+     * 응시 현황 대시보드 (T-010)
+     */
+    public List<StatisticsDto.ExamDashboardItem> getDashboard() {
+        List<Exam> exams = examRepository.findByIsUse("Y");
+        if (exams.isEmpty()) return List.of();
+
+        List<String> examCds = exams.stream().map(Exam::getExamCd).collect(Collectors.toList());
+
+        // 응시자 수 일괄 조회
+        Map<String, Long> applicantCounts = new HashMap<>();
+        for (Object[] row : examRepository.findExamCountsByExamCds(examCds)) {
+            applicantCounts.put((String) row[0], (Long) row[2]);
+        }
+
+        // 제출 완료 수 일괄 조회
+        Map<String, Long> submittedCounts = new HashMap<>();
+        for (Object[] row : userTotalScoreRepository.countByExamCdIn(examCds)) {
+            submittedCounts.put((String) row[0], (Long) row[1]);
+        }
+
+        return exams.stream().map(exam -> {
+            long applicantCount = applicantCounts.getOrDefault(exam.getExamCd(), 0L);
+            long submittedCount = submittedCounts.getOrDefault(exam.getExamCd(), 0L);
+            BigDecimal submissionRate = BigDecimal.ZERO;
+            if (applicantCount > 0) {
+                submissionRate = BigDecimal.valueOf(submittedCount)
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(BigDecimal.valueOf(applicantCount), 2, RoundingMode.HALF_UP);
+            }
+
+            return StatisticsDto.ExamDashboardItem.builder()
+                    .examCd(exam.getExamCd())
+                    .examNm(exam.getExamNm())
+                    .examType(exam.getExamType())
+                    .examStatus(exam.getExamStatus())
+                    .applicantCount(applicantCount)
+                    .submittedCount(submittedCount)
+                    .submissionRate(submissionRate)
+                    .build();
+        }).collect(Collectors.toList());
     }
 }

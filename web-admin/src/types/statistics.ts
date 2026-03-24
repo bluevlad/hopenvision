@@ -48,3 +48,23 @@ export interface ChoiceDistribution {
   percentage: number;
   isCorrect: boolean;
 }
+
+export interface AreaStatistics {
+  applyArea: string;
+  applicantCount: number;
+  avgScore: number | null;
+  maxScore: number | null;
+  minScore: number | null;
+  passedCount: number;
+  passRate: number;
+}
+
+export interface ExamDashboardItem {
+  examCd: string;
+  examNm: string;
+  examType: string;
+  examStatus: string | null;
+  applicantCount: number;
+  submittedCount: number;
+  submissionRate: number;
+}

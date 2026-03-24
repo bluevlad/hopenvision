@@ -87,6 +87,7 @@ public class ExamService {
                 .passScore(exam.getPassScore())
                 .questionSetId(exam.getQuestionSetId())
                 .questionSetNm(questionSetNm)
+                .examStatus(exam.getExamStatus())
                 .isUse(exam.getIsUse())
                 .regDt(exam.getRegDt())
                 .updDt(exam.getUpdDt())
@@ -171,6 +172,52 @@ public class ExamService {
             throw new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd);
         }
         examRepository.deleteById(examCd);
+    }
+
+    // ==================== 시험 상태 관리 ====================
+
+    private static final Map<String, List<String>> STATUS_TRANSITIONS = Map.of(
+            "DRAFT", List.of("REGISTRATION"),
+            "REGISTRATION", List.of("IN_PROGRESS"),
+            "IN_PROGRESS", List.of("GRADING"),
+            "GRADING", List.of("PUBLISHED"),
+            "PUBLISHED", List.of("CLOSED"),
+            "CLOSED", List.of()
+    );
+
+    private static final Map<String, String> STATUS_LABELS = Map.of(
+            "DRAFT", "초안",
+            "REGISTRATION", "접수중",
+            "IN_PROGRESS", "시험중",
+            "GRADING", "채점중",
+            "PUBLISHED", "성적공개",
+            "CLOSED", "종료"
+    );
+
+    /**
+     * 시험 상태 변경
+     */
+    @Transactional
+    public ExamDto.Response updateExamStatus(String examCd, String newStatus) {
+        Exam exam = examRepository.findById(examCd)
+                .orElseThrow(() -> new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd));
+
+        String currentStatus = exam.getExamStatus() != null ? exam.getExamStatus() : "DRAFT";
+
+        if (!STATUS_LABELS.containsKey(newStatus)) {
+            throw new IllegalArgumentException("유효하지 않은 상태입니다: " + newStatus);
+        }
+
+        List<String> allowedNext = STATUS_TRANSITIONS.getOrDefault(currentStatus, List.of());
+        if (!allowedNext.contains(newStatus)) {
+            String currentLabel = STATUS_LABELS.getOrDefault(currentStatus, currentStatus);
+            String newLabel = STATUS_LABELS.getOrDefault(newStatus, newStatus);
+            throw new IllegalStateException(
+                    String.format("'%s' → '%s' 상태 전이가 불가능합니다.", currentLabel, newLabel));
+        }
+
+        exam.setExamStatus(newStatus);
+        return toResponse(examRepository.save(exam));
     }
 
     // ==================== 과목 관련 ====================
@@ -299,6 +346,7 @@ public class ExamService {
                 .passScore(exam.getPassScore())
                 .questionSetId(exam.getQuestionSetId())
                 .questionSetNm(questionSetNm)
+                .examStatus(exam.getExamStatus())
                 .isUse(exam.getIsUse())
                 .regDt(exam.getRegDt())
                 .updDt(exam.getUpdDt())

@@ -1,6 +1,6 @@
 import { adminClient as client } from './adminClient';
 import type { ApiResponse } from '@hopenvision/shared';
-import type { ExamStatistics, QuestionStatistics } from '../types/statistics';
+import type { ExamStatistics, QuestionStatistics, AreaStatistics, ExamDashboardItem } from '../types/statistics';
 
 export const statisticsApi = {
   getExamStatistics: async (examCd: string): Promise<ApiResponse<ExamStatistics>> => {
@@ -10,6 +10,16 @@ export const statisticsApi = {
 
   getQuestionStatistics: async (examCd: string): Promise<ApiResponse<QuestionStatistics[]>> => {
     const response = await client.get(`/api/statistics/exams/${examCd}/questions`);
+    return response.data;
+  },
+
+  getAreaStatistics: async (examCd: string): Promise<ApiResponse<AreaStatistics[]>> => {
+    const response = await client.get(`/api/statistics/exams/${examCd}/area`);
+    return response.data;
+  },
+
+  getDashboard: async (): Promise<ApiResponse<ExamDashboardItem[]>> => {
+    const response = await client.get('/api/statistics/dashboard');
     return response.data;
   },
 

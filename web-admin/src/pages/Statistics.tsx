@@ -39,7 +39,7 @@ import {
 } from 'recharts';
 import { examApi } from '../api/examApi';
 import { statisticsApi } from '../api/statisticsApi';
-import type { SubjectStatistics, QuestionDetail } from '../types/statistics';
+import type { SubjectStatistics, QuestionDetail, AreaStatistics, ExamDashboardItem } from '../types/statistics';
 
 const CHART_COLORS = ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#13c2c2', '#eb2f96', '#fa8c16'];
 
@@ -75,9 +75,31 @@ export default function Statistics() {
     enabled: !!selectedExamCd,
   });
 
+  const { data: areaStatsData } = useQuery({
+    queryKey: ['areaStatistics', selectedExamCd],
+    queryFn: () => statisticsApi.getAreaStatistics(selectedExamCd!),
+    enabled: !!selectedExamCd,
+  });
+
+  const { data: dashboardData } = useQuery({
+    queryKey: ['dashboard'],
+    queryFn: () => statisticsApi.getDashboard(),
+  });
+
   const examList = examListData?.data?.content || [];
   const stats = statsData?.data;
   const questionStats = questionStatsData?.data || [];
+  const areaStats = areaStatsData?.data || [];
+  const dashboard = dashboardData?.data || [];
+
+  const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+    DRAFT: { label: '초안', color: 'default' },
+    REGISTRATION: { label: '접수중', color: 'blue' },
+    IN_PROGRESS: { label: '시험중', color: 'orange' },
+    GRADING: { label: '채점중', color: 'purple' },
+    PUBLISHED: { label: '성적공개', color: 'green' },
+    CLOSED: { label: '종료', color: 'default' },
+  };
 
   const subjectColumns: ColumnsType<SubjectStatistics> = [
     {
@@ -452,8 +474,94 @@ export default function Statistics() {
                 </>
               ),
             },
+            {
+              key: 'area',
+              label: '직렬별 분석',
+              children: (
+                <>
+                  {areaStats.length > 0 ? (
+                    <>
+                      <Card title="직렬별 비교" style={{ marginBottom: 16 }}>
+                        <ResponsiveContainer width="100%" height={300}>
+                          <BarChart data={areaStats.map((a) => ({
+                            직렬: a.applyArea || '미지정',
+                            평균: a.avgScore ?? 0,
+                            최고: a.maxScore ?? 0,
+                            최저: a.minScore ?? 0,
+                          }))}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="직렬" />
+                            <YAxis />
+                            <Tooltip formatter={(value) => [`${value}점`]} />
+                            <Legend />
+                            <Bar dataKey="평균" fill={CHART_COLORS[0]} />
+                            <Bar dataKey="최고" fill={CHART_COLORS[1]} />
+                            <Bar dataKey="최저" fill={CHART_COLORS[3]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </Card>
+                      <Card title="직렬별 상세">
+                        <Table<AreaStatistics>
+                          columns={[
+                            { title: '직렬', dataIndex: 'applyArea', key: 'applyArea', width: 120, render: (v: string) => v || '미지정' },
+                            { title: '응시자', dataIndex: 'applicantCount', key: 'applicantCount', width: 80, align: 'center', render: (v: number) => `${v}명` },
+                            { title: '평균', dataIndex: 'avgScore', key: 'avgScore', width: 80, align: 'center', render: (v: number | null) => v != null ? `${v}점` : '-' },
+                            { title: '최고', dataIndex: 'maxScore', key: 'maxScore', width: 80, align: 'center', render: (v: number | null) => v != null ? `${v}점` : '-' },
+                            { title: '최저', dataIndex: 'minScore', key: 'minScore', width: 80, align: 'center', render: (v: number | null) => v != null ? `${v}점` : '-' },
+                            { title: '합격자', dataIndex: 'passedCount', key: 'passedCount', width: 80, align: 'center', render: (v: number) => `${v}명` },
+                            { title: '합격률', dataIndex: 'passRate', key: 'passRate', width: 100, align: 'center', render: (v: number) => <Progress percent={v} size="small" format={(p) => `${p?.toFixed(1)}%`} /> },
+                          ]}
+                          dataSource={areaStats}
+                          rowKey="applyArea"
+                          size="small"
+                          pagination={false}
+                        />
+                      </Card>
+                    </>
+                  ) : (
+                    <Card><Empty description="직렬별 통계 데이터가 없습니다. 응시자의 직렬(applyArea) 정보가 필요합니다." /></Card>
+                  )}
+                </>
+              ),
+            },
           ]}
         />
+      )}
+
+      {!selectedExamCd && !isLoading && dashboard.length > 0 && (
+        <Card title="응시 현황 대시보드">
+          <Table<ExamDashboardItem>
+            columns={[
+              { title: '시험코드', dataIndex: 'examCd', key: 'examCd', width: 120 },
+              { title: '시험명', dataIndex: 'examNm', key: 'examNm', ellipsis: true },
+              { title: '유형', dataIndex: 'examType', key: 'examType', width: 80 },
+              {
+                title: '상태',
+                dataIndex: 'examStatus',
+                key: 'examStatus',
+                width: 100,
+                align: 'center',
+                render: (v: string) => {
+                  const s = STATUS_LABELS[v] || { label: v || '-', color: 'default' };
+                  return <Tag color={s.color}>{s.label}</Tag>;
+                },
+              },
+              { title: '응시자', dataIndex: 'applicantCount', key: 'applicantCount', width: 80, align: 'center', render: (v: number) => `${v}명` },
+              { title: '제출 완료', dataIndex: 'submittedCount', key: 'submittedCount', width: 90, align: 'center', render: (v: number) => `${v}명` },
+              {
+                title: '제출률',
+                dataIndex: 'submissionRate',
+                key: 'submissionRate',
+                width: 140,
+                render: (v: number) => <Progress percent={v} size="small" format={(p) => `${p?.toFixed(1)}%`} />,
+              },
+            ]}
+            dataSource={dashboard}
+            rowKey="examCd"
+            size="small"
+            pagination={false}
+          />
+        </Card>
       )}
     </div>
   );

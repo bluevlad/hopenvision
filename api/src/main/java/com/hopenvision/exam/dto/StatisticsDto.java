@@ -87,4 +87,34 @@ public class StatisticsDto {
         private BigDecimal percentage;
         private boolean isCorrect;
     }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class AreaStatistics {
+        private String applyArea;
+        private long applicantCount;
+        private BigDecimal avgScore;
+        private BigDecimal maxScore;
+        private BigDecimal minScore;
+        private long passedCount;
+        private BigDecimal passRate;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ExamDashboardItem {
+        private String examCd;
+        private String examNm;
+        private String examType;
+        private String examStatus;
+        private long applicantCount;
+        private long submittedCount;
+        private BigDecimal submissionRate;
+    }
 }

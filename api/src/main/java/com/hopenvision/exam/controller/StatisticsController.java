@@ -37,6 +37,22 @@ public class StatisticsController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    @Operation(summary = "응시 현황 대시보드", description = "사용 중인 시험들의 응시 현황을 조회합니다.")
+    @GetMapping("/dashboard")
+    public ResponseEntity<ApiResponse<java.util.List<StatisticsDto.ExamDashboardItem>>> getDashboard() {
+        var result = statisticsService.getDashboard();
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @Operation(summary = "직렬별 통계", description = "시험의 직렬(applyArea)별 통계를 조회합니다.")
+    @GetMapping("/exams/{examCd}/area")
+    public ResponseEntity<ApiResponse<java.util.List<StatisticsDto.AreaStatistics>>> getAreaStatistics(
+            @Parameter(description = "시험코드") @PathVariable String examCd
+    ) {
+        var result = statisticsService.getAreaStatistics(examCd);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
     @Operation(summary = "문항별 정답률 통계", description = "과목별 문항의 정답률, 선택지 분포, 난이도를 조회합니다.")
     @GetMapping("/exams/{examCd}/questions")
     public ResponseEntity<ApiResponse<java.util.List<StatisticsDto.QuestionStatistics>>> getQuestionStatistics(

@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS exam_mst (
     total_score     NUMERIC(5,2) DEFAULT 100,
     pass_score      NUMERIC(5,2),
     question_set_id INTEGER,
+    exam_status     VARCHAR(20) DEFAULT 'DRAFT',
     is_use          CHAR(1) DEFAULT 'Y',
     reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     upd_dt          TIMESTAMP

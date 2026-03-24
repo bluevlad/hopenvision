@@ -31,6 +31,20 @@ public class JwtTokenProvider {
         this.expirationMs = expirationHours * 60 * 60 * 1000;
     }
 
+    public String generateUserToken(String userId, String name) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + expirationMs);
+
+        return Jwts.builder()
+                .subject(userId)
+                .claim("name", name)
+                .claim("role", "USER")
+                .issuedAt(now)
+                .expiration(expiry)
+                .signWith(key)
+                .compact();
+    }
+
     public String generateToken(String email, String name) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);

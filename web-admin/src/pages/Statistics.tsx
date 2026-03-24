@@ -11,6 +11,9 @@ import {
   Spin,
   Button,
   message,
+  Tabs,
+  Tag,
+  Progress,
 } from 'antd';
 import {
   UserOutlined,
@@ -36,7 +39,7 @@ import {
 } from 'recharts';
 import { examApi } from '../api/examApi';
 import { statisticsApi } from '../api/statisticsApi';
-import type { SubjectStatistics } from '../types/statistics';
+import type { SubjectStatistics, QuestionDetail } from '../types/statistics';
 
 const CHART_COLORS = ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#13c2c2', '#eb2f96', '#fa8c16'];
 
@@ -66,8 +69,15 @@ export default function Statistics() {
     enabled: !!selectedExamCd,
   });
 
+  const { data: questionStatsData, isLoading: isLoadingQuestions } = useQuery({
+    queryKey: ['questionStatistics', selectedExamCd],
+    queryFn: () => statisticsApi.getQuestionStatistics(selectedExamCd!),
+    enabled: !!selectedExamCd,
+  });
+
   const examList = examListData?.data?.content || [];
   const stats = statsData?.data;
+  const questionStats = questionStatsData?.data || [];
 
   const subjectColumns: ColumnsType<SubjectStatistics> = [
     {
@@ -203,155 +213,247 @@ export default function Statistics() {
       )}
 
       {stats && !isLoading && (
-        <>
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={4}>
-              <Card>
-                <Statistic
-                  title="응시자수"
-                  value={stats.totalApplicants}
-                  suffix="명"
-                  prefix={<UserOutlined />}
-                />
-              </Card>
-            </Col>
-            <Col span={4}>
-              <Card>
-                <Statistic
-                  title="합격자수"
-                  value={stats.passedCount}
-                  suffix="명"
-                  prefix={<TrophyOutlined />}
-                  valueStyle={{ color: '#3f8600' }}
-                />
-              </Card>
-            </Col>
-            <Col span={4}>
-              <Card>
-                <Statistic
-                  title="합격률"
-                  value={stats.passRate}
-                  suffix="%"
-                  prefix={<BarChartOutlined />}
-                  precision={2}
-                />
-              </Card>
-            </Col>
-            <Col span={4}>
-              <Card>
-                <Statistic
-                  title="평균점수"
-                  value={stats.avgScore ?? 0}
-                  suffix="점"
-                  precision={2}
-                />
-              </Card>
-            </Col>
-            <Col span={4}>
-              <Card>
-                <Statistic
-                  title="최고점수"
-                  value={stats.maxScore ?? 0}
-                  suffix="점"
-                  prefix={<RiseOutlined />}
-                  valueStyle={{ color: '#3f8600' }}
-                />
-              </Card>
-            </Col>
-            <Col span={4}>
-              <Card>
-                <Statistic
-                  title="최저점수"
-                  value={stats.minScore ?? 0}
-                  suffix="점"
-                  prefix={<FallOutlined />}
-                  valueStyle={{ color: '#cf1322' }}
-                />
-              </Card>
-            </Col>
-          </Row>
+        <Tabs
+          defaultActiveKey="overview"
+          items={[
+            {
+              key: 'overview',
+              label: '전체 통계',
+              children: (
+                <>
+                  <Row gutter={16} style={{ marginBottom: 16 }}>
+                    <Col span={4}>
+                      <Card>
+                        <Statistic title="응시자수" value={stats.totalApplicants} suffix="명" prefix={<UserOutlined />} />
+                      </Card>
+                    </Col>
+                    <Col span={4}>
+                      <Card>
+                        <Statistic title="합격자수" value={stats.passedCount} suffix="명" prefix={<TrophyOutlined />} valueStyle={{ color: '#3f8600' }} />
+                      </Card>
+                    </Col>
+                    <Col span={4}>
+                      <Card>
+                        <Statistic title="합격률" value={stats.passRate} suffix="%" prefix={<BarChartOutlined />} precision={2} />
+                      </Card>
+                    </Col>
+                    <Col span={4}>
+                      <Card>
+                        <Statistic title="평균점수" value={stats.avgScore ?? 0} suffix="점" precision={2} />
+                      </Card>
+                    </Col>
+                    <Col span={4}>
+                      <Card>
+                        <Statistic title="최고점수" value={stats.maxScore ?? 0} suffix="점" prefix={<RiseOutlined />} valueStyle={{ color: '#3f8600' }} />
+                      </Card>
+                    </Col>
+                    <Col span={4}>
+                      <Card>
+                        <Statistic title="최저점수" value={stats.minScore ?? 0} suffix="점" prefix={<FallOutlined />} valueStyle={{ color: '#cf1322' }} />
+                      </Card>
+                    </Col>
+                  </Row>
 
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={16}>
-              <Card title="점수 분포">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={distributionChartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="range" />
-                    <YAxis allowDecimals={false} />
-                    <Tooltip
-                      formatter={(value, name) => {
-                        if (name === '인원수') return [`${value}명`, name];
-                        return [`${value}%`, name];
-                      }}
-                    />
-                    <Legend />
-                    <Bar dataKey="인원수" fill="#1890ff">
-                      {distributionChartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </Card>
-            </Col>
-            <Col span={8}>
-              <Card title="합격/불합격 비율">
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={passFailData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={100}
-                      dataKey="value"
-                      label={({ name, value }) => `${name} ${value}명`}
-                    >
-                      {passFailData.map((_entry, index) => (
-                        <Cell key={`cell-${index}`} fill={PIE_COLORS[index]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => [`${value}명`]} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </Card>
-            </Col>
-          </Row>
+                  <Row gutter={16} style={{ marginBottom: 16 }}>
+                    <Col span={16}>
+                      <Card title="점수 분포">
+                        <ResponsiveContainer width="100%" height={300}>
+                          <BarChart data={distributionChartData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="range" />
+                            <YAxis allowDecimals={false} />
+                            <Tooltip
+                              formatter={(value, name) => {
+                                if (name === '인원수') return [`${value}명`, name];
+                                return [`${value}%`, name];
+                              }}
+                            />
+                            <Legend />
+                            <Bar dataKey="인원수" fill="#1890ff">
+                              {distributionChartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.fill} />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </Card>
+                    </Col>
+                    <Col span={8}>
+                      <Card title="합격/불합격 비율">
+                        <ResponsiveContainer width="100%" height={300}>
+                          <PieChart>
+                            <Pie
+                              data={passFailData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={100}
+                              dataKey="value"
+                              label={({ name, value }) => `${name} ${value}명`}
+                            >
+                              {passFailData.map((_entry, index) => (
+                                <Cell key={`cell-${index}`} fill={PIE_COLORS[index]} />
+                              ))}
+                            </Pie>
+                            <Tooltip formatter={(value) => [`${value}명`]} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </Card>
+                    </Col>
+                  </Row>
 
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={24}>
-              <Card title="과목별 통계 비교">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={subjectChartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="과목" />
-                    <YAxis />
-                    <Tooltip formatter={(value) => [`${value}점`]} />
-                    <Legend />
-                    <Bar dataKey="평균" fill={CHART_COLORS[0]} />
-                    <Bar dataKey="최고" fill={CHART_COLORS[1]} />
-                    <Bar dataKey="최저" fill={CHART_COLORS[3]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </Card>
-            </Col>
-          </Row>
+                  <Row gutter={16} style={{ marginBottom: 16 }}>
+                    <Col span={24}>
+                      <Card title="과목별 통계 비교">
+                        <ResponsiveContainer width="100%" height={300}>
+                          <BarChart data={subjectChartData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="과목" />
+                            <YAxis />
+                            <Tooltip formatter={(value) => [`${value}점`]} />
+                            <Legend />
+                            <Bar dataKey="평균" fill={CHART_COLORS[0]} />
+                            <Bar dataKey="최고" fill={CHART_COLORS[1]} />
+                            <Bar dataKey="최저" fill={CHART_COLORS[3]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </Card>
+                    </Col>
+                  </Row>
 
-          <Row gutter={16}>
-            <Col span={24}>
-              <Card title="과목별 상세 통계">
-                <Table
-                  columns={subjectColumns}
-                  dataSource={stats.subjectStatistics}
-                  rowKey="subjectCd"
-                  size="small"
-                  pagination={false}
-                />
-              </Card>
-            </Col>
-          </Row>
-        </>
+                  <Row gutter={16}>
+                    <Col span={24}>
+                      <Card title="과목별 상세 통계">
+                        <Table
+                          columns={subjectColumns}
+                          dataSource={stats.subjectStatistics}
+                          rowKey="subjectCd"
+                          size="small"
+                          pagination={false}
+                        />
+                      </Card>
+                    </Col>
+                  </Row>
+                </>
+              ),
+            },
+            {
+              key: 'questions',
+              label: '문항별 분석',
+              children: isLoadingQuestions ? (
+                <Card><div style={{ textAlign: 'center', padding: 60 }}><Spin size="large" /></div></Card>
+              ) : (
+                <>
+                  {questionStats.map((subject) => {
+                    const questionColumns: ColumnsType<QuestionDetail> = [
+                      {
+                        title: '문항',
+                        dataIndex: 'questionNo',
+                        key: 'questionNo',
+                        width: 70,
+                        align: 'center',
+                        render: (v: number) => `Q${v}`,
+                      },
+                      {
+                        title: '정답',
+                        dataIndex: 'correctAns',
+                        key: 'correctAns',
+                        width: 60,
+                        align: 'center',
+                        render: (v: string) => <Tag color="blue">{v}</Tag>,
+                      },
+                      {
+                        title: '응시자',
+                        dataIndex: 'totalAnswered',
+                        key: 'totalAnswered',
+                        width: 80,
+                        align: 'center',
+                        render: (v: number) => `${v}명`,
+                      },
+                      {
+                        title: '정답률',
+                        dataIndex: 'correctRate',
+                        key: 'correctRate',
+                        width: 160,
+                        render: (rate: number) => (
+                          <Progress
+                            percent={rate}
+                            size="small"
+                            strokeColor={rate >= 70 ? '#52c41a' : rate >= 40 ? '#faad14' : '#f5222d'}
+                            format={(p) => `${p?.toFixed(1)}%`}
+                          />
+                        ),
+                      },
+                      {
+                        title: '난이도',
+                        dataIndex: 'difficulty',
+                        key: 'difficulty',
+                        width: 100,
+                        align: 'center',
+                        render: (v: string) => {
+                          const color = v.includes('쉬움') ? 'green' : v.includes('보통') ? 'orange' : 'red';
+                          return <Tag color={color}>{v}</Tag>;
+                        },
+                      },
+                      {
+                        title: '선택지 분포',
+                        key: 'choiceDistributions',
+                        render: (_, record) => (
+                          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                            {record.choiceDistributions.map((cd) => (
+                              <div key={cd.choice} style={{ textAlign: 'center', minWidth: 40 }}>
+                                <div style={{
+                                  fontSize: 11,
+                                  fontWeight: cd.isCorrect ? 'bold' : 'normal',
+                                  color: cd.isCorrect ? '#1890ff' : '#666',
+                                }}>
+                                  {cd.isCorrect ? `[${cd.choice}]` : cd.choice}
+                                </div>
+                                <div style={{
+                                  background: cd.isCorrect ? '#e6f7ff' : '#f5f5f5',
+                                  borderRadius: 4,
+                                  padding: '2px 6px',
+                                  fontSize: 11,
+                                  border: cd.isCorrect ? '1px solid #91d5ff' : '1px solid #d9d9d9',
+                                }}>
+                                  {cd.percentage.toFixed(0)}%
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ),
+                      },
+                    ];
+
+                    return (
+                      <Card
+                        key={subject.subjectCd}
+                        title={`${subject.subjectNm} (${subject.subjectCd})`}
+                        style={{ marginBottom: 16 }}
+                        extra={
+                          <span style={{ color: '#888' }}>
+                            {subject.questions.length}문항
+                          </span>
+                        }
+                      >
+                        <Table
+                          columns={questionColumns}
+                          dataSource={subject.questions}
+                          rowKey="questionNo"
+                          size="small"
+                          pagination={false}
+                        />
+                      </Card>
+                    );
+                  })}
+                  {questionStats.length === 0 && (
+                    <Card><Empty description="문항별 통계 데이터가 없습니다." /></Card>
+                  )}
+                </>
+              ),
+            },
+          ]}
+        />
       )}
     </div>
   );

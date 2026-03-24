@@ -37,6 +37,15 @@ public class StatisticsController {
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
+    @Operation(summary = "문항별 정답률 통계", description = "과목별 문항의 정답률, 선택지 분포, 난이도를 조회합니다.")
+    @GetMapping("/exams/{examCd}/questions")
+    public ResponseEntity<ApiResponse<java.util.List<StatisticsDto.QuestionStatistics>>> getQuestionStatistics(
+            @Parameter(description = "시험코드") @PathVariable String examCd
+    ) {
+        var result = statisticsService.getQuestionStatistics(examCd);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
     @Operation(summary = "성적 Excel 내보내기", description = "시험 성적 데이터를 Excel 파일로 다운로드합니다.")
     @GetMapping("/exams/{examCd}/export")
     public ResponseEntity<byte[]> exportScores(

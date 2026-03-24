@@ -2,9 +2,12 @@ package com.hopenvision.exam.service;
 
 import com.hopenvision.exam.dto.StatisticsDto;
 import com.hopenvision.exam.entity.Exam;
+import com.hopenvision.exam.entity.ExamAnswerKey;
 import com.hopenvision.exam.entity.ExamSubject;
+import com.hopenvision.exam.repository.ExamAnswerKeyRepository;
 import com.hopenvision.exam.repository.ExamRepository;
 import com.hopenvision.exam.repository.ExamSubjectRepository;
+import com.hopenvision.user.repository.UserAnswerRepository;
 import com.hopenvision.user.repository.UserScoreRepository;
 import com.hopenvision.user.repository.UserTotalScoreRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -15,10 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,8 +29,10 @@ public class StatisticsService {
 
     private final ExamRepository examRepository;
     private final ExamSubjectRepository subjectRepository;
+    private final ExamAnswerKeyRepository answerKeyRepository;
     private final UserTotalScoreRepository userTotalScoreRepository;
     private final UserScoreRepository userScoreRepository;
+    private final UserAnswerRepository userAnswerRepository;
 
     public StatisticsDto.ExamStatistics getExamStatistics(String examCd) {
         Exam exam = examRepository.findById(examCd)
@@ -118,5 +120,123 @@ public class StatisticsService {
         }
 
         return distributions;
+    }
+
+    /**
+     * 문항별 정답률 및 선택지 분포 통계
+     */
+    public List<StatisticsDto.QuestionStatistics> getQuestionStatistics(String examCd) {
+        Exam exam = examRepository.findById(examCd)
+                .orElseThrow(() -> new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd));
+
+        List<ExamSubject> subjects = subjectRepository.findByExamCdOrderBySortOrder(examCd);
+
+        // 과목별 정답 맵: subjectCd -> questionNo -> correctAns
+        Map<String, Map<Integer, String>> answerKeyMap = new HashMap<>();
+        for (ExamSubject subject : subjects) {
+            List<ExamAnswerKey> keys = answerKeyRepository.findByExamCdAndSubjectCdOrderByQuestionNo(examCd, subject.getSubjectCd());
+            Map<Integer, String> qMap = new HashMap<>();
+            for (ExamAnswerKey key : keys) {
+                qMap.put(key.getQuestionNo(), key.getCorrectAns());
+            }
+            answerKeyMap.put(subject.getSubjectCd(), qMap);
+        }
+
+        // 문항별 정답률 집계
+        List<Object[]> correctRates = userAnswerRepository.getQuestionCorrectRates(examCd);
+        // key: "subjectCd:questionNo" -> [correctCount, totalCount]
+        Map<String, long[]> rateMap = new HashMap<>();
+        for (Object[] row : correctRates) {
+            String key = row[0] + ":" + row[1];
+            long correct = ((Number) row[2]).longValue();
+            long total = ((Number) row[3]).longValue();
+            rateMap.put(key, new long[]{correct, total});
+        }
+
+        // 선택지 분포 집계
+        List<Object[]> choiceRows = userAnswerRepository.getChoiceDistributions(examCd);
+        // key: "subjectCd:questionNo" -> {choice -> count}
+        Map<String, Map<String, Long>> choiceMap = new LinkedHashMap<>();
+        for (Object[] row : choiceRows) {
+            String key = row[0] + ":" + row[1];
+            String choice = (String) row[2];
+            long count = ((Number) row[3]).longValue();
+            choiceMap.computeIfAbsent(key, k -> new LinkedHashMap<>())
+                    .put(choice != null ? choice : "미응답", count);
+        }
+
+        // 과목별로 결과 조합
+        List<StatisticsDto.QuestionStatistics> result = new ArrayList<>();
+
+        for (ExamSubject subject : subjects) {
+            Map<Integer, String> qAnswers = answerKeyMap.getOrDefault(subject.getSubjectCd(), Map.of());
+            List<StatisticsDto.QuestionDetail> questions = new ArrayList<>();
+
+            // 문항 번호 수집 (정답 키 기준)
+            List<Integer> questionNos = new ArrayList<>(qAnswers.keySet());
+            Collections.sort(questionNos);
+
+            for (int qNo : questionNos) {
+                String mapKey = subject.getSubjectCd() + ":" + qNo;
+                long[] rates = rateMap.getOrDefault(mapKey, new long[]{0, 0});
+                long correctCount = rates[0];
+                long totalAnswered = rates[1];
+
+                BigDecimal correctRate = BigDecimal.ZERO;
+                if (totalAnswered > 0) {
+                    correctRate = BigDecimal.valueOf(correctCount)
+                            .multiply(BigDecimal.valueOf(100))
+                            .divide(BigDecimal.valueOf(totalAnswered), 2, RoundingMode.HALF_UP);
+                }
+
+                // 난이도 판정
+                String difficulty;
+                if (correctRate.compareTo(BigDecimal.valueOf(70)) >= 0) {
+                    difficulty = "상(쉬움)";
+                } else if (correctRate.compareTo(BigDecimal.valueOf(40)) >= 0) {
+                    difficulty = "중(보통)";
+                } else {
+                    difficulty = "하(어려움)";
+                }
+
+                // 선택지 분포
+                String correctAns = qAnswers.get(qNo);
+                Map<String, Long> choices = choiceMap.getOrDefault(mapKey, Map.of());
+                List<StatisticsDto.ChoiceDistribution> choiceDist = new ArrayList<>();
+                for (String choiceNum : List.of("1", "2", "3", "4", "5")) {
+                    long cnt = choices.getOrDefault(choiceNum, 0L);
+                    BigDecimal pct = BigDecimal.ZERO;
+                    if (totalAnswered > 0) {
+                        pct = BigDecimal.valueOf(cnt)
+                                .multiply(BigDecimal.valueOf(100))
+                                .divide(BigDecimal.valueOf(totalAnswered), 2, RoundingMode.HALF_UP);
+                    }
+                    choiceDist.add(StatisticsDto.ChoiceDistribution.builder()
+                            .choice(choiceNum)
+                            .count(cnt)
+                            .percentage(pct)
+                            .isCorrect(choiceNum.equals(correctAns))
+                            .build());
+                }
+
+                questions.add(StatisticsDto.QuestionDetail.builder()
+                        .questionNo(qNo)
+                        .correctAns(correctAns)
+                        .totalAnswered(totalAnswered)
+                        .correctCount(correctCount)
+                        .correctRate(correctRate)
+                        .difficulty(difficulty)
+                        .choiceDistributions(choiceDist)
+                        .build());
+            }
+
+            result.add(StatisticsDto.QuestionStatistics.builder()
+                    .subjectCd(subject.getSubjectCd())
+                    .subjectNm(subject.getSubjectNm())
+                    .questions(questions)
+                    .build());
+        }
+
+        return result;
     }
 }

@@ -28,4 +28,19 @@ public interface UserAnswerRepository extends JpaRepository<UserAnswer, UserAnsw
     // 사용자가 제출한 시험 코드 목록 일괄 조회 (N+1 방지)
     @Query("SELECT DISTINCT ua.id.examCd FROM UserAnswer ua WHERE ua.id.userId = :userId AND ua.id.examCd IN :examCds")
     List<String> findSubmittedExamCds(@Param("userId") String userId, @Param("examCds") List<String> examCds);
+
+    // 문항별 정답률 집계: [subjectCd, questionNo, correctCount, totalCount]
+    @Query("SELECT ua.id.subjectCd, ua.id.questionNo, " +
+           "SUM(CASE WHEN ua.isCorrect = 'Y' THEN 1 ELSE 0 END), COUNT(ua) " +
+           "FROM UserAnswer ua WHERE ua.id.examCd = :examCd " +
+           "GROUP BY ua.id.subjectCd, ua.id.questionNo " +
+           "ORDER BY ua.id.subjectCd, ua.id.questionNo")
+    List<Object[]> getQuestionCorrectRates(@Param("examCd") String examCd);
+
+    // 문항별 선택지 분포: [subjectCd, questionNo, userAns, count]
+    @Query("SELECT ua.id.subjectCd, ua.id.questionNo, ua.userAns, COUNT(ua) " +
+           "FROM UserAnswer ua WHERE ua.id.examCd = :examCd " +
+           "GROUP BY ua.id.subjectCd, ua.id.questionNo, ua.userAns " +
+           "ORDER BY ua.id.subjectCd, ua.id.questionNo, ua.userAns")
+    List<Object[]> getChoiceDistributions(@Param("examCd") String examCd);
 }

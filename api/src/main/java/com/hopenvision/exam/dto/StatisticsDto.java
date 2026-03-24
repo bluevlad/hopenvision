@@ -49,4 +49,42 @@ public class StatisticsDto {
         private long count;
         private BigDecimal percentage;
     }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class QuestionStatistics {
+        private String subjectCd;
+        private String subjectNm;
+        private List<QuestionDetail> questions;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class QuestionDetail {
+        private int questionNo;
+        private String correctAns;
+        private long totalAnswered;
+        private long correctCount;
+        private BigDecimal correctRate;
+        private String difficulty;
+        private List<ChoiceDistribution> choiceDistributions;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ChoiceDistribution {
+        private String choice;
+        private long count;
+        private BigDecimal percentage;
+        private boolean isCorrect;
+    }
 }

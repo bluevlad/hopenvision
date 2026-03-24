@@ -25,3 +25,26 @@ export interface ScoreDistribution {
   count: number;
   percentage: number;
 }
+
+export interface QuestionStatistics {
+  subjectCd: string;
+  subjectNm: string;
+  questions: QuestionDetail[];
+}
+
+export interface QuestionDetail {
+  questionNo: number;
+  correctAns: string;
+  totalAnswered: number;
+  correctCount: number;
+  correctRate: number;
+  difficulty: string;
+  choiceDistributions: ChoiceDistribution[];
+}
+
+export interface ChoiceDistribution {
+  choice: string;
+  count: number;
+  percentage: number;
+  isCorrect: boolean;
+}

@@ -114,6 +114,6 @@ public class PathTraversalFilter extends OncePerRequestFilter {
     private void sendBadRequest(HttpServletResponse response, String message) throws IOException {
         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write("{\"success\":false,\"error\":\"" + message + "\"}");
+        response.getWriter().write("{\"success\":false,\"code\":\"PATH_TRAVERSAL\",\"message\":\"" + message + "\",\"data\":null}");
     }
 }

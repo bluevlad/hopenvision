@@ -101,7 +101,7 @@ public class SecurityConfig {
             if (signature == null || !verifyHmac(userId, signature)) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json;charset=UTF-8");
-                response.getWriter().write("{\"success\":false,\"message\":\"Invalid user signature\",\"data\":null}");
+                response.getWriter().write("{\"success\":false,\"code\":\"AUTH_INVALID\",\"message\":\"Invalid user signature\",\"data\":null}");
                 return;
             }
 

@@ -9,6 +9,8 @@ import {
   Table,
   Empty,
   Spin,
+  Button,
+  message,
 } from 'antd';
 import {
   UserOutlined,
@@ -16,6 +18,7 @@ import {
   BarChartOutlined,
   RiseOutlined,
   FallOutlined,
+  DownloadOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -50,6 +53,7 @@ const DISTRIBUTION_COLORS: Record<string, string> = {
 
 export default function Statistics() {
   const [selectedExamCd, setSelectedExamCd] = useState<string | undefined>();
+  const [exporting, setExporting] = useState(false);
 
   const { data: examListData } = useQuery({
     queryKey: ['exams', { page: 0, size: 100 }],
@@ -157,6 +161,28 @@ export default function Statistics() {
                 label: `${exam.examNm} (${exam.examCd})`,
               }))}
             />
+          </Col>
+          <Col>
+            <Button
+              type="primary"
+              icon={<DownloadOutlined />}
+              disabled={!selectedExamCd || !stats}
+              loading={exporting}
+              onClick={async () => {
+                if (!selectedExamCd) return;
+                setExporting(true);
+                try {
+                  await statisticsApi.exportScores(selectedExamCd);
+                  message.success('성적 Excel 파일을 다운로드했습니다.');
+                } catch {
+                  message.error('Excel 내보내기에 실패했습니다.');
+                } finally {
+                  setExporting(false);
+                }
+              }}
+            >
+              Excel 내보내기
+            </Button>
           </Col>
         </Row>
       </Card>

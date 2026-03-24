@@ -3,6 +3,7 @@ package com.hopenvision.exam.controller;
 import com.hopenvision.exam.dto.ApiResponse;
 import com.hopenvision.exam.dto.StatisticsDto;
 import com.hopenvision.exam.service.ExcelExportService;
+import com.hopenvision.exam.service.PdfExportService;
 import com.hopenvision.exam.service.StatisticsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,6 +28,7 @@ public class StatisticsController {
 
     private final StatisticsService statisticsService;
     private final ExcelExportService excelExportService;
+    private final PdfExportService pdfExportService;
 
     @Operation(summary = "시험 통계 조회", description = "시험의 전체 통계를 조회합니다.")
     @GetMapping("/exams/{examCd}")
@@ -104,5 +106,41 @@ public class StatisticsController {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .contentLength(excelData.length)
                 .body(excelData);
+    }
+
+    @Operation(summary = "성적표 PDF 다운로드", description = "개인 성적표를 PDF 파일로 다운로드합니다.")
+    @GetMapping("/exams/{examCd}/pdf")
+    public ResponseEntity<byte[]> exportPdf(
+            @Parameter(description = "시험코드") @PathVariable String examCd,
+            @Parameter(description = "사용자 ID") @RequestHeader(value = "X-User-Id", defaultValue = "guest") String userId
+    ) throws IOException {
+        byte[] pdfData = pdfExportService.generateScoreReport(userId, examCd);
+        String fileName = URLEncoder.encode("성적표_" + examCd + "_" + userId + ".pdf", StandardCharsets.UTF_8);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .contentLength(pdfData.length)
+                .body(pdfData);
+    }
+
+    @Operation(summary = "합격 예측", description = "현재 성적 기반 합격 가능성을 예측합니다.")
+    @GetMapping("/exams/{examCd}/prediction")
+    public ResponseEntity<ApiResponse<StatisticsDto.PassPrediction>> getPassPrediction(
+            @Parameter(description = "사용자 ID") @RequestHeader(value = "X-User-Id", defaultValue = "guest") String userId,
+            @Parameter(description = "시험코드") @PathVariable String examCd
+    ) {
+        var result = statisticsService.getPassPrediction(userId, examCd);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @Operation(summary = "오답 유형 분석", description = "사용자의 과목별 오답 패턴을 분석합니다.")
+    @GetMapping("/exams/{examCd}/wrong-patterns")
+    public ResponseEntity<ApiResponse<java.util.List<StatisticsDto.WrongAnswerPattern>>> getWrongAnswerPatterns(
+            @Parameter(description = "사용자 ID") @RequestHeader(value = "X-User-Id", defaultValue = "guest") String userId,
+            @Parameter(description = "시험코드") @PathVariable String examCd
+    ) {
+        var result = statisticsService.getWrongAnswerPatterns(userId, examCd);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 }

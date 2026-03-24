@@ -8,6 +8,7 @@ import com.hopenvision.exam.repository.ExamAnswerKeyRepository;
 import com.hopenvision.exam.repository.ExamApplicantRepository;
 import com.hopenvision.exam.repository.ExamRepository;
 import com.hopenvision.exam.repository.ExamSubjectRepository;
+import com.hopenvision.user.entity.UserAnswer;
 import com.hopenvision.user.entity.UserScore;
 import com.hopenvision.user.entity.UserTotalScore;
 import com.hopenvision.user.repository.UserAnswerRepository;
@@ -489,5 +490,111 @@ public class StatisticsService {
                     .discriminationLevel(diLevel)
                     .build();
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * 합격 예측 (T-015)
+     */
+    public StatisticsDto.PassPrediction getPassPrediction(String userId, String examCd) {
+        Exam exam = examRepository.findById(examCd)
+                .orElseThrow(() -> new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd));
+
+        UserTotalScore ts = userTotalScoreRepository.findByUserIdAndExamCd(userId, examCd)
+                .orElseThrow(() -> new EntityNotFoundException("채점 결과를 찾을 수 없습니다."));
+
+        long totalApplicants = userTotalScoreRepository.countByExamCd(examCd);
+        long passedCount = userTotalScoreRepository.countPassedByExamCd(examCd);
+        BigDecimal passRate = totalApplicants > 0
+                ? BigDecimal.valueOf(passedCount).multiply(BigDecimal.valueOf(100))
+                        .divide(BigDecimal.valueOf(totalApplicants), 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
+        BigDecimal examPassScore = exam.getPassScore() != null ? exam.getPassScore() : BigDecimal.valueOf(60);
+        BigDecimal myAvg = ts.getAvgScore() != null ? ts.getAvgScore() : BigDecimal.ZERO;
+        BigDecimal gap = myAvg.subtract(examPassScore);
+
+        Long lowerCount = userTotalScoreRepository.countByExamCdAndScoreLessThanOrEqual(examCd, ts.getTotalScore());
+        BigDecimal percentile = totalApplicants > 0
+                ? BigDecimal.valueOf(lowerCount).multiply(BigDecimal.valueOf(100))
+                        .divide(BigDecimal.valueOf(totalApplicants), 2, RoundingMode.HALF_UP)
+                : BigDecimal.ZERO;
+
+        String prediction;
+        if ("Y".equals(ts.getPassYn())) {
+            prediction = "합격권";
+        } else if ("Y".equals(ts.getCutFailYn())) {
+            prediction = "과락 — 약점 과목 집중 필요";
+        } else if (gap.compareTo(BigDecimal.valueOf(-5)) >= 0) {
+            prediction = "합격 근접 — 소폭 향상 필요";
+        } else if (gap.compareTo(BigDecimal.valueOf(-15)) >= 0) {
+            prediction = "노력 필요 — 전 과목 보강 필요";
+        } else {
+            prediction = "기초 보강 필요";
+        }
+
+        return StatisticsDto.PassPrediction.builder()
+                .myTotalScore(ts.getTotalScore())
+                .myAvgScore(myAvg)
+                .examPassScore(examPassScore)
+                .currentPassLine(examPassScore)
+                .gapToPassLine(gap)
+                .prediction(prediction)
+                .percentile(percentile)
+                .totalApplicants(totalApplicants)
+                .passedCount(passedCount)
+                .passRate(passRate)
+                .build();
+    }
+
+    /**
+     * 오답 유형 분석 (T-016)
+     */
+    public List<StatisticsDto.WrongAnswerPattern> getWrongAnswerPatterns(String userId, String examCd) {
+        examRepository.findById(examCd)
+                .orElseThrow(() -> new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd));
+
+        List<ExamSubject> subjects = subjectRepository.findByExamCdOrderBySortOrder(examCd);
+        List<UserAnswer> allAnswers = userAnswerRepository.findByUserIdAndExamCd(userId, examCd);
+        Map<String, List<UserAnswer>> bySubject = allAnswers.stream()
+                .collect(Collectors.groupingBy(ua -> ua.getId().getSubjectCd()));
+
+        List<StatisticsDto.WrongAnswerPattern> result = new ArrayList<>();
+
+        for (ExamSubject subject : subjects) {
+            List<UserAnswer> answers = bySubject.getOrDefault(subject.getSubjectCd(), List.of());
+            List<StatisticsDto.WrongQuestionInfo> wrongQuestions = new ArrayList<>();
+
+            for (UserAnswer ua : answers) {
+                if ("N".equals(ua.getIsCorrect())) {
+                    // 정답 조회
+                    ExamAnswerKey key = answerKeyRepository.findByExamCdAndSubjectCdOrderByQuestionNo(examCd, subject.getSubjectCd())
+                            .stream().filter(k -> k.getQuestionNo().equals(ua.getId().getQuestionNo()))
+                            .findFirst().orElse(null);
+
+                    wrongQuestions.add(StatisticsDto.WrongQuestionInfo.builder()
+                            .questionNo(ua.getId().getQuestionNo())
+                            .userAns(ua.getUserAns())
+                            .correctAns(key != null ? key.getCorrectAns() : "-")
+                            .build());
+                }
+            }
+
+            int totalQ = answers.size();
+            BigDecimal wrongRate = totalQ > 0
+                    ? BigDecimal.valueOf(wrongQuestions.size()).multiply(BigDecimal.valueOf(100))
+                            .divide(BigDecimal.valueOf(totalQ), 2, RoundingMode.HALF_UP)
+                    : BigDecimal.ZERO;
+
+            result.add(StatisticsDto.WrongAnswerPattern.builder()
+                    .subjectCd(subject.getSubjectCd())
+                    .subjectNm(subject.getSubjectNm())
+                    .wrongCount(wrongQuestions.size())
+                    .totalQuestions(totalQ)
+                    .wrongRate(wrongRate)
+                    .wrongQuestions(wrongQuestions)
+                    .build());
+        }
+
+        return result;
     }
 }

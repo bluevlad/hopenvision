@@ -325,6 +325,21 @@ COMMENT ON COLUMN question_set_item.score IS '배점 (오버라이드)';
 
 CREATE INDEX IF NOT EXISTS idx_question_set_item_subject ON question_set_item(set_id, subject_cd);
 
+-- 17. 시험 공지사항 테이블
+CREATE TABLE IF NOT EXISTS exam_notice (
+    notice_id       SERIAL PRIMARY KEY,
+    exam_cd         VARCHAR(50) NOT NULL,
+    title           VARCHAR(200) NOT NULL,
+    content         TEXT,
+    is_pinned       CHAR(1) DEFAULT 'N',
+    is_use          CHAR(1) DEFAULT 'Y',
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP,
+    FOREIGN KEY (exam_cd) REFERENCES exam_mst(exam_cd) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE exam_notice IS '시험 공지사항';
+
 -- ============================================
 -- 인덱스 생성
 -- ============================================

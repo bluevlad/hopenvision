@@ -164,11 +164,54 @@ public class StatisticsDto {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
+    public static class PassPrediction {
+        private BigDecimal myTotalScore;
+        private BigDecimal myAvgScore;
+        private BigDecimal examPassScore;
+        private BigDecimal currentPassLine;
+        private BigDecimal gapToPassLine;
+        private String prediction;
+        private BigDecimal percentile;
+        private long totalApplicants;
+        private long passedCount;
+        private BigDecimal passRate;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class DiscriminationDetail {
         private int questionNo;
         private BigDecimal correctRate;
         private String difficulty;
         private BigDecimal discriminationIndex;
         private String discriminationLevel;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class WrongAnswerPattern {
+        private String subjectCd;
+        private String subjectNm;
+        private int wrongCount;
+        private int totalQuestions;
+        private BigDecimal wrongRate;
+        private List<WrongQuestionInfo> wrongQuestions;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class WrongQuestionInfo {
+        private int questionNo;
+        private String userAns;
+        private String correctAns;
     }
 }

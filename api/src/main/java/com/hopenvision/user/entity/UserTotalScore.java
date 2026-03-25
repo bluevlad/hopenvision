@@ -42,6 +42,9 @@ public class UserTotalScore {
     @Column(name = "PERCENTILE", precision = 5, scale = 2)
     private BigDecimal percentile;
 
+    @Column(name = "STANDARD_SCORE", precision = 5, scale = 2)
+    private BigDecimal standardScore;
+
     @Column(name = "PASS_YN", length = 1)
     private String passYn;
 

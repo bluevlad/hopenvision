@@ -157,6 +157,27 @@ export interface UserProfileUpsertRequest {
   newsletterYn: string;
 }
 
+// 성적 추이
+export interface ScoreTrendItem {
+  examCd: string;
+  examNm: string;
+  totalScore: number;
+  avgScore: number;
+  passYn: string;
+  regDt: string;
+}
+
+// 약점 진단
+export interface WeaknessItem {
+  subjectCd: string;
+  subjectNm: string;
+  correctRate: number;
+  correctCnt: number;
+  wrongCnt: number;
+  totalQuestions: number;
+  level: string;
+}
+
 // API Response 타입
 export type UserExamListResponse = ApiResponse<UserExam[]>;
 export type UserExamDetailResponse = ApiResponse<UserExam>;

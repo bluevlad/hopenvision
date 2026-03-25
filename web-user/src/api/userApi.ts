@@ -6,6 +6,8 @@ import type {
   ScoringResult,
   ScoreAnalysis,
   HistoryItem,
+  ScoreTrendItem,
+  WeaknessItem,
   SubmitRequest,
   UserProfileUpsertRequest,
   UserExamListResponse,
@@ -91,7 +93,7 @@ export const getUserHistory = async (): Promise<HistoryItem[]> => {
 };
 
 // 성적 추이 조회 (회차별)
-export const getScoreTrend = async () => {
+export const getScoreTrend = async (): Promise<ScoreTrendItem[]> => {
   const response = await client.get('/api/user/history/trend', {
     headers: { [USER_ID_HEADER]: getUserId() },
   });
@@ -99,8 +101,8 @@ export const getScoreTrend = async () => {
 };
 
 // 약점 과목 진단
-export const getWeaknessAnalysis = async (examCd: string) => {
-  const response = await client.get(`/api/user/exams/${examCd}/weakness`, {
+export const getWeaknessAnalysis = async (examCd: string): Promise<WeaknessItem[]> => {
+  const response = await client.get(`/api/user/exams/${encodeURIComponent(examCd)}/weakness`, {
     headers: { [USER_ID_HEADER]: getUserId() },
   });
   return response.data.data;

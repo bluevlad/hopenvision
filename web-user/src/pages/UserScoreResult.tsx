@@ -44,7 +44,7 @@ import {
   PolarRadiusAxis,
   Radar,
 } from 'recharts';
-import type { SubjectResult } from '../types/user';
+import type { SubjectResult, ScoreTrendItem, WeaknessItem } from '../types/user';
 import OMRCard from '../components/OMRCard';
 
 const { Title, Text } = Typography;
@@ -77,15 +77,13 @@ const UserScoreResult: React.FC = () => {
     enabled: !!examCd && !!result,
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: trendData } = useQuery<any[]>({
+  const { data: trendData } = useQuery<ScoreTrendItem[]>({
     queryKey: ['scoreTrend'],
     queryFn: getScoreTrend,
     enabled: !!result,
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: weaknessData } = useQuery<any[]>({
+  const { data: weaknessData } = useQuery<WeaknessItem[]>({
     queryKey: ['weakness', examCd],
     queryFn: () => getWeaknessAnalysis(examCd!),
     enabled: !!examCd && !!result,
@@ -437,7 +435,7 @@ const UserScoreResult: React.FC = () => {
   const trendTab = trendData && trendData.length > 1 ? (
     <Card title="회차별 성적 추이">
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={trendData.map((t: { examNm: string; avgScore: number; totalScore: number }) => ({
+        <LineChart data={trendData.map((t) => ({
           시험: t.examNm.length > 10 ? t.examNm.substring(0, 10) + '...' : t.examNm,
           평균: t.avgScore,
           총점: t.totalScore,
@@ -461,7 +459,7 @@ const UserScoreResult: React.FC = () => {
     <>
       <Card title="과목별 정답률 레이더" style={{ marginBottom: 16 }}>
         <ResponsiveContainer width="100%" height={300}>
-          <RadarChart data={weaknessData.map((w: { subjectNm: string; correctRate: number }) => ({
+          <RadarChart data={weaknessData.map((w) => ({
             과목: w.subjectNm,
             정답률: w.correctRate,
           }))}>

@@ -33,6 +33,9 @@ public class UserScore {
     @Column(name = "PERCENTILE", precision = 5, scale = 2)
     private BigDecimal percentile;
 
+    @Column(name = "STANDARD_SCORE", precision = 5, scale = 2)
+    private BigDecimal standardScore;
+
     @Column(name = "BATCH_YN", length = 1)
     @Builder.Default
     private String batchYn = "N";

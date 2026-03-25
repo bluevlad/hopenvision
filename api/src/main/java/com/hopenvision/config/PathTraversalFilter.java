@@ -108,6 +108,11 @@ public class PathTraversalFilter extends OncePerRequestFilter {
             return true;
         }
 
+        // ..; 패턴 (세미콜론을 이용한 경로 파라미터 우회)
+        if (value.contains("..;")) {
+            return true;
+        }
+
         return false;
     }
 

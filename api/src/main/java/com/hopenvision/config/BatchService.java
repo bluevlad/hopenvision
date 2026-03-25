@@ -160,7 +160,7 @@ public class BatchService {
         List<UserTotalScore> scores = userTotalScoreRepository.findByExamCdOrderByTotalScoreDesc(examCd);
         if (scores.size() < 2) return 0;
 
-        // 전체 총점 기준
+        // 전체 총점 기준 표준점수
         double[] totalScores = scores.stream()
                 .mapToDouble(s -> s.getTotalScore().doubleValue())
                 .toArray();
@@ -173,9 +173,31 @@ public class BatchService {
         for (UserTotalScore ts : scores) {
             double raw = ts.getTotalScore().doubleValue();
             double standardScore = ((raw - mean) / stdDev) * 20 + 100;
+            ts.setStandardScore(BigDecimal.valueOf(standardScore).setScale(2, RoundingMode.HALF_UP));
             ts.setBatchYn("Y");
-            // 표준점수를 percentile 필드에 반영하지 않고 별도 처리
-            // (현재 Entity에 standardScore 필드가 없으므로 batchYn을 마커로 사용)
+        }
+
+        // 과목별 표준점수
+        List<ExamSubject> subjects = subjectRepository.findByExamCdOrderBySortOrder(examCd);
+        for (ExamSubject subject : subjects) {
+            List<UserScore> subjectScores = userScoreRepository.findByExamCdAndSubjectCdOrderByScore(
+                    examCd, subject.getSubjectCd());
+            if (subjectScores.size() < 2) continue;
+
+            double[] rawScores = subjectScores.stream()
+                    .mapToDouble(s -> s.getRawScore().doubleValue())
+                    .toArray();
+            double subMean = Arrays.stream(rawScores).average().orElse(0);
+            double subVar = Arrays.stream(rawScores).map(s -> Math.pow(s - subMean, 2)).average().orElse(0);
+            double subStdDev = Math.sqrt(subVar);
+
+            if (subStdDev == 0) continue;
+
+            for (UserScore us : subjectScores) {
+                double raw = us.getRawScore().doubleValue();
+                double ss = ((raw - subMean) / subStdDev) * 20 + 100;
+                us.setStandardScore(BigDecimal.valueOf(ss).setScale(2, RoundingMode.HALF_UP));
+            }
         }
 
         return scores.size();

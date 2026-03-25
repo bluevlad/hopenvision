@@ -34,6 +34,100 @@ jobs:
         run: |
           source .env
           docker exec -e PGPASSWORD="$DB_PASSWORD" postgresql psql -U "$DB_USER" -d "$DB_NAME" -c "
+            -- v5.0: Stage 1~4 누락 테이블/컬럼 추가
+
+            -- 과목 마스터 (question_bank_item이 참조)
+            CREATE TABLE IF NOT EXISTS subject_master (
+              subject_cd      VARCHAR(20) PRIMARY KEY,
+              subject_nm      VARCHAR(100) NOT NULL,
+              parent_subject_cd VARCHAR(20),
+              subject_depth   INTEGER DEFAULT 1,
+              sort_order      INTEGER DEFAULT 1,
+              category        VARCHAR(50),
+              description     TEXT,
+              is_use          CHAR(1) DEFAULT 'Y',
+              reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              upd_dt          TIMESTAMP
+            );
+
+            -- 문제은행 그룹 (question_bank_item이 참조)
+            CREATE TABLE IF NOT EXISTS question_bank_group (
+              group_id        SERIAL PRIMARY KEY,
+              group_cd        VARCHAR(50) UNIQUE NOT NULL,
+              group_nm        VARCHAR(200) NOT NULL,
+              exam_year       VARCHAR(4),
+              exam_round      INTEGER,
+              category        VARCHAR(50),
+              source          VARCHAR(100),
+              description     TEXT,
+              is_use          CHAR(1) DEFAULT 'Y',
+              reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              upd_dt          TIMESTAMP
+            );
+
+            -- 문제은행 항목 (question_set_item이 참조)
+            CREATE TABLE IF NOT EXISTS question_bank_item (
+              item_id         SERIAL PRIMARY KEY,
+              group_id        INTEGER NOT NULL REFERENCES question_bank_group(group_id) ON DELETE CASCADE,
+              subject_cd      VARCHAR(20) NOT NULL,
+              question_no     INTEGER,
+              question_title  VARCHAR(500),
+              question_text   TEXT,
+              context_text    TEXT,
+              choice1         VARCHAR(1000),
+              choice2         VARCHAR(1000),
+              choice3         VARCHAR(1000),
+              choice4         VARCHAR(1000),
+              choice5         VARCHAR(1000),
+              correct_ans     VARCHAR(100) NOT NULL,
+              is_multi_ans    CHAR(1) DEFAULT 'N',
+              score           NUMERIC(5,2) DEFAULT 5,
+              category        VARCHAR(100),
+              difficulty      VARCHAR(10),
+              question_type   VARCHAR(20) DEFAULT 'CHOICE',
+              tags            VARCHAR(500),
+              explanation     TEXT,
+              correction_note TEXT,
+              image_file      VARCHAR(200),
+              use_count       INTEGER DEFAULT 0,
+              correct_rate    NUMERIC(5,2),
+              is_use          CHAR(1) DEFAULT 'Y',
+              reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              upd_dt          TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS idx_qb_item_group ON question_bank_item(group_id, subject_cd);
+
+            -- 시험 상태 컬럼 (Stage 1)
+            ALTER TABLE exam_mst ADD COLUMN IF NOT EXISTS exam_status VARCHAR(20) DEFAULT 'DRAFT';
+
+            -- 시험 공지사항 (Stage 3)
+            CREATE TABLE IF NOT EXISTS exam_notice (
+              notice_id       SERIAL PRIMARY KEY,
+              exam_cd         VARCHAR(50) NOT NULL,
+              title           VARCHAR(200) NOT NULL,
+              content         TEXT,
+              is_pinned       CHAR(1) DEFAULT 'N',
+              is_use          CHAR(1) DEFAULT 'Y',
+              reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              upd_dt          TIMESTAMP,
+              FOREIGN KEY (exam_cd) REFERENCES exam_mst(exam_cd) ON DELETE CASCADE
+            );
+
+            -- 사용자 프로필 (Phase 5)
+            CREATE TABLE IF NOT EXISTS user_profile (
+              user_id         VARCHAR(50) PRIMARY KEY,
+              user_nm         VARCHAR(100) NOT NULL,
+              email           VARCHAR(200),
+              newsletter_yn   CHAR(1) DEFAULT 'N',
+              version         BIGINT DEFAULT 0,
+              reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              upd_dt          TIMESTAMP
+            );
+
+            -- 표준점수 컬럼 (Phase 3 배치)
+            ALTER TABLE user_total_score ADD COLUMN IF NOT EXISTS standard_score NUMERIC(5,2);
+            ALTER TABLE user_score ADD COLUMN IF NOT EXISTS standard_score NUMERIC(5,2);
+
             -- v4.0: 문제세트 다과목 구조 + 시험 연결
             ALTER TABLE exam_mst ADD COLUMN IF NOT EXISTS question_set_id INTEGER;
 

@@ -42,6 +42,10 @@ nul
 # Upload
 upload/
 
+# MkDocs
+wiki-site/site/
+wiki-site/.venv/
+
 # Environment files (secrets)
 .env
 .env.*

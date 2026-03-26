@@ -111,7 +111,14 @@
       "Bash(find /Users/rainend/GIT/Claude-Opus-bluevlad/ -name hopenvision* -o -name HOPENVISION*)",
       "Bash(./gradlew build:*)",
       "Bash(./gradlew test:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(find /Users/rainend/GIT -type d -name *Claude-Opus* -o -name *bluevlad*)",
+      "Bash(python3 -m venv .venv)",
+      "Bash(source .venv/bin/activate)",
+      "Bash(pip install:*)",
+      "Bash(mkdocs build:*)",
+      "Bash(gh repo:*)",
+      "Bash(open:*)"
     ]
   }
 }

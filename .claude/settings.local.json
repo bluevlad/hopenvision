@@ -105,7 +105,20 @@
       "Bash(git -C \"C:\\\\GIT\\\\unmong-main\" commit -m \"$\\(cat <<''EOF''\nchore: 포트 80 → 8888로 변경 \\(nginx gateway 도입\\)\n\nnginx 리버스 프록시가 포트 80을 점유하고 도메인 기반 라우팅을 담당.\nunmong-main은 내부 포트 8888에서 운영.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git -C \"C:\\\\GIT\\\\unmong-main\" push origin main)",
       "Bash(git -C \"C:\\\\GIT\\\\Claude-Opus-bluevlad\" add docker/nginx/nginx.conf docker/nginx/conf.d/default.conf docker/docker-compose.gateway.yml docker/deploy-gateway.sh)",
-      "Bash(git -C \"C:\\\\GIT\\\\Claude-Opus-bluevlad\" commit -m \"$\\(cat <<''EOF''\nfeat: nginx 리버스 프록시 게이트웨이 구성\n\n도메인 기반 라우팅을 위한 nginx gateway 도입:\n- study.unmong.com → localhost:4060 \\(HopenVision User\\)\n- admin.unmong.com → localhost:4061 \\(HopenVision Admin\\)\n- 기본 → localhost:8888 \\(unmong-main portal\\)\n\n- docker-compose.gateway.yml: nginx 컨테이너 정의\n- deploy-gateway.sh: 배포 스크립트 \\(unmong-main 포트 전환 + nginx 시작\\)\n- nginx.conf: upstream 제거, host.docker.internal 사용\n- default.conf: 도메인별 server block 설정\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")"
+      "Bash(git -C \"C:\\\\GIT\\\\Claude-Opus-bluevlad\" commit -m \"$\\(cat <<''EOF''\nfeat: nginx 리버스 프록시 게이트웨이 구성\n\n도메인 기반 라우팅을 위한 nginx gateway 도입:\n- study.unmong.com → localhost:4060 \\(HopenVision User\\)\n- admin.unmong.com → localhost:4061 \\(HopenVision Admin\\)\n- 기본 → localhost:8888 \\(unmong-main portal\\)\n\n- docker-compose.gateway.yml: nginx 컨테이너 정의\n- deploy-gateway.sh: 배포 스크립트 \\(unmong-main 포트 전환 + nginx 시작\\)\n- nginx.conf: upstream 제거, host.docker.internal 사용\n- default.conf: 도메인별 server block 설정\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(find /Users/rainend/GIT/hopenvision/api -name *.sql -o -name V*.sql)",
+      "Read(//Users/rainend/GIT/Claude-Opus-bluevlad/**)",
+      "Bash(find /Users/rainend/GIT/Claude-Opus-bluevlad/ -name hopenvision* -o -name HOPENVISION*)",
+      "Bash(./gradlew build:*)",
+      "Bash(./gradlew test:*)",
+      "Bash(grep:*)",
+      "Bash(find /Users/rainend/GIT -type d -name *Claude-Opus* -o -name *bluevlad*)",
+      "Bash(python3 -m venv .venv)",
+      "Bash(source .venv/bin/activate)",
+      "Bash(pip install:*)",
+      "Bash(mkdocs build:*)",
+      "Bash(gh repo:*)",
+      "Bash(open:*)"
     ]
   }
 }

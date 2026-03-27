@@ -43,8 +43,8 @@ nul
 upload/
 
 # MkDocs
-wiki-site/site/
-wiki-site/.venv/
+wiki/site/
+wiki/.venv/
 
 # Environment files (secrets)
 .env

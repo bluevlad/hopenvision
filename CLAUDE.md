@@ -42,6 +42,11 @@ hopenvision/
 │       ├── components/         # AdminLayout, ApplicantModal
 │       ├── pages/              # ApiKeyLogin, ExamList, ExamForm, AnswerKeyForm, ExcelImport, JsonImport, ApplicantList, Statistics
 │       └── types/              # exam.ts, applicant.ts, statistics.ts
+├── wiki/                       # MkDocs Material 위키 (wiki-hub 동기화)
+│   ├── mkdocs.yml              # MkDocs 설정
+│   ├── requirements.txt        # Python 의존성
+│   └── docs/                   # 마크다운 콘텐츠
+├── github-wiki/                # GitHub Wiki 마크다운 (저장소 Wiki 탭용)
 ├── docker-compose.yml          # 개발용
 └── docker-compose.prod.yml     # 운영용
 ```
@@ -184,6 +189,16 @@ com.hopenvision/
 - 날짜 함수: `CURRENT_TIMESTAMP`, `NOW()` 사용
 - DDL: 운영은 `validate` (수동 마이그레이션), 개발은 `create`
 - 공유 DB: `database-network` 외부 네트워크 (다른 서비스와 PostgreSQL 공유)
+
+## Wiki
+
+- **구현 표준**: [WIKI_HUB_GUIDE.md](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/standards/documentation/WIKI_HUB_GUIDE.md)
+- **로컬 위키**: `wiki/` (MkDocs Material, 개발용)
+- **운영 위키**: Wiki Hub 독립 서비스 (`wiki-hub/HopenVision/`)
+- **접근 URL**: `https://study.unmong.com/wiki/HopenVision/`
+- **Wiki Hub 포트**: 4075
+- **GitHub Wiki**: `github-wiki/` (저장소 Wiki 탭에 push하는 원본)
+- wiki 콘텐츠 수정 시 `wiki/docs/`와 `wiki-hub/HopenVision/docs/` 양쪽 동기화 필요
 
 ## Deployment
 

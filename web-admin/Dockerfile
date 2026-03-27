@@ -31,6 +31,7 @@ ENV TZ=Asia/Seoul
 RUN rm -rf ./*
 
 COPY --from=builder /app/web-admin/dist .
+COPY wiki/site ./wiki
 COPY web-admin/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80

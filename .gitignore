@@ -52,6 +52,10 @@ wiki/.venv/
 !.env.example
 !.env.*.example
 
+# Python
+__pycache__/
+*.pyc
+
 # Scripts data (HWPX, PDF, 파싱 결과)
 scripts/data/
 

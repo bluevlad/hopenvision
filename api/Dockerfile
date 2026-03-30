@@ -26,7 +26,7 @@ RUN groupadd -r appgroup && useradd -r -g appgroup appuser
 
 COPY --from=builder /app/build/libs/hopenvision-api-0.0.1-SNAPSHOT.jar app.jar
 
-RUN chown -R appuser:appgroup /app
+RUN mkdir -p /data/hopenvision/upload && chown -R appuser:appgroup /app /data/hopenvision
 USER appuser
 
 EXPOSE 8080

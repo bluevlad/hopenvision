@@ -90,6 +90,7 @@ export const questionBankApi = {
     formData.append('file', file);
     const response = await client.post(`${BASE_PATH}/csv-update/preview`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
     });
     return response.data;
   },
@@ -100,6 +101,7 @@ export const questionBankApi = {
     formData.append('file', file);
     const response = await client.post(`${BASE_PATH}/csv-update/apply`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
     });
     return response.data;
   },
@@ -110,6 +112,7 @@ export const questionBankApi = {
     formData.append('file', file);
     const response = await client.post(`${BASE_PATH}/excel-update/preview`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
     });
     return response.data;
   },
@@ -120,6 +123,7 @@ export const questionBankApi = {
     formData.append('file', file);
     const response = await client.post(`${BASE_PATH}/excel-update/apply`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
     });
     return response.data;
   },

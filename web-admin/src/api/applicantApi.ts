@@ -38,6 +38,7 @@ export const applicantApi = {
     formData.append('file', file);
     const response = await client.post(`/api/exams/${examCd}/applicants/csv-result/preview`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
     });
     return response.data;
   },
@@ -48,6 +49,7 @@ export const applicantApi = {
     formData.append('file', file);
     const response = await client.post(`/api/exams/${examCd}/applicants/csv-result/apply`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
     });
     return response.data;
   },
@@ -58,6 +60,7 @@ export const applicantApi = {
     formData.append('file', file);
     const response = await client.post(`/api/exams/${examCd}/applicants/temp-score/preview`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
     });
     return response.data;
   },
@@ -68,6 +71,7 @@ export const applicantApi = {
     formData.append('file', file);
     const response = await client.post(`/api/exams/${examCd}/applicants/temp-score/apply`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
     });
     return response.data;
   },

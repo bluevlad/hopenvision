@@ -25,6 +25,8 @@ public interface ExamApplicantRepository extends JpaRepository<ExamApplicant, Ex
 
     boolean existsByExamCdAndApplicantNo(String examCd, String applicantNo);
 
+    java.util.List<ExamApplicant> findByExamCd(String examCd);
+
     // 직렬별 통계: [applyArea, count, avgScore, maxScore, minScore, passedCount]
     @Query("SELECT a.applyArea, COUNT(a), AVG(a.totalScore), MAX(a.totalScore), MIN(a.totalScore), " +
            "SUM(CASE WHEN a.passYn = 'Y' THEN 1 ELSE 0 END) " +

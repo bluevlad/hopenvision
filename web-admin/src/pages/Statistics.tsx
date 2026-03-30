@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect, useRef } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  Alert,
   Card,
   Select,
   Row,
@@ -10,6 +11,7 @@ import {
   Empty,
   Spin,
   Button,
+  Space,
   message,
   Tabs,
   Tag,
@@ -22,6 +24,9 @@ import {
   RiseOutlined,
   FallOutlined,
   DownloadOutlined,
+  CalculatorOutlined,
+  CheckCircleOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -39,6 +44,7 @@ import {
 } from 'recharts';
 import { examApi } from '../api/examApi';
 import { statisticsApi } from '../api/statisticsApi';
+import { applicantApi } from '../api/applicantApi';
 import type { SubjectStatistics, QuestionDetail, AreaStatistics, ExamDashboardItem } from '../types/statistics';
 
 const CHART_COLORS = ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#13c2c2', '#eb2f96', '#fa8c16'];
@@ -57,6 +63,62 @@ const DISTRIBUTION_COLORS: Record<string, string> = {
 export default function Statistics() {
   const [selectedExamCd, setSelectedExamCd] = useState<string | undefined>();
   const [exporting, setExporting] = useState(false);
+  const [scoringJobId, setScoringJobId] = useState<string | null>(null);
+  const [scoringStatus, setScoringStatus] = useState<string | null>(null);
+  const [scoringResult, setScoringResult] = useState<string | null>(null);
+  const [scoringLoading, setScoringLoading] = useState(false);
+  const scoringPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const queryClient = useQueryClient();
+
+  // 채점 Job 폴링
+  useEffect(() => {
+    if (scoringJobId && (scoringStatus === 'PENDING' || scoringStatus === 'PROCESSING')) {
+      scoringPollingRef.current = setInterval(async () => {
+        try {
+          const res = await applicantApi.getJobStatus(scoringJobId);
+          if (res.success) {
+            setScoringStatus(res.data.status);
+            if (res.data.status === 'COMPLETED') {
+              setScoringResult(res.data.resultSummary);
+              message.success('성적채점 완료');
+              queryClient.invalidateQueries({ queryKey: ['statistics'] });
+              if (scoringPollingRef.current) clearInterval(scoringPollingRef.current);
+            } else if (res.data.status === 'FAILED') {
+              setScoringResult(res.data.errorMessage);
+              message.error('성적채점 실패');
+              if (scoringPollingRef.current) clearInterval(scoringPollingRef.current);
+            }
+          }
+        } catch { /* ignore */ }
+      }, 2000);
+    }
+    return () => {
+      if (scoringPollingRef.current) clearInterval(scoringPollingRef.current);
+    };
+  }, [scoringJobId, scoringStatus]);
+
+  const handleScoring = async () => {
+    if (!selectedExamCd) return;
+    setScoringLoading(true);
+    setScoringResult(null);
+    try {
+      const res = await applicantApi.startScoring(selectedExamCd);
+      if (res.success) {
+        setScoringJobId(res.data.jobId);
+        setScoringStatus('PENDING');
+        message.info('성적채점을 시작합니다.');
+      } else {
+        message.error(res.message || '채점 시작 실패');
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : '채점 시작 오류';
+      message.error(errorMsg);
+    } finally {
+      setScoringLoading(false);
+    }
+  };
+
+  const isScoringInProgress = scoringStatus === 'PENDING' || scoringStatus === 'PROCESSING';
 
   const { data: examListData } = useQuery({
     queryKey: ['exams', { page: 0, size: 100 }],
@@ -195,29 +257,50 @@ export default function Statistics() {
             />
           </Col>
           <Col>
-            <Button
-              type="primary"
-              icon={<DownloadOutlined />}
-              disabled={!selectedExamCd || !stats}
-              loading={exporting}
-              onClick={async () => {
-                if (!selectedExamCd) return;
-                setExporting(true);
-                try {
-                  await statisticsApi.exportScores(selectedExamCd);
-                  message.success('성적 Excel 파일을 다운로드했습니다.');
-                } catch {
-                  message.error('Excel 내보내기에 실패했습니다.');
-                } finally {
-                  setExporting(false);
-                }
-              }}
-            >
-              Excel 내보내기
-            </Button>
+            <Space>
+              <Button
+                icon={isScoringInProgress ? <LoadingOutlined /> : (scoringStatus === 'COMPLETED' ? <CheckCircleOutlined /> : <CalculatorOutlined />)}
+                disabled={!selectedExamCd || isScoringInProgress}
+                loading={scoringLoading}
+                onClick={handleScoring}
+                type={scoringStatus === 'COMPLETED' ? 'default' : 'primary'}
+                danger={scoringStatus === 'FAILED'}
+              >
+                {isScoringInProgress ? '채점 중...' : '성적채점'}
+              </Button>
+              <Button
+                icon={<DownloadOutlined />}
+                disabled={!selectedExamCd || !stats}
+                loading={exporting}
+                onClick={async () => {
+                  if (!selectedExamCd) return;
+                  setExporting(true);
+                  try {
+                    await statisticsApi.exportScores(selectedExamCd);
+                    message.success('성적 Excel 파일을 다운로드했습니다.');
+                  } catch {
+                    message.error('Excel 내보내기에 실패했습니다.');
+                  } finally {
+                    setExporting(false);
+                  }
+                }}
+              >
+                Excel 내보내기
+              </Button>
+            </Space>
           </Col>
         </Row>
       </Card>
+
+      {scoringResult && (
+        <Card style={{ marginBottom: 16 }}>
+          {scoringStatus === 'COMPLETED' ? (
+            <Alert type="success" showIcon message="성적채점 완료" description={scoringResult} />
+          ) : (
+            <Alert type="error" showIcon message="성적채점 실패" description={scoringResult} />
+          )}
+        </Card>
+      )}
 
       {isLoading && (
         <Card>

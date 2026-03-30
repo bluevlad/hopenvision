@@ -45,6 +45,22 @@ public class ImportJobController {
         )));
     }
 
+    @Operation(summary = "성적채점 시작",
+            description = "시험별 응시자 총점/평균/순위를 비동기로 계산합니다.")
+    @PostMapping("/exams/{examCd}/jobs/scoring")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> startScoring(
+            @Parameter(description = "시험코드") @PathVariable String examCd
+    ) {
+        ImportJob job = importJobService.createScoringJob(examCd);
+        importJobService.processScoringAsync(job.getJobId());
+
+        return ResponseEntity.ok(ApiResponse.success("성적채점을 시작합니다.", Map.of(
+                "jobId", job.getJobId(),
+                "status", job.getStatus(),
+                "examCd", examCd
+        )));
+    }
+
     @Operation(summary = "Job 상태 조회")
     @GetMapping("/jobs/{jobId}")
     public ResponseEntity<ApiResponse<ImportJob>> getJobStatus(

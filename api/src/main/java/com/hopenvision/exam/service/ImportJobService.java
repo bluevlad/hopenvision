@@ -85,6 +85,40 @@ public class ImportJobService {
         return jobRepository.findByExamCdOrderByRegDtDesc(examCd);
     }
 
+    /**
+     * 성적채점 Job 생성 (파일 없음, 버튼 트리거)
+     */
+    @Transactional
+    public ImportJob createScoringJob(String examCd) {
+        // 중복 체크: 동일 시험에 PROCESSING 중인 SCORING Job 존재 여부
+        String scoringHash = "SCORING:" + examCd;
+        Optional<ImportJob> existing = jobRepository.findByFileHashAndStatusIn(
+                scoringHash, List.of("PENDING", "PROCESSING"));
+        if (existing.isPresent()) {
+            throw new IllegalArgumentException(
+                    "해당 시험의 채점이 진행 중입니다 (jobId: " + existing.get().getJobId() + ")");
+        }
+
+        // 이전 완료 Job의 해시 삭제 (재채점 허용)
+        jobRepository.findByFileHashAndStatusIn(scoringHash, List.of("COMPLETED", "FAILED"))
+                .ifPresent(old -> {
+                    old.setFileHash(old.getFileHash() + ":" + old.getJobId().substring(0, 8));
+                    jobRepository.save(old);
+                });
+
+        String jobId = UUID.randomUUID().toString();
+        ImportJob job = ImportJob.builder()
+                .jobId(jobId)
+                .fileName("성적채점: " + examCd)
+                .fileHash(scoringHash)
+                .jobType("SCORING")
+                .examCd(examCd)
+                .status("PENDING")
+                .build();
+
+        return jobRepository.save(job);
+    }
+
     // ==================== 비동기 처리 ====================
 
     @Async("importJobExecutor")
@@ -143,6 +177,43 @@ public class ImportJobService {
             log.info("Job {} 완료: {}", jobId, job.getResultSummary());
         } catch (Exception e) {
             log.error("Job {} 처리 실패", jobId, e);
+            job.setStatus("FAILED");
+            job.setEndDt(LocalDateTime.now());
+            job.setErrorMessage(e.getMessage());
+            jobRepository.save(job);
+        }
+    }
+
+    @Async("importJobExecutor")
+    public void processScoringAsync(String jobId) {
+        ImportJob job = jobRepository.findById(jobId).orElse(null);
+        if (job == null) return;
+
+        job.setStatus("PROCESSING");
+        job.setStartDt(LocalDateTime.now());
+        jobRepository.save(job);
+
+        try {
+            String examCd = job.getExamCd();
+
+            // 1) 응시자별 총점/평균 계산
+            int totalApplicants = jobProcessor.updateAllApplicantScores(examCd);
+            job.setTotalRows(totalApplicants);
+            job.setProcessedRows(totalApplicants);
+            job.setSuccessRows(totalApplicants);
+            jobRepository.save(job);
+
+            // 2) 순위 계산
+            int rankedCount = jobProcessor.updateRankings(examCd);
+
+            job.setStatus("COMPLETED");
+            job.setEndDt(LocalDateTime.now());
+            job.setResultSummary("응시자 " + totalApplicants + "명 채점, " + rankedCount + "명 순위 산출 완료");
+            jobRepository.save(job);
+
+            log.info("Scoring Job {} 완료: {}", jobId, job.getResultSummary());
+        } catch (Exception e) {
+            log.error("Scoring Job {} 실패", jobId, e);
             job.setStatus("FAILED");
             job.setEndDt(LocalDateTime.now());
             job.setErrorMessage(e.getMessage());

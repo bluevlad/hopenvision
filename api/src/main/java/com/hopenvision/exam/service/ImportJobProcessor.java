@@ -139,6 +139,70 @@ public class ImportJobProcessor {
         applicantRepository.save(applicant);
     }
 
+    // ==================== 성적채점 (SCORING) ====================
+
+    /**
+     * 시험별 전체 응시자 총점/평균 일괄 계산
+     */
+    @Transactional
+    public int updateAllApplicantScores(String examCd) {
+        List<ExamApplicant> applicants = applicantRepository.findByExamCd(examCd);
+        int updated = 0;
+
+        for (ExamApplicant applicant : applicants) {
+            List<ExamApplicantScore> scores = scoreRepository.findByExamCdAndApplicantNo(
+                    examCd, applicant.getApplicantNo());
+            if (scores.isEmpty()) continue;
+
+            BigDecimal sumScore = BigDecimal.ZERO;
+            for (ExamApplicantScore s : scores) {
+                if (s.getRawScore() != null) {
+                    sumScore = sumScore.add(s.getRawScore());
+                }
+            }
+            BigDecimal avgScore = sumScore.divide(
+                    BigDecimal.valueOf(scores.size()), 2, java.math.RoundingMode.HALF_UP);
+
+            applicant.setTotalScore(sumScore);
+            applicant.setAvgScore(avgScore);
+            applicant.setScoreStatus("Y");
+            applicantRepository.save(applicant);
+            updated++;
+        }
+
+        return updated;
+    }
+
+    /**
+     * 시험별 전체 응시자 순위 계산 (총점 기준 내림차순)
+     */
+    @Transactional
+    public int updateRankings(String examCd) {
+        List<ExamApplicant> applicants = applicantRepository.findByExamCd(examCd);
+
+        // 총점 기준 내림차순 정렬
+        List<ExamApplicant> scored = applicants.stream()
+                .filter(a -> a.getTotalScore() != null)
+                .sorted((a, b) -> b.getTotalScore().compareTo(a.getTotalScore()))
+                .toList();
+
+        int rank = 0;
+        int count = 0;
+        BigDecimal prevScore = null;
+
+        for (ExamApplicant applicant : scored) {
+            count++;
+            if (prevScore == null || applicant.getTotalScore().compareTo(prevScore) != 0) {
+                rank = count;
+            }
+            applicant.setRanking(rank);
+            applicantRepository.save(applicant);
+            prevScore = applicant.getTotalScore();
+        }
+
+        return scored.size();
+    }
+
     // ==================== Helper ====================
 
     @lombok.AllArgsConstructor

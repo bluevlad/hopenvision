@@ -76,4 +76,10 @@ export const applicantApi = {
     const response = await client.get(`/api/exams/${examCd}/jobs`);
     return response.data;
   },
+
+  // 성적채점 시작
+  startScoring: async (examCd: string): Promise<ApiResponse<{ jobId: string; status: string; examCd: string }>> => {
+    const response = await client.post(`/api/exams/${examCd}/jobs/scoring`);
+    return response.data;
+  },
 };

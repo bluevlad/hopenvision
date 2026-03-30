@@ -8,6 +8,7 @@ import {
   LogoutOutlined,
   TrophyOutlined,
   DatabaseOutlined,
+  BookOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../auth/useAuth';
 
@@ -30,14 +31,14 @@ const menuItems = [
     label: '통계',
   },
   {
-    key: 'master',
-    icon: <DatabaseOutlined />,
-    label: '기초 데이터',
+    key: 'content',
+    icon: <BookOutlined />,
+    label: '콘텐츠 관리',
     children: [
       { key: '/subjects', label: '과목 관리' },
-      { key: '/question-bank/groups', label: '문제은행 그룹' },
-      { key: '/question-bank/items', label: '문제은행 문제' },
+      { key: '/question-bank', label: '문제은행' },
       { key: '/question-bank/bulk-import', label: '문제 일괄등록' },
+      { key: '/question-sets', label: '문제세트' },
     ],
   },
   {
@@ -61,7 +62,7 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { token } = theme.useToken();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const handleMenuClick = ({ key }: { key: string }) => {
     navigate(key);
@@ -70,9 +71,9 @@ export default function AdminLayout() {
   const getSelectedKey = () => {
     const path = location.pathname;
     if (path.startsWith('/subjects')) return '/subjects';
-    if (path.startsWith('/question-bank/groups')) return '/question-bank/groups';
     if (path.startsWith('/question-bank/bulk-import')) return '/question-bank/bulk-import';
-    if (path.startsWith('/question-bank/items')) return '/question-bank/items';
+    if (path.startsWith('/question-bank')) return '/question-bank';
+    if (path.startsWith('/question-sets')) return '/question-sets';
     if (path.startsWith('/gosi/exams')) return '/gosi/exams';
     if (path.startsWith('/gosi/pass')) return '/gosi/pass';
     if (path.startsWith('/gosi/results')) return '/gosi/results';
@@ -88,7 +89,9 @@ export default function AdminLayout() {
 
   const getOpenKeys = () => {
     const path = location.pathname;
-    if (path.startsWith('/subjects') || path.startsWith('/question-bank')) return ['master'];
+    if (path.startsWith('/question-sets')) return ['content'];
+    if (path.startsWith('/question-bank')) return ['content'];
+    if (path.startsWith('/subjects')) return ['content'];
     if (path.startsWith('/gosi')) return ['gosi'];
     return [];
   };
@@ -141,6 +144,21 @@ export default function AdminLayout() {
         >
           <h3 style={{ margin: 0 }}>시험 관리 시스템</h3>
           <Space>
+            {user && (
+              <Space size="small">
+                {user.picture && (
+                  <img
+                    src={user.picture}
+                    alt={user.name}
+                    style={{ width: 28, height: 28, borderRadius: '50%' }}
+                    referrerPolicy="no-referrer"
+                  />
+                )}
+                <span style={{ fontSize: 13, color: token.colorTextSecondary }}>
+                  {user.name}
+                </span>
+              </Space>
+            )}
             <Button icon={<LogoutOutlined />} onClick={handleLogout}>
               로그아웃
             </Button>

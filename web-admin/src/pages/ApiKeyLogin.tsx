@@ -1,25 +1,99 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, Form, Input, Button, Typography, message, Space } from 'antd';
-import { LockOutlined } from '@ant-design/icons';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Card, Form, Input, Button, Typography, message, Space, Divider, Alert, Spin } from 'antd';
+import { LockOutlined, GoogleOutlined } from '@ant-design/icons';
 import { useAuth } from '../auth/useAuth';
 import { adminClient } from '../api/adminClient';
 
 const { Title, Text } = Typography;
 
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
+const errorMessages: Record<string, string> = {
+  oauth_failed: 'Google 인증에 실패했습니다. 다시 시도해주세요.',
+  unauthorized: '관리자 권한이 없는 계정입니다.',
+  invalid_credential: '유효하지 않은 인증 정보입니다.',
+};
+
 export default function ApiKeyLogin() {
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { loginWithGoogle, loginWithApiKey } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const error = searchParams.get('error');
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+  const initializedRef = useRef(false);
+  const [googleReady, setGoogleReady] = useState(false);
 
-  const handleSubmit = async (values: { apiKey: string }) => {
+  const handleCredentialResponse = useCallback(
+    async (response: { credential: string }) => {
+      try {
+        const res = await adminClient.post('/api/auth/google/verify', {
+          idToken: response.credential,
+        });
+
+        const { data } = res.data;
+        loginWithGoogle(data.token, {
+          email: data.email,
+          name: data.name,
+          picture: data.picture,
+        });
+        message.success(`${data.name}님 환영합니다`);
+        navigate('/', { replace: true });
+      } catch (err: unknown) {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 403) {
+          navigate('/login?error=unauthorized', { replace: true });
+        } else {
+          navigate('/login?error=oauth_failed', { replace: true });
+        }
+      }
+    },
+    [loginWithGoogle, navigate],
+  );
+
+  useEffect(() => {
+    if (initializedRef.current || !GOOGLE_CLIENT_ID) return;
+
+    const initializeGoogle = () => {
+      if (!window.google?.accounts?.id || !googleButtonRef.current) return;
+      initializedRef.current = true;
+
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleCredentialResponse,
+      });
+
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: 'outline',
+        size: 'large',
+        width: 352,
+        text: 'signin_with',
+        locale: 'ko',
+      });
+
+      setGoogleReady(true);
+    };
+
+    if (window.google?.accounts?.id) {
+      initializeGoogle();
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = initializeGoogle;
+      document.head.appendChild(script);
+    }
+  }, [handleCredentialResponse]);
+
+  const handleApiKeySubmit = async (values: { apiKey: string }) => {
     setLoading(true);
     try {
-      // API Key를 임시로 설정하고 verify 엔드포인트 호출
       await adminClient.post('/api/admin/verify', null, {
         headers: { 'X-Api-Key': values.apiKey },
       });
-      login(values.apiKey);
+      loginWithApiKey(values.apiKey);
       message.success('로그인 성공');
       navigate('/', { replace: true });
     } catch {
@@ -40,12 +114,40 @@ export default function ApiKeyLogin() {
       <Card style={{ width: 400, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
         <Space direction="vertical" size="large" style={{ width: '100%', textAlign: 'center' }}>
           <div>
-            <LockOutlined style={{ fontSize: 48, color: '#1890ff' }} />
+            <GoogleOutlined style={{ fontSize: 48, color: '#1890ff' }} />
             <Title level={3} style={{ margin: '16px 0 0' }}>HopenVision Admin</Title>
             <Text type="secondary">관리자 인증이 필요합니다</Text>
           </div>
 
-          <Form onFinish={handleSubmit} layout="vertical" style={{ textAlign: 'left' }}>
+          {error && (
+            <Alert
+              type="error"
+              message={errorMessages[error] || '알 수 없는 오류가 발생했습니다.'}
+              showIcon
+            />
+          )}
+
+          {GOOGLE_CLIENT_ID && (
+            <>
+              <div
+                ref={googleButtonRef}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  minHeight: 44,
+                  alignItems: 'center',
+                }}
+              >
+                {!googleReady && <Spin size="small" />}
+              </div>
+
+              <Divider plain>
+                <Text type="secondary" style={{ fontSize: 12 }}>또는 API Key로 로그인</Text>
+              </Divider>
+            </>
+          )}
+
+          <Form onFinish={handleApiKeySubmit} layout="vertical" style={{ textAlign: 'left' }}>
             <Form.Item
               name="apiKey"
               label="API Key"
@@ -67,4 +169,29 @@ export default function ApiKeyLogin() {
       </Card>
     </div>
   );
+}
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: { credential: string }) => void;
+          }) => void;
+          renderButton: (
+            element: HTMLElement,
+            config: {
+              theme?: string;
+              size?: string;
+              width?: number;
+              text?: string;
+              locale?: string;
+            },
+          ) => void;
+        };
+      };
+    };
+  }
 }

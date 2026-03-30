@@ -34,8 +34,17 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-import { getMyResult, getScoreAnalysis } from '../api/userApi';
-import type { SubjectResult } from '../types/user';
+import { getMyResult, getScoreAnalysis, getScoreTrend, getWeaknessAnalysis } from '../api/userApi';
+import {
+  LineChart,
+  Line,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+} from 'recharts';
+import type { SubjectResult, ScoreTrendItem, WeaknessItem } from '../types/user';
 import OMRCard from '../components/OMRCard';
 
 const { Title, Text } = Typography;
@@ -65,6 +74,18 @@ const UserScoreResult: React.FC = () => {
   const { data: analysis } = useQuery({
     queryKey: ['scoreAnalysis', examCd],
     queryFn: () => getScoreAnalysis(examCd!),
+    enabled: !!examCd && !!result,
+  });
+
+  const { data: trendData } = useQuery<ScoreTrendItem[]>({
+    queryKey: ['scoreTrend'],
+    queryFn: getScoreTrend,
+    enabled: !!result,
+  });
+
+  const { data: weaknessData } = useQuery<WeaknessItem[]>({
+    queryKey: ['weakness', examCd],
+    queryFn: () => getWeaknessAnalysis(examCd!),
     enabled: !!examCd && !!result,
   });
 
@@ -410,6 +431,96 @@ const UserScoreResult: React.FC = () => {
     };
   });
 
+  // 성적 추이 탭
+  const trendTab = trendData && trendData.length > 1 ? (
+    <Card title="회차별 성적 추이">
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={trendData.map((t) => ({
+          시험: t.examNm.length > 10 ? t.examNm.substring(0, 10) + '...' : t.examNm,
+          평균: t.avgScore,
+          총점: t.totalScore,
+        }))}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="시험" />
+          <YAxis />
+          <Tooltip formatter={(value) => [`${value}점`]} />
+          <Legend />
+          <Line type="monotone" dataKey="평균" stroke="#1890ff" strokeWidth={2} />
+          <Line type="monotone" dataKey="총점" stroke="#52c41a" strokeWidth={2} />
+        </LineChart>
+      </ResponsiveContainer>
+    </Card>
+  ) : (
+    <Card><Alert message="2회 이상 응시해야 성적 추이를 확인할 수 있습니다." type="info" /></Card>
+  );
+
+  // 약점 진단 탭
+  const weaknessTab = weaknessData && weaknessData.length > 0 ? (
+    <>
+      <Card title="과목별 정답률 레이더" style={{ marginBottom: 16 }}>
+        <ResponsiveContainer width="100%" height={300}>
+          <RadarChart data={weaknessData.map((w) => ({
+            과목: w.subjectNm,
+            정답률: w.correctRate,
+          }))}>
+            <PolarGrid />
+            <PolarAngleAxis dataKey="과목" />
+            <PolarRadiusAxis angle={90} domain={[0, 100]} />
+            <Radar name="정답률" dataKey="정답률" stroke="#1890ff" fill="#1890ff" fillOpacity={0.3} />
+          </RadarChart>
+        </ResponsiveContainer>
+      </Card>
+      <Card title="약점 진단 상세">
+        <Table
+          dataSource={weaknessData}
+          rowKey="subjectCd"
+          pagination={false}
+          size="small"
+          columns={[
+            { title: '과목', dataIndex: 'subjectNm', key: 'subjectNm' },
+            { title: '정답률', dataIndex: 'correctRate', key: 'correctRate', align: 'center' as const,
+              render: (v: number) => `${v}%` },
+            { title: '정답', dataIndex: 'correctCnt', key: 'correctCnt', align: 'center' as const },
+            { title: '오답', dataIndex: 'wrongCnt', key: 'wrongCnt', align: 'center' as const },
+            { title: '진단', dataIndex: 'level', key: 'level', align: 'center' as const,
+              render: (v: string) => {
+                const colors: Record<string, string> = { '강점': 'green', '보통': 'blue', '주의': 'orange', '약점': 'red' };
+                return <Tag color={colors[v] || 'default'}>{v}</Tag>;
+              },
+            },
+          ]}
+        />
+      </Card>
+    </>
+  ) : (
+    <Card><Alert message="약점 진단 데이터가 없습니다." type="info" /></Card>
+  );
+
+  // 오답 노트 탭 — 기존 detailTabs에서 오답만 필터
+  const wrongNoteTab = result ? (
+    <>
+      {result.subjectResults.map((subject: SubjectResult) => {
+        const wrongQuestions = subject.questionResults?.filter((q) => q.isCorrect === 'N') || [];
+        if (wrongQuestions.length === 0) return null;
+        return (
+          <Card key={subject.subjectCd} title={`${subject.subjectNm} — 오답 ${wrongQuestions.length}문항`} style={{ marginBottom: 16 }}>
+            <Table
+              dataSource={wrongQuestions}
+              rowKey="questionNo"
+              pagination={false}
+              size="small"
+              columns={[
+                { title: '문항', dataIndex: 'questionNo', key: 'questionNo', width: 70, align: 'center' as const, render: (v: number) => `Q${v}` },
+                { title: '내 답', dataIndex: 'userAns', key: 'userAns', width: 80, align: 'center' as const, render: (v: string) => <Tag color="red">{v || '-'}</Tag> },
+                { title: '정답', dataIndex: 'correctAns', key: 'correctAns', width: 80, align: 'center' as const, render: (v: string) => <Tag color="blue">{v}</Tag> },
+              ]}
+            />
+          </Card>
+        );
+      })}
+    </>
+  ) : null;
+
   const tabItems = [
     {
       key: 'summary',
@@ -420,6 +531,21 @@ const UserScoreResult: React.FC = () => {
       key: 'analysis',
       label: '성적 분석',
       children: analysisTab,
+    },
+    {
+      key: 'trend',
+      label: '성적 추이',
+      children: trendTab,
+    },
+    {
+      key: 'weakness',
+      label: '약점 진단',
+      children: weaknessTab,
+    },
+    {
+      key: 'wrongNote',
+      label: '오답 노트',
+      children: wrongNoteTab,
     },
     ...detailTabs,
   ];

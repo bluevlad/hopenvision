@@ -57,6 +57,13 @@ public class ExamSubject {
     @Column(name = "master_subject_cd", length = 20)
     private String masterSubjectCd;
 
+    @Column(name = "group_id")
+    private Long groupId;
+
+    @Column(name = "time_limit")
+    @Builder.Default
+    private Integer timeLimit = 22;
+
     @Column(name = "is_use", length = 1)
     @Builder.Default
     private String isUse = "Y";

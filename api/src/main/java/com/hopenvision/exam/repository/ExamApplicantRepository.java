@@ -24,4 +24,11 @@ public interface ExamApplicantRepository extends JpaRepository<ExamApplicant, Ex
     long countByExamCd(String examCd);
 
     boolean existsByExamCdAndApplicantNo(String examCd, String applicantNo);
+
+    // 직렬별 통계: [applyArea, count, avgScore, maxScore, minScore, passedCount]
+    @Query("SELECT a.applyArea, COUNT(a), AVG(a.totalScore), MAX(a.totalScore), MIN(a.totalScore), " +
+           "SUM(CASE WHEN a.passYn = 'Y' THEN 1 ELSE 0 END) " +
+           "FROM ExamApplicant a WHERE a.examCd = :examCd AND a.applyArea IS NOT NULL AND a.totalScore IS NOT NULL " +
+           "GROUP BY a.applyArea ORDER BY a.applyArea")
+    java.util.List<Object[]> getAreaStatistics(@Param("examCd") String examCd);
 }

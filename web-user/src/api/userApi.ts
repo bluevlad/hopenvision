@@ -2,13 +2,17 @@ import { apiClient as client } from '@hopenvision/shared';
 import type {
   UserExam,
   UserProfile,
+  ExamQuestionData,
   ScoringResult,
   ScoreAnalysis,
   HistoryItem,
+  ScoreTrendItem,
+  WeaknessItem,
   SubmitRequest,
   UserProfileUpsertRequest,
   UserExamListResponse,
   UserExamDetailResponse,
+  ExamQuestionResponse,
   ScoringResultResponse,
   ScoreAnalysisResponse,
   HistoryListResponse,
@@ -44,6 +48,14 @@ export const getExamDetail = async (examCd: string): Promise<UserExam> => {
   return response.data.data;
 };
 
+// 모의고사 문제 조회
+export const getSubjectQuestions = async (examCd: string, subjectCd: string): Promise<ExamQuestionData> => {
+  const response = await client.get<ExamQuestionResponse>(
+    `/api/user/exams/${examCd}/subjects/${subjectCd}/questions`,
+  );
+  return response.data.data;
+};
+
 // 답안 제출 및 채점
 export const submitAnswers = async (examCd: string, request: SubmitRequest): Promise<ScoringResult> => {
   const response = await client.post<ScoringResultResponse>(
@@ -75,6 +87,22 @@ export const getScoreAnalysis = async (examCd: string): Promise<ScoreAnalysis> =
 // 채점 이력 조회
 export const getUserHistory = async (): Promise<HistoryItem[]> => {
   const response = await client.get<HistoryListResponse>('/api/user/history', {
+    headers: { [USER_ID_HEADER]: getUserId() },
+  });
+  return response.data.data;
+};
+
+// 성적 추이 조회 (회차별)
+export const getScoreTrend = async (): Promise<ScoreTrendItem[]> => {
+  const response = await client.get('/api/user/history/trend', {
+    headers: { [USER_ID_HEADER]: getUserId() },
+  });
+  return response.data.data;
+};
+
+// 약점 과목 진단
+export const getWeaknessAnalysis = async (examCd: string): Promise<WeaknessItem[]> => {
+  const response = await client.get(`/api/user/exams/${encodeURIComponent(examCd)}/weakness`, {
     headers: { [USER_ID_HEADER]: getUserId() },
   });
   return response.data.data;

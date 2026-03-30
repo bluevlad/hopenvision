@@ -7,6 +7,9 @@ export interface ExamResponse {
   examDate: string | null;
   totalScore: number | null;
   passScore: number | null;
+  questionSetId: number | null;
+  questionSetNm: string | null;
+  examStatus: string | null;
   isUse: string;
   regDt: string;
   updDt: string;

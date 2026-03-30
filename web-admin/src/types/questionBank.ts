@@ -31,11 +31,11 @@ export interface QuestionBankGroupDetailResponse {
 export interface QuestionBankGroupRequest {
   groupCd: string;
   groupNm: string;
-  examYear?: string | null;
-  examRound?: number | null;
-  category?: string | null;
-  source?: string | null;
-  description?: string | null;
+  examYear?: string;
+  examRound?: number;
+  category?: string;
+  source?: string;
+  description?: string;
   isUse?: string;
 }
 
@@ -72,7 +72,7 @@ export interface QuestionBankItemResponse {
 }
 
 export interface QuestionBankItemRequest {
-  groupId: number;
+  groupId?: number;
   subjectCd: string;
   questionNo?: number;
   questionTitle?: string;
@@ -100,6 +100,7 @@ export interface GroupSearchParams {
   keyword?: string;
   category?: string;
   examYear?: string;
+  source?: string;
   isUse?: string;
   page?: number;
   size?: number;

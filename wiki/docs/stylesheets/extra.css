@@ -1,0 +1,49 @@
+/* HopenVision Wiki — Custom Styles */
+
+/* Primary color: #10b981 (Emerald) matching service accent */
+:root {
+  --md-primary-fg-color: #059669;
+  --md-primary-fg-color--light: #34d399;
+  --md-primary-fg-color--dark: #047857;
+  --md-accent-fg-color: #10b981;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #34d399;
+  --md-primary-fg-color--light: #6ee7b7;
+  --md-primary-fg-color--dark: #10b981;
+  --md-accent-fg-color: #34d399;
+}
+
+/* Badge styles */
+.md-badge {
+  display: inline-block;
+  padding: 0.2em 0.6em;
+  border-radius: 0.25rem;
+  font-size: 0.75em;
+  font-weight: 600;
+  color: #fff;
+  margin-right: 0.25em;
+}
+
+.md-badge--primary {
+  background-color: #059669;
+}
+
+.md-badge--success {
+  background-color: #10b981;
+}
+
+.md-badge--info {
+  background-color: #3b82f6;
+}
+
+/* Table improvements */
+.md-typeset table:not([class]) {
+  font-size: 0.82rem;
+}
+
+/* Mermaid diagram sizing */
+.mermaid {
+  text-align: center;
+}

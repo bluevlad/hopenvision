@@ -50,6 +50,13 @@ public class Exam {
     @Builder.Default
     private String examCategory = "ACTUAL";
 
+    @Column(name = "question_set_id")
+    private Long questionSetId;
+
+    @Column(name = "exam_status", length = 20)
+    @Builder.Default
+    private String examStatus = "DRAFT";
+
     @Column(name = "status", length = 20)
     private String status;
 
@@ -82,6 +89,10 @@ public class Exam {
     @UpdateTimestamp
     @Column(name = "upd_dt")
     private LocalDateTime updDt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "question_set_id", insertable = false, updatable = false)
+    private QuestionSet questionSet;
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

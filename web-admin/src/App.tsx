@@ -13,6 +13,11 @@ import ExcelImport from './pages/ExcelImport';
 import JsonImport from './pages/JsonImport';
 import ApplicantList from './pages/ApplicantList';
 import Statistics from './pages/Statistics';
+import SubjectList from './pages/SubjectList';
+import QuestionBankList from './pages/QuestionBankList';
+import QuestionBankDetail from './pages/QuestionBankDetail';
+import QuestionSetList from './pages/QuestionSetList';
+import QuestionSetDetail from './pages/QuestionSetDetail';
 import GosiExamList from './pages/gosi/GosiExamList';
 import GosiPassList from './pages/gosi/GosiPassList';
 import GosiScoreList from './pages/gosi/GosiScoreList';
@@ -58,6 +63,11 @@ function App() {
                 <Route path="exams/:examCd/json-import" element={<JsonImport />} />
                 <Route path="applicants" element={<ApplicantList />} />
                 <Route path="statistics" element={<Statistics />} />
+                <Route path="subjects" element={<SubjectList />} />
+                <Route path="question-bank" element={<QuestionBankList />} />
+                <Route path="question-bank/:groupId" element={<QuestionBankDetail />} />
+                <Route path="question-sets" element={<QuestionSetList />} />
+                <Route path="question-sets/:setId" element={<QuestionSetDetail />} />
                 <Route path="import/preview" element={<ExcelImport />} />
                 <Route path="subjects" element={<SubjectMasterList />} />
                 <Route path="question-bank/groups" element={<QuestionBankGroupList />} />

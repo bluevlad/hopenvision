@@ -1,9 +1,20 @@
 import { createContext } from 'react';
 
+export interface AdminUser {
+  email: string;
+  name: string;
+  picture?: string;
+}
+
+export type AuthMethod = 'google' | 'apikey';
+
 export interface AuthContextType {
-  apiKey: string | null;
+  token: string | null;
+  user: AdminUser | null;
+  authMethod: AuthMethod | null;
   isAuthenticated: boolean;
-  login: (key: string) => void;
+  loginWithGoogle: (token: string, user: AdminUser) => void;
+  loginWithApiKey: (apiKey: string) => void;
   logout: () => void;
 }
 

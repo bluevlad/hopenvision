@@ -20,12 +20,29 @@ public class JwtTokenProvider {
             @Value("${app.jwt.secret:hopenvision-default-jwt-secret-change-in-production}") String secret,
             @Value("${app.jwt.expiration-hours:24}") long expirationHours) {
         // Ensure the secret is at least 32 bytes for HMAC-SHA256
+        if (secret == null || secret.isBlank()) {
+            secret = "hopenvision-default-jwt-secret-change-in-production";
+        }
         String paddedSecret = secret;
         while (paddedSecret.getBytes(StandardCharsets.UTF_8).length < 32) {
             paddedSecret = paddedSecret + paddedSecret;
         }
         this.key = Keys.hmacShaKeyFor(paddedSecret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expirationHours * 60 * 60 * 1000;
+    }
+
+    public String generateUserToken(String userId, String name) {
+        Date now = new Date();
+        Date expiry = new Date(now.getTime() + expirationMs);
+
+        return Jwts.builder()
+                .subject(userId)
+                .claim("name", name)
+                .claim("role", "USER")
+                .issuedAt(now)
+                .expiration(expiry)
+                .signWith(key)
+                .compact();
     }
 
     public String generateToken(String email, String name) {

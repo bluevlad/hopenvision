@@ -23,6 +23,25 @@ export interface SubjectInfo {
   scorePerQ: number;
   questionType: string;
   cutLine: number;
+  timeLimit: number;
+  groupId: number | null;
+}
+
+// 모의고사 문제 조회
+export interface ExamQuestionData {
+  subjectCd: string;
+  subjectNm: string;
+  timeLimit: number;
+  questionCnt: number;
+  questions: QuestionItem[];
+}
+
+export interface QuestionItem {
+  questionNo: number;
+  questionText: string;
+  contextText: string | null;
+  choices: string[];
+  imageUrl: string | null;
 }
 
 // 답안 제출 요청
@@ -138,6 +157,27 @@ export interface UserProfileUpsertRequest {
   newsletterYn: string;
 }
 
+// 성적 추이
+export interface ScoreTrendItem {
+  examCd: string;
+  examNm: string;
+  totalScore: number;
+  avgScore: number;
+  passYn: string;
+  regDt: string;
+}
+
+// 약점 진단
+export interface WeaknessItem {
+  subjectCd: string;
+  subjectNm: string;
+  correctRate: number;
+  correctCnt: number;
+  wrongCnt: number;
+  totalQuestions: number;
+  level: string;
+}
+
 // API Response 타입
 export type UserExamListResponse = ApiResponse<UserExam[]>;
 export type UserExamDetailResponse = ApiResponse<UserExam>;
@@ -146,3 +186,4 @@ export type ScoreAnalysisResponse = ApiResponse<ScoreAnalysis>;
 export type HistoryListResponse = ApiResponse<HistoryItem[]>;
 export type UserProfileResponse = ApiResponse<UserProfile>;
 export type UserProfileExistsResponse = ApiResponse<boolean>;
+export type ExamQuestionResponse = ApiResponse<ExamQuestionData>;

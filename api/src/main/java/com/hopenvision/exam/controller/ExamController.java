@@ -85,6 +85,30 @@ public class ExamController {
         return ResponseEntity.ok(ApiResponse.success("시험이 삭제되었습니다.", null));
     }
 
+    @Operation(summary = "시험 재채점", description = "정답 변경 후 전체 응시자의 점수를 재계산합니다.")
+    @PostMapping("/{examCd}/rescore")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> rescoreExam(
+            @Parameter(description = "시험코드") @PathVariable String examCd
+    ) {
+        int rescored = examService.rescoreExam(examCd);
+        return ResponseEntity.ok(ApiResponse.success("재채점이 완료되었습니다.",
+                java.util.Map.of("examCd", examCd, "rescoredCount", rescored)));
+    }
+
+    @Operation(summary = "시험 상태 변경", description = "시험 상태를 변경합니다. (DRAFT→REGISTRATION→IN_PROGRESS→GRADING→PUBLISHED→CLOSED)")
+    @PutMapping("/{examCd}/status")
+    public ResponseEntity<ApiResponse<ExamDto.Response>> updateExamStatus(
+            @Parameter(description = "시험코드") @PathVariable String examCd,
+            @RequestBody java.util.Map<String, String> body
+    ) {
+        String status = body.get("status");
+        if (status == null || status.isBlank()) {
+            throw new IllegalArgumentException("status는 필수입니다.");
+        }
+        ExamDto.Response result = examService.updateExamStatus(examCd, status);
+        return ResponseEntity.ok(ApiResponse.success("시험 상태가 변경되었습니다.", result));
+    }
+
     // ==================== 과목 관리 ====================
 
     @Operation(summary = "과목 목록 조회", description = "시험의 과목 목록을 조회합니다.")

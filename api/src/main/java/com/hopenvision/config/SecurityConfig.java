@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,6 +15,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.firewall.RequestRejectedHandler;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.crypto.Mac;
@@ -22,6 +24,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HexFormat;
 
+@Slf4j
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -60,10 +63,27 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
                 .anyRequest().permitAll()
             )
-            .addFilterBefore(new ApiKeyAuthFilter(adminApiKey, jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(new PathTraversalFilter(), UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(new ApiKeyAuthFilter(adminApiKey, jwtTokenProvider), PathTraversalFilter.class)
             .addFilterBefore(new UserIdAuthFilter(userAuthSecret), ApiKeyAuthFilter.class);
 
         return http.build();
+    }
+
+    /**
+     * StrictHttpFirewall가 요청을 거부할 때 (예: Path Traversal) 400 JSON 응답을 반환한다.
+     * 기본 핸들러는 sendError(400)을 호출하여 HTML 에러 페이지를 반환할 수 있으므로,
+     * 명시적으로 JSON 형식의 400 응답을 작성한다.
+     */
+    @Bean
+    public RequestRejectedHandler requestRejectedHandler() {
+        return (request, response, ex) -> {
+            log.warn("요청 거부 (Firewall): {}", ex.getMessage());
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write(
+                    "{\"success\":false,\"code\":\"PATH_TRAVERSAL\",\"message\":\"잘못된 요청입니다.\",\"data\":null}");
+        };
     }
 
     /**
@@ -100,7 +120,7 @@ public class SecurityConfig {
             if (signature == null || !verifyHmac(userId, signature)) {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.setContentType("application/json;charset=UTF-8");
-                response.getWriter().write("{\"error\":\"Invalid user signature\"}");
+                response.getWriter().write("{\"success\":false,\"code\":\"AUTH_INVALID\",\"message\":\"Invalid user signature\",\"data\":null}");
                 return;
             }
 

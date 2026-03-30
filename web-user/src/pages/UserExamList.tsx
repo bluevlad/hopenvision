@@ -15,6 +15,7 @@ import {
   EyeOutlined,
   UserOutlined,
   TrophyOutlined,
+  FormOutlined,
 } from '@ant-design/icons';
 import { getAvailableExams } from '../api/userApi';
 import type { UserExam } from '../types/user';
@@ -71,13 +72,27 @@ const UserExamList: React.FC = () => {
       ),
     },
     {
-      title: '과목수',
+      title: '과목 구성',
       key: 'subjects',
-      width: 80,
-      align: 'center' as const,
-      render: (_: unknown, record: UserExam) => (
-        <Text>{record.subjects.length}과목</Text>
-      ),
+      width: 220,
+      render: (_: unknown, record: UserExam) => {
+        const mandatory = record.subjects.filter((s) => s.subjectType === 'M');
+        const elective = record.subjects.filter((s) => s.subjectType === 'S');
+        return (
+          <Space direction="vertical" size={2}>
+            <Text style={{ fontSize: 13 }}>
+              <Tag color="blue" style={{ marginRight: 4 }}>필수</Tag>
+              {mandatory.map((s) => s.subjectNm).join(', ')}
+            </Text>
+            {elective.length > 0 && (
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                <Tag style={{ marginRight: 4 }}>선택</Tag>
+                {elective.length}과목 중 2과목 선택
+              </Text>
+            )}
+          </Space>
+        );
+      },
     },
     {
       title: '응시자수',
@@ -108,7 +123,7 @@ const UserExamList: React.FC = () => {
     {
       title: '작업',
       key: 'action',
-      width: 150,
+      width: 220,
       align: 'center' as const,
       render: (_: unknown, record: UserExam) => (
         <Space>
@@ -123,15 +138,25 @@ const UserExamList: React.FC = () => {
               </Button>
             </Tooltip>
           ) : (
-            <Tooltip title="답안 입력">
-              <Button
-                type="primary"
-                icon={<EditOutlined />}
-                onClick={() => navigate(`/exams/${record.examCd}/answer`)}
-              >
-                응시
-              </Button>
-            </Tooltip>
+            <>
+              <Tooltip title="문제를 보면서 시간 제한 내 응시">
+                <Button
+                  type="primary"
+                  icon={<FormOutlined />}
+                  onClick={() => navigate(`/exams/${record.examCd}/mock`)}
+                >
+                  모의고사
+                </Button>
+              </Tooltip>
+              <Tooltip title="답안 번호만 빠르게 입력하여 채점">
+                <Button
+                  icon={<EditOutlined />}
+                  onClick={() => navigate(`/exams/${record.examCd}/answer`)}
+                >
+                  답안채점
+                </Button>
+              </Tooltip>
+            </>
           )}
         </Space>
       ),

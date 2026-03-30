@@ -25,3 +25,54 @@ export interface ScoreDistribution {
   count: number;
   percentage: number;
 }
+
+export interface QuestionStatistics {
+  subjectCd: string;
+  subjectNm: string;
+  questions: QuestionDetail[];
+}
+
+export interface QuestionDetail {
+  questionNo: number;
+  correctAns: string;
+  totalAnswered: number;
+  correctCount: number;
+  correctRate: number;
+  difficulty: string;
+  choiceDistributions: ChoiceDistribution[];
+}
+
+export interface ChoiceDistribution {
+  choice: string;
+  count: number;
+  percentage: number;
+  isCorrect: boolean;
+}
+
+export interface AreaStatistics {
+  applyArea: string;
+  applicantCount: number;
+  avgScore: number | null;
+  maxScore: number | null;
+  minScore: number | null;
+  passedCount: number;
+  passRate: number;
+}
+
+export interface ExamDashboardItem {
+  examCd: string;
+  examNm: string;
+  examType: string;
+  examStatus: string | null;
+  applicantCount: number;
+  submittedCount: number;
+  submissionRate: number;
+}
+
+export interface DiscriminationDetail {
+  questionNo: number;
+  correctRate: number;
+  difficulty: string;
+  discriminationIndex: number;
+  discriminationLevel: string;
+}

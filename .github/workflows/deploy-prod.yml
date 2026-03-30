@@ -22,10 +22,199 @@ jobs:
           DB_USER=${{ secrets.DB_USER }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           ADMIN_API_KEY=${{ secrets.ADMIN_API_KEY }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          SUPER_ADMIN_EMAILS=${{ secrets.SUPER_ADMIN_EMAILS }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
           CORS_ALLOWED_ORIGINS=https://study.unmong.com,https://admin.unmong.com,http://study.unmong.com:4060,http://study.unmong.com:4061
           TZ=Asia/Seoul
           EOF
           sed -i '' 's/^[[:space:]]*//' .env
+
+      - name: Run DB migrations
+        run: |
+          source .env
+          docker exec -e PGPASSWORD="$DB_PASSWORD" postgresql psql -U "$DB_USER" -d "$DB_NAME" -c "
+            -- v5.0: Stage 1~4 누락 테이블/컬럼 추가
+
+            -- 과목 마스터 (question_bank_item이 참조)
+            CREATE TABLE IF NOT EXISTS subject_master (
+              subject_cd      VARCHAR(20) PRIMARY KEY,
+              subject_nm      VARCHAR(100) NOT NULL,
+              parent_subject_cd VARCHAR(20),
+              subject_depth   INTEGER DEFAULT 1,
+              sort_order      INTEGER DEFAULT 1,
+              category        VARCHAR(50),
+              description     TEXT,
+              is_use          CHAR(1) DEFAULT 'Y',
+              reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              upd_dt          TIMESTAMP
+            );
+
+            -- 문제은행 그룹 (question_bank_item이 참조)
+            CREATE TABLE IF NOT EXISTS question_bank_group (
+              group_id        SERIAL PRIMARY KEY,
+              group_cd        VARCHAR(50) UNIQUE NOT NULL,
+              group_nm        VARCHAR(200) NOT NULL,
+              exam_year       VARCHAR(4),
+              exam_round      INTEGER,
+              category        VARCHAR(50),
+              source          VARCHAR(100),
+              description     TEXT,
+              is_use          CHAR(1) DEFAULT 'Y',
+              reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              upd_dt          TIMESTAMP
+            );
+
+            -- 문제은행 항목 (question_set_item이 참조)
+            CREATE TABLE IF NOT EXISTS question_bank_item (
+              item_id         SERIAL PRIMARY KEY,
+              group_id        INTEGER NOT NULL REFERENCES question_bank_group(group_id) ON DELETE CASCADE,
+              subject_cd      VARCHAR(20) NOT NULL,
+              question_no     INTEGER,
+              question_title  VARCHAR(500),
+              question_text   TEXT,
+              context_text    TEXT,
+              choice1         VARCHAR(1000),
+              choice2         VARCHAR(1000),
+              choice3         VARCHAR(1000),
+              choice4         VARCHAR(1000),
+              choice5         VARCHAR(1000),
+              correct_ans     VARCHAR(100) NOT NULL,
+              is_multi_ans    CHAR(1) DEFAULT 'N',
+              score           NUMERIC(5,2) DEFAULT 5,
+              category        VARCHAR(100),
+              difficulty      VARCHAR(10),
+              question_type   VARCHAR(20) DEFAULT 'CHOICE',
+              tags            VARCHAR(500),
+              explanation     TEXT,
+              correction_note TEXT,
+              image_file      VARCHAR(200),
+              use_count       INTEGER DEFAULT 0,
+              correct_rate    NUMERIC(5,2),
+              is_use          CHAR(1) DEFAULT 'Y',
+              reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              upd_dt          TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS idx_qb_item_group ON question_bank_item(group_id, subject_cd);
+
+            -- 시험 상태 컬럼 (Stage 1)
+            ALTER TABLE exam_mst ADD COLUMN IF NOT EXISTS exam_status VARCHAR(20) DEFAULT 'DRAFT';
+
+            -- 시험 공지사항 (Stage 3)
+            CREATE TABLE IF NOT EXISTS exam_notice (
+              notice_id       SERIAL PRIMARY KEY,
+              exam_cd         VARCHAR(50) NOT NULL,
+              title           VARCHAR(200) NOT NULL,
+              content         TEXT,
+              is_pinned       CHAR(1) DEFAULT 'N',
+              is_use          CHAR(1) DEFAULT 'Y',
+              reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              upd_dt          TIMESTAMP,
+              FOREIGN KEY (exam_cd) REFERENCES exam_mst(exam_cd) ON DELETE CASCADE
+            );
+
+            -- 사용자 프로필 (Phase 5)
+            CREATE TABLE IF NOT EXISTS user_profile (
+              user_id         VARCHAR(50) PRIMARY KEY,
+              user_nm         VARCHAR(100) NOT NULL,
+              email           VARCHAR(200),
+              newsletter_yn   CHAR(1) DEFAULT 'N',
+              version         BIGINT DEFAULT 0,
+              reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              upd_dt          TIMESTAMP
+            );
+
+            -- 표준점수 컬럼 (Phase 3 배치)
+            ALTER TABLE user_total_score ADD COLUMN IF NOT EXISTS standard_score NUMERIC(5,2);
+            ALTER TABLE user_score ADD COLUMN IF NOT EXISTS standard_score NUMERIC(5,2);
+
+            -- v4.0: 문제세트 다과목 구조 + 시험 연결
+            ALTER TABLE exam_mst ADD COLUMN IF NOT EXISTS question_set_id INTEGER;
+
+            -- v4.0.1: exam_subject 누락 컬럼 추가 (group_id, time_limit)
+            ALTER TABLE exam_subject ADD COLUMN IF NOT EXISTS group_id BIGINT;
+            ALTER TABLE exam_subject ADD COLUMN IF NOT EXISTS time_limit INTEGER DEFAULT 22;
+
+            CREATE TABLE IF NOT EXISTS question_set (
+              set_id SERIAL PRIMARY KEY,
+              set_cd VARCHAR(50) UNIQUE NOT NULL,
+              set_nm VARCHAR(200) NOT NULL,
+              question_cnt INTEGER DEFAULT 0,
+              total_score INTEGER DEFAULT 0,
+              subject_cnt INTEGER DEFAULT 0,
+              category VARCHAR(50),
+              difficulty_level VARCHAR(10),
+              description TEXT,
+              is_use CHAR(1) DEFAULT 'Y',
+              reg_dt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              upd_dt TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS question_set_item (
+              set_item_id SERIAL PRIMARY KEY,
+              set_id INTEGER NOT NULL REFERENCES question_set(set_id) ON DELETE CASCADE,
+              item_id INTEGER NOT NULL,
+              subject_cd VARCHAR(20) NOT NULL,
+              question_no INTEGER,
+              score NUMERIC(5,2),
+              sort_order INTEGER DEFAULT 1
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_question_set_item_subject ON question_set_item(set_id, subject_cd);
+
+            -- v4.1: exam_subject.group_id 연결 (그룹코드 패턴: examCd-subjectNm)
+            UPDATE exam_subject es
+            SET group_id = qbg.group_id
+            FROM question_bank_group qbg
+            WHERE qbg.group_cd = es.exam_cd || '-' || es.subject_nm
+              AND es.group_id IS NULL;
+
+            -- v4.2: 시험별 문제세트 자동 생성 + 항목 연결
+            DO \$\$
+            DECLARE
+              v_exam RECORD;
+              v_set_id INTEGER;
+              v_item RECORD;
+              v_sort INTEGER;
+              v_q_cnt INTEGER;
+              v_s_cnt INTEGER;
+            BEGIN
+              FOR v_exam IN SELECT DISTINCT exam_cd FROM exam_subject WHERE group_id IS NOT NULL LOOP
+                -- 이미 세트가 있으면 스킵
+                IF NOT EXISTS (SELECT 1 FROM question_set WHERE set_cd = v_exam.exam_cd) THEN
+                  -- 시험 정보 조회
+                  INSERT INTO question_set (set_cd, set_nm, category, is_use, reg_dt)
+                  SELECT v_exam.exam_cd,
+                         (SELECT exam_nm FROM exam_mst WHERE exam_cd = v_exam.exam_cd),
+                         (SELECT exam_type FROM exam_mst WHERE exam_cd = v_exam.exam_cd),
+                         'Y', CURRENT_TIMESTAMP
+                  RETURNING set_id INTO v_set_id;
+
+                  v_sort := 0;
+                  -- 각 과목의 문제은행 항목을 세트에 연결
+                  FOR v_item IN
+                    SELECT qi.item_id, qi.subject_cd, qi.question_no, qi.score
+                    FROM exam_subject es
+                    JOIN question_bank_item qi ON qi.group_id = es.group_id AND qi.subject_cd = es.subject_cd
+                    WHERE es.exam_cd = v_exam.exam_cd AND es.group_id IS NOT NULL
+                    ORDER BY es.sort_order, qi.question_no
+                  LOOP
+                    v_sort := v_sort + 1;
+                    INSERT INTO question_set_item (set_id, item_id, subject_cd, question_no, score, sort_order)
+                    VALUES (v_set_id, v_item.item_id, v_item.subject_cd, v_item.question_no, v_item.score, v_sort);
+                  END LOOP;
+
+                  -- 통계 업데이트
+                  SELECT COUNT(*) INTO v_q_cnt FROM question_set_item WHERE set_id = v_set_id;
+                  SELECT COUNT(DISTINCT subject_cd) INTO v_s_cnt FROM question_set_item WHERE set_id = v_set_id;
+                  UPDATE question_set SET question_cnt = v_q_cnt, subject_cnt = v_s_cnt, total_score = v_q_cnt * 5 WHERE set_id = v_set_id;
+
+                  -- 시험에 문제세트 연결
+                  UPDATE exam_mst SET question_set_id = v_set_id WHERE exam_cd = v_exam.exam_cd;
+                END IF;
+              END LOOP;
+            END \$\$;
+          " || echo "Migration skipped or already applied"
 
       - name: Stop existing services
         run: |
@@ -39,19 +228,33 @@ jobs:
       - name: Health check
         run: |
           echo "Waiting for services to start..."
-          sleep 30
+          sleep 10
 
           echo "Checking user frontend..."
-          curl -f -s -o /dev/null --retry 5 --retry-delay 5 --retry-connrefused http://localhost:4060
+          curl -f -s -o /dev/null --retry 5 --retry-delay 5 --retry-all-errors http://localhost:4060
           echo "User frontend OK"
 
           echo "Checking admin frontend..."
-          curl -f -s -o /dev/null --retry 5 --retry-delay 5 --retry-connrefused http://localhost:4061
+          curl -f -s -o /dev/null --retry 5 --retry-delay 5 --retry-all-errors http://localhost:4061
           echo "Admin frontend OK"
 
-          echo "Checking backend..."
-          curl -f -s -o /dev/null --retry 10 --retry-delay 10 --retry-connrefused "http://localhost:9050/api/exams?page=0&size=1"
-          echo "Backend OK"
+          echo "Checking backend (waiting for Spring Boot startup)..."
+          for i in $(seq 1 20); do
+            if curl -f -s -o /dev/null "http://localhost:9050/api/exams?page=0&size=1" 2>/dev/null; then
+              echo "Backend OK (attempt $i)"
+              break
+            fi
+            if [ $i -eq 20 ]; then
+              echo "Backend health check failed after 20 attempts"
+              echo "=== Container status ==="
+              docker ps -a --filter name=hopenvision-api --format "{{.Status}}"
+              echo "=== Last 200 lines of backend logs ==="
+              docker logs hopenvision-api --tail 200
+              exit 1
+            fi
+            echo "Attempt $i: backend not ready, waiting 10s..."
+            sleep 10
+          done
 
           echo "All services are healthy."
 

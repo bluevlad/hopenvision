@@ -16,7 +16,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,23 +33,40 @@ public class QuestionBankService {
 
     // ==================== Group ====================
 
+    /**
+     * 그룹 목록 조회 (페이징, 검색)
+     */
     public Page<QuestionBankDto.GroupResponse> getGroupList(QuestionBankDto.GroupSearchRequest request) {
         Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
-        Page<QuestionBankGroup> page = groupRepository.searchGroups(
-                blankToNull(request.getKeyword()), blankToNull(request.getCategory()),
-                blankToNull(request.getExamYear()), blankToNull(request.getIsUse()), pageable);
 
-        return page.map(group -> {
-            long itemCount = itemRepository.countByGroupId(group.getGroupId());
-            return toGroupResponse(group, itemCount);
-        });
+        Page<QuestionBankGroup> page = groupRepository.searchGroups(
+                request.getKeyword(),
+                request.getCategory(),
+                request.getExamYear(),
+                request.getSource(),
+                request.getIsUse(),
+                pageable
+        );
+
+        // 항목 수 일괄 조회 (N+1 방지)
+        List<Long> groupIds = page.getContent().stream()
+                .map(QuestionBankGroup::getGroupId)
+                .collect(Collectors.toList());
+        Map<Long, Long> itemCountMap = getItemCountMap(groupIds);
+
+        return page.map(group -> toGroupResponse(group,
+                itemCountMap.getOrDefault(group.getGroupId(), 0L)));
     }
 
+    /**
+     * 그룹 상세 조회 (항목 포함)
+     */
     public QuestionBankDto.GroupDetailResponse getGroupDetail(Long groupId) {
         QuestionBankGroup group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new EntityNotFoundException("문제은행 그룹을 찾을 수 없습니다: " + groupId));
 
         List<QuestionBankItem> items = itemRepository.findByGroupIdOrderByQuestionNo(groupId);
+        Map<String, String> subjectNameMap = getSubjectNameMap(items);
 
         return QuestionBankDto.GroupDetailResponse.builder()
                 .groupId(group.getGroupId())
@@ -61,10 +80,15 @@ public class QuestionBankService {
                 .isUse(group.getIsUse())
                 .regDt(group.getRegDt())
                 .updDt(group.getUpdDt())
-                .items(items.stream().map(this::toItemResponse).collect(Collectors.toList()))
+                .items(items.stream()
+                        .map(item -> toItemResponse(item, subjectNameMap.getOrDefault(item.getSubjectCd(), "")))
+                        .collect(Collectors.toList()))
                 .build();
     }
 
+    /**
+     * 그룹 등록
+     */
     @Transactional
     public QuestionBankDto.GroupResponse createGroup(QuestionBankDto.GroupRequest request) {
         if (groupRepository.existsByGroupCd(request.getGroupCd())) {
@@ -85,6 +109,9 @@ public class QuestionBankService {
         return toGroupResponse(groupRepository.save(group), 0L);
     }
 
+    /**
+     * 그룹 수정
+     */
     @Transactional
     public QuestionBankDto.GroupResponse updateGroup(Long groupId, QuestionBankDto.GroupRequest request) {
         QuestionBankGroup group = groupRepository.findById(groupId)
@@ -102,6 +129,9 @@ public class QuestionBankService {
         return toGroupResponse(groupRepository.save(group), itemCount);
     }
 
+    /**
+     * 그룹 삭제
+     */
     @Transactional
     public void deleteGroup(Long groupId) {
         if (!groupRepository.existsById(groupId)) {
@@ -112,36 +142,50 @@ public class QuestionBankService {
 
     // ==================== Item ====================
 
-    public Page<QuestionBankDto.ItemResponse> getItemList(QuestionBankDto.ItemSearchRequest request) {
-        Pageable pageable = PageRequest.of(request.getPage(), request.getSize());
-        Page<QuestionBankItem> page = itemRepository.searchItems(
-                request.getGroupId(), blankToNull(request.getSubjectCd()),
-                blankToNull(request.getDifficulty()), blankToNull(request.getKeyword()),
-                blankToNull(request.getIsUse()), pageable);
-
-        return page.map(this::toItemResponse);
-    }
-
-    public QuestionBankDto.ItemResponse getItemDetail(Long itemId) {
-        QuestionBankItem item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new EntityNotFoundException("문제를 찾을 수 없습니다: " + itemId));
-        return toItemResponse(item);
-    }
-
-    @Transactional
-    public QuestionBankDto.ItemResponse createItem(QuestionBankDto.ItemRequest request) {
-        if (!groupRepository.existsById(request.getGroupId())) {
-            throw new EntityNotFoundException("문제은행 그룹을 찾을 수 없습니다: " + request.getGroupId());
+    /**
+     * 항목 목록 조회
+     */
+    public List<QuestionBankDto.ItemResponse> getItemList(Long groupId, String subjectCd) {
+        List<QuestionBankItem> items;
+        if (subjectCd != null && !subjectCd.isEmpty()) {
+            items = itemRepository.findByGroupIdAndSubjectCdOrderByQuestionNo(groupId, subjectCd);
+        } else {
+            items = itemRepository.findByGroupIdOrderByQuestionNo(groupId);
         }
 
-        QuestionBankItem item = buildItemFromRequest(request);
-        return toItemResponse(itemRepository.save(item));
+        Map<String, String> subjectNameMap = getSubjectNameMap(items);
+        return items.stream()
+                .map(item -> toItemResponse(item, subjectNameMap.getOrDefault(item.getSubjectCd(), "")))
+                .collect(Collectors.toList());
     }
 
+    /**
+     * 항목 등록
+     */
     @Transactional
-    public QuestionBankDto.ItemResponse updateItem(Long itemId, QuestionBankDto.ItemRequest request) {
+    public QuestionBankDto.ItemResponse createItem(Long groupId, QuestionBankDto.ItemRequest request) {
+        QuestionBankGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new EntityNotFoundException("문제은행 그룹을 찾을 수 없습니다: " + groupId));
+
+        QuestionBankItem item = buildItemFromRequest(request);
+        group.addItem(item);
+        groupRepository.save(group);
+
+        String subjectNm = getSubjectName(request.getSubjectCd());
+        return toItemResponse(item, subjectNm);
+    }
+
+    /**
+     * 항목 수정
+     */
+    @Transactional
+    public QuestionBankDto.ItemResponse updateItem(Long groupId, Long itemId, QuestionBankDto.ItemRequest request) {
         QuestionBankItem item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new EntityNotFoundException("문제를 찾을 수 없습니다: " + itemId));
+                .orElseThrow(() -> new EntityNotFoundException("문제은행 항목을 찾을 수 없습니다: " + itemId));
+
+        if (!item.getGroupId().equals(groupId)) {
+            throw new IllegalArgumentException("해당 그룹에 속하지 않는 항목입니다.");
+        }
 
         item.setSubjectCd(request.getSubjectCd());
         item.setQuestionNo(request.getQuestionNo());
@@ -154,46 +198,56 @@ public class QuestionBankService {
         item.setChoice4(request.getChoice4());
         item.setChoice5(request.getChoice5());
         item.setCorrectAns(request.getCorrectAns());
-        item.setIsMultiAns(request.getIsMultiAns() != null ? request.getIsMultiAns() : "N");
+        item.setIsMultiAns(request.getIsMultiAns());
         item.setScore(request.getScore());
         item.setCategory(request.getCategory());
         item.setDifficulty(request.getDifficulty());
-        item.setQuestionType(request.getQuestionType() != null ? request.getQuestionType() : "CHOICE");
+        item.setQuestionType(request.getQuestionType());
         item.setTags(request.getTags());
         item.setExplanation(request.getExplanation());
         item.setCorrectionNote(request.getCorrectionNote());
         item.setImageFile(request.getImageFile());
-        if (request.getIsUse() != null) item.setIsUse(request.getIsUse());
 
-        return toItemResponse(itemRepository.save(item));
+        String subjectNm = getSubjectName(request.getSubjectCd());
+        return toItemResponse(itemRepository.save(item), subjectNm);
     }
 
+    /**
+     * 항목 삭제
+     */
     @Transactional
-    public void deleteItem(Long itemId) {
-        if (!itemRepository.existsById(itemId)) {
-            throw new EntityNotFoundException("문제를 찾을 수 없습니다: " + itemId);
+    public void deleteItem(Long groupId, Long itemId) {
+        QuestionBankItem item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new EntityNotFoundException("문제은행 항목을 찾을 수 없습니다: " + itemId));
+
+        if (!item.getGroupId().equals(groupId)) {
+            throw new IllegalArgumentException("해당 그룹에 속하지 않는 항목입니다.");
         }
+
         itemRepository.deleteById(itemId);
     }
 
+    /**
+     * 항목 일괄 등록
+     */
     @Transactional
     public List<QuestionBankDto.ItemResponse> bulkImportItems(Long groupId, QuestionBankDto.BulkImportRequest request) {
-        if (!groupRepository.existsById(groupId)) {
-            throw new EntityNotFoundException("문제은행 그룹을 찾을 수 없습니다: " + groupId);
-        }
+        QuestionBankGroup group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new EntityNotFoundException("문제은행 그룹을 찾을 수 없습니다: " + groupId));
 
         List<QuestionBankItem> items = request.getItems().stream()
                 .map(req -> {
                     QuestionBankItem item = buildItemFromRequest(req);
-                    item.setGroupId(null); // will be set via group relation
-                    QuestionBankGroup group = groupRepository.getReferenceById(groupId);
-                    item.setGroup(group);
+                    group.addItem(item);
                     return item;
                 })
                 .collect(Collectors.toList());
 
-        return itemRepository.saveAll(items).stream()
-                .map(this::toItemResponse)
+        groupRepository.save(group);
+
+        Map<String, String> subjectNameMap = getSubjectNameMap(items);
+        return items.stream()
+                .map(item -> toItemResponse(item, subjectNameMap.getOrDefault(item.getSubjectCd(), "")))
                 .collect(Collectors.toList());
     }
 
@@ -225,11 +279,7 @@ public class QuestionBankService {
                 .build();
     }
 
-    private String blankToNull(String value) {
-        return (value != null && !value.isBlank()) ? value : null;
-    }
-
-    private QuestionBankDto.GroupResponse toGroupResponse(QuestionBankGroup group, Long itemCount) {
+    private QuestionBankDto.GroupResponse toGroupResponse(QuestionBankGroup group, long itemCount) {
         return QuestionBankDto.GroupResponse.builder()
                 .groupId(group.getGroupId())
                 .groupCd(group.getGroupCd())
@@ -246,21 +296,11 @@ public class QuestionBankService {
                 .build();
     }
 
-    private QuestionBankDto.ItemResponse toItemResponse(QuestionBankItem item) {
-        String groupNm = null;
-        String subjectNm = null;
-
-        if (item.getGroup() != null) {
-            groupNm = item.getGroup().getGroupNm();
-        }
-        if (item.getSubject() != null) {
-            subjectNm = item.getSubject().getSubjectNm();
-        }
-
+    private QuestionBankDto.ItemResponse toItemResponse(QuestionBankItem item, String subjectNm) {
         return QuestionBankDto.ItemResponse.builder()
                 .itemId(item.getItemId())
-                .groupId(item.getGroup() != null ? item.getGroup().getGroupId() : item.getGroupId())
-                .groupNm(groupNm)
+                .groupId(item.getGroupId())
+                .groupNm(item.getGroup() != null ? item.getGroup().getGroupNm() : null)
                 .subjectCd(item.getSubjectCd())
                 .subjectNm(subjectNm)
                 .questionNo(item.getQuestionNo())
@@ -288,5 +328,35 @@ public class QuestionBankService {
                 .regDt(item.getRegDt())
                 .updDt(item.getUpdDt())
                 .build();
+    }
+
+    private Map<Long, Long> getItemCountMap(List<Long> groupIds) {
+        if (groupIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, Long> map = new HashMap<>();
+        List<Object[]> counts = groupRepository.countItemsByGroupIds(groupIds);
+        for (Object[] row : counts) {
+            map.put((Long) row[0], (Long) row[1]);
+        }
+        return map;
+    }
+
+    private Map<String, String> getSubjectNameMap(List<QuestionBankItem> items) {
+        List<String> subjectCds = items.stream()
+                .map(QuestionBankItem::getSubjectCd)
+                .distinct()
+                .collect(Collectors.toList());
+        if (subjectCds.isEmpty()) {
+            return Map.of();
+        }
+        return subjectMasterRepository.findAllById(subjectCds).stream()
+                .collect(Collectors.toMap(SubjectMaster::getSubjectCd, SubjectMaster::getSubjectNm));
+    }
+
+    private String getSubjectName(String subjectCd) {
+        return subjectMasterRepository.findById(subjectCd)
+                .map(SubjectMaster::getSubjectNm)
+                .orElse("");
     }
 }

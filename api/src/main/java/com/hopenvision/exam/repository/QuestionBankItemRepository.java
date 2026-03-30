@@ -13,6 +13,8 @@ public interface QuestionBankItemRepository extends JpaRepository<QuestionBankIt
 
     List<QuestionBankItem> findByGroupIdOrderByQuestionNo(Long groupId);
 
+    List<QuestionBankItem> findByGroupIdAndSubjectCdOrderByQuestionNo(Long groupId, String subjectCd);
+
     @Query("SELECT i FROM QuestionBankItem i WHERE " +
             "(:groupId IS NULL OR i.groupId = :groupId) " +
             "AND (:subjectCd IS NULL OR i.subjectCd = :subjectCd) " +

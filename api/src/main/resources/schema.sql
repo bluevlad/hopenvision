@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS exam_mst (
     exam_date       DATE,
     total_score     NUMERIC(5,2) DEFAULT 100,
     pass_score      NUMERIC(5,2),
+    question_set_id INTEGER,
+    exam_status     VARCHAR(20) DEFAULT 'DRAFT',
     is_use          CHAR(1) DEFAULT 'Y',
     reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     upd_dt          TIMESTAMP
@@ -34,6 +36,8 @@ CREATE TABLE IF NOT EXISTS exam_subject (
     question_type   VARCHAR(20) DEFAULT 'CHOICE',
     cut_line        NUMERIC(5,2) DEFAULT 40,
     sort_order      INTEGER DEFAULT 1,
+    group_id        BIGINT,
+    time_limit      INTEGER DEFAULT 22,
     is_use          CHAR(1) DEFAULT 'Y',
     reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (exam_cd, subject_cd),
@@ -237,6 +241,7 @@ CREATE TABLE IF NOT EXISTS user_score (
     wrong_cnt       INTEGER,
     ranking         INTEGER,
     percentile      NUMERIC(5,2),
+    standard_score  NUMERIC(5,2),
     batch_yn        CHAR(1) DEFAULT 'N',
     reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     upd_dt          TIMESTAMP,
@@ -261,6 +266,7 @@ CREATE TABLE IF NOT EXISTS user_total_score (
     area_ranking    INTEGER,
     type_ranking    INTEGER,
     percentile      NUMERIC(5,2),
+    standard_score  NUMERIC(5,2),
     pass_yn         CHAR(1),
     cut_fail_yn     CHAR(1) DEFAULT 'N',
     batch_yn        CHAR(1) DEFAULT 'N',
@@ -276,6 +282,158 @@ COMMENT ON COLUMN user_total_score.avg_score IS '평균 점수';
 COMMENT ON COLUMN user_total_score.total_ranking IS '전체 순위';
 COMMENT ON COLUMN user_total_score.pass_yn IS '합격여부 (Y/N)';
 COMMENT ON COLUMN user_total_score.cut_fail_yn IS '과락여부 (Y:과락있음, N:없음)';
+COMMENT ON COLUMN user_total_score.standard_score IS '표준점수 (T = (원점수-평균)/표준편차*20+100)';
+
+-- 12. 과목 마스터 테이블
+CREATE TABLE IF NOT EXISTS subject_master (
+    subject_cd          VARCHAR(20) PRIMARY KEY,
+    subject_nm          VARCHAR(100) NOT NULL,
+    parent_subject_cd   VARCHAR(20),
+    subject_depth       INTEGER DEFAULT 1,
+    sort_order          INTEGER DEFAULT 1,
+    category            VARCHAR(50),
+    description         TEXT,
+    is_use              CHAR(1) DEFAULT 'Y',
+    reg_dt              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt              TIMESTAMP,
+    FOREIGN KEY (parent_subject_cd) REFERENCES subject_master(subject_cd)
+);
+
+COMMENT ON TABLE subject_master IS '과목 마스터';
+COMMENT ON COLUMN subject_master.subject_cd IS '과목코드';
+COMMENT ON COLUMN subject_master.subject_nm IS '과목명';
+COMMENT ON COLUMN subject_master.parent_subject_cd IS '상위 과목코드 (계층 구조)';
+
+-- 13. 문제은행 그룹 테이블
+CREATE TABLE IF NOT EXISTS question_bank_group (
+    group_id        SERIAL PRIMARY KEY,
+    group_cd        VARCHAR(50) UNIQUE NOT NULL,
+    group_nm        VARCHAR(200) NOT NULL,
+    exam_year       VARCHAR(4),
+    exam_round      INTEGER,
+    category        VARCHAR(50),
+    source          VARCHAR(100),
+    description     TEXT,
+    is_use          CHAR(1) DEFAULT 'Y',
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP
+);
+
+COMMENT ON TABLE question_bank_group IS '문제은행 그룹';
+COMMENT ON COLUMN question_bank_group.group_cd IS '그룹코드';
+COMMENT ON COLUMN question_bank_group.group_nm IS '그룹명';
+
+-- 14. 문제은행 항목 테이블
+CREATE TABLE IF NOT EXISTS question_bank_item (
+    item_id         SERIAL PRIMARY KEY,
+    group_id        INTEGER NOT NULL REFERENCES question_bank_group(group_id) ON DELETE CASCADE,
+    subject_cd      VARCHAR(20) NOT NULL,
+    question_no     INTEGER,
+    question_title  VARCHAR(500),
+    question_text   TEXT,
+    context_text    TEXT,
+    choice1         VARCHAR(1000),
+    choice2         VARCHAR(1000),
+    choice3         VARCHAR(1000),
+    choice4         VARCHAR(1000),
+    choice5         VARCHAR(1000),
+    correct_ans     VARCHAR(100) NOT NULL,
+    is_multi_ans    CHAR(1) DEFAULT 'N',
+    score           NUMERIC(5,2) DEFAULT 5,
+    category        VARCHAR(100),
+    difficulty      VARCHAR(10),
+    question_type   VARCHAR(20) DEFAULT 'CHOICE',
+    tags            VARCHAR(500),
+    explanation     TEXT,
+    correction_note TEXT,
+    image_file      VARCHAR(200),
+    use_count       INTEGER DEFAULT 0,
+    correct_rate    NUMERIC(5,2),
+    is_use          CHAR(1) DEFAULT 'Y',
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP
+);
+
+COMMENT ON TABLE question_bank_item IS '문제은행 항목';
+COMMENT ON COLUMN question_bank_item.item_id IS '항목 ID';
+COMMENT ON COLUMN question_bank_item.group_id IS '그룹 ID';
+COMMENT ON COLUMN question_bank_item.correct_ans IS '정답';
+CREATE INDEX IF NOT EXISTS idx_qb_item_group ON question_bank_item(group_id, subject_cd);
+
+-- 15. 문제세트 테이블 (시험 단위, 여러 과목 포함)
+CREATE TABLE IF NOT EXISTS question_set (
+    set_id          SERIAL PRIMARY KEY,
+    set_cd          VARCHAR(50) UNIQUE NOT NULL,
+    set_nm          VARCHAR(200) NOT NULL,
+    question_cnt    INTEGER DEFAULT 0,
+    total_score     INTEGER DEFAULT 0,
+    subject_cnt     INTEGER DEFAULT 0,
+    category        VARCHAR(50),
+    difficulty_level VARCHAR(10),
+    description     TEXT,
+    is_use          CHAR(1) DEFAULT 'Y',
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP
+);
+
+COMMENT ON TABLE question_set IS '문제세트 (시험 단위)';
+COMMENT ON COLUMN question_set.set_cd IS '세트코드';
+COMMENT ON COLUMN question_set.set_nm IS '세트명';
+COMMENT ON COLUMN question_set.question_cnt IS '총 문제 수';
+COMMENT ON COLUMN question_set.total_score IS '총 배점';
+COMMENT ON COLUMN question_set.subject_cnt IS '과목 수';
+COMMENT ON COLUMN question_set.difficulty_level IS '평균 난이도';
+
+-- 16. 문제세트 항목 테이블 (과목별 문제 귀속)
+CREATE TABLE IF NOT EXISTS question_set_item (
+    set_item_id     SERIAL PRIMARY KEY,
+    set_id          INTEGER NOT NULL REFERENCES question_set(set_id) ON DELETE CASCADE,
+    item_id         INTEGER NOT NULL REFERENCES question_bank_item(item_id),
+    subject_cd      VARCHAR(20) NOT NULL,
+    question_no     INTEGER,
+    score           NUMERIC(5,2),
+    sort_order      INTEGER DEFAULT 1
+);
+
+COMMENT ON TABLE question_set_item IS '문제세트 항목';
+COMMENT ON COLUMN question_set_item.set_id IS '세트 ID';
+COMMENT ON COLUMN question_set_item.item_id IS '문제은행 항목 ID';
+COMMENT ON COLUMN question_set_item.subject_cd IS '과목코드';
+COMMENT ON COLUMN question_set_item.question_no IS '과목 내 문항 번호';
+COMMENT ON COLUMN question_set_item.score IS '배점 (오버라이드)';
+
+CREATE INDEX IF NOT EXISTS idx_question_set_item_subject ON question_set_item(set_id, subject_cd);
+
+-- 17. 시험 공지사항 테이블
+CREATE TABLE IF NOT EXISTS exam_notice (
+    notice_id       SERIAL PRIMARY KEY,
+    exam_cd         VARCHAR(50) NOT NULL,
+    title           VARCHAR(200) NOT NULL,
+    content         TEXT,
+    is_pinned       CHAR(1) DEFAULT 'N',
+    is_use          CHAR(1) DEFAULT 'Y',
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP,
+    FOREIGN KEY (exam_cd) REFERENCES exam_mst(exam_cd) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE exam_notice IS '시험 공지사항';
+
+-- 18. 사용자 프로필 테이블
+CREATE TABLE IF NOT EXISTS user_profile (
+    user_id         VARCHAR(50) PRIMARY KEY,
+    user_nm         VARCHAR(100) NOT NULL,
+    email           VARCHAR(200),
+    newsletter_yn   CHAR(1) DEFAULT 'N',
+    version         BIGINT DEFAULT 0,
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP
+);
+
+COMMENT ON TABLE user_profile IS '사용자 프로필';
+COMMENT ON COLUMN user_profile.user_id IS '사용자 ID';
+COMMENT ON COLUMN user_profile.user_nm IS '사용자명';
+COMMENT ON COLUMN user_profile.newsletter_yn IS '뉴스레터 수신 여부';
 
 -- ============================================
 -- 인덱스 생성

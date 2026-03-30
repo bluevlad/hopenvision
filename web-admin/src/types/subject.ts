@@ -3,24 +3,38 @@ export interface SubjectMasterResponse {
   subjectNm: string;
   parentSubjectCd: string | null;
   subjectDepth: number;
-  sortOrder: number;
   category: string | null;
   description: string | null;
+  sortOrder: number;
   isUse: string;
   regDt: string;
   updDt: string;
+  childCount: number;
+  examCount: number | null;
   children?: SubjectMasterResponse[];
 }
 
 export interface SubjectMasterRequest {
   subjectCd: string;
   subjectNm: string;
-  parentSubjectCd?: string | null;
+  parentSubjectCd?: string;
   subjectDepth?: number;
+  category?: string;
+  description?: string;
   sortOrder?: number;
-  category?: string | null;
-  description?: string | null;
   isUse?: string;
+}
+
+export interface SubjectMasterTreeResponse {
+  subjectCd: string;
+  subjectNm: string;
+  parentSubjectCd: string | null;
+  subjectDepth: number;
+  category: string | null;
+  description: string | null;
+  sortOrder: number;
+  isUse: string;
+  children: SubjectMasterTreeResponse[];
 }
 
 export interface SubjectSearchParams {

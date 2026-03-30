@@ -6,26 +6,23 @@ import type {
   QuestionBankGroupRequest,
   QuestionBankItemResponse,
   QuestionBankItemRequest,
+  GroupSearchParams,
+  ItemSearchParams,
+  CsvUpdateResult,
 } from '../types/questionBank';
 
 const BASE_PATH = '/api/question-bank';
 
 export const questionBankApi = {
+  // ==================== Group ====================
+
   // 그룹 목록 조회
-  getGroupList: async (params: {
-    keyword?: string;
-    category?: string;
-    examYear?: string;
-    source?: string;
-    isUse?: string;
-    page?: number;
-    size?: number;
-  }): Promise<ApiResponse<PageResponse<QuestionBankGroupResponse>>> => {
+  getGroupList: async (params: GroupSearchParams): Promise<ApiResponse<PageResponse<QuestionBankGroupResponse>>> => {
     const response = await client.get(BASE_PATH, { params });
     return response.data;
   },
 
-  // 그룹 상세 조회
+  // 그룹 상세 조회 (문제 포함)
   getGroupDetail: async (groupId: number): Promise<ApiResponse<QuestionBankGroupDetailResponse>> => {
     const response = await client.get(`${BASE_PATH}/${groupId}`);
     return response.data;
@@ -49,29 +46,61 @@ export const questionBankApi = {
     return response.data;
   },
 
-  // 항목 목록 조회
-  getItemList: async (groupId: number, subjectCd?: string): Promise<ApiResponse<QuestionBankItemResponse[]>> => {
-    const response = await client.get(`${BASE_PATH}/${groupId}/items`, {
-      params: { subjectCd },
-    });
+  // ==================== Item ====================
+
+  // 문제 목록 조회
+  getItemList: async (params: ItemSearchParams): Promise<ApiResponse<PageResponse<QuestionBankItemResponse>>> => {
+    const response = await client.get(`${BASE_PATH}/items`, { params });
     return response.data;
   },
 
-  // 항목 등록
+  // 문제 상세 조회
+  getItemDetail: async (itemId: number): Promise<ApiResponse<QuestionBankItemResponse>> => {
+    const response = await client.get(`${BASE_PATH}/items/${itemId}`);
+    return response.data;
+  },
+
+  // 문제 등록
   createItem: async (groupId: number, data: QuestionBankItemRequest): Promise<ApiResponse<QuestionBankItemResponse>> => {
     const response = await client.post(`${BASE_PATH}/${groupId}/items`, data);
     return response.data;
   },
 
-  // 항목 수정
+  // 문제 수정
   updateItem: async (groupId: number, itemId: number, data: QuestionBankItemRequest): Promise<ApiResponse<QuestionBankItemResponse>> => {
     const response = await client.put(`${BASE_PATH}/${groupId}/items/${itemId}`, data);
     return response.data;
   },
 
-  // 항목 삭제
+  // 문제 삭제
   deleteItem: async (groupId: number, itemId: number): Promise<ApiResponse<void>> => {
     const response = await client.delete(`${BASE_PATH}/${groupId}/items/${itemId}`);
+    return response.data;
+  },
+
+  // 문제 일괄 등록
+  bulkImportItems: async (groupId: number, items: QuestionBankItemRequest[]): Promise<ApiResponse<QuestionBankItemResponse[]>> => {
+    const response = await client.post(`${BASE_PATH}/${groupId}/bulk-import`, { items });
+    return response.data;
+  },
+
+  // CSV 정답/배점/난이도 업데이트 미리보기
+  csvUpdatePreview: async (file: File): Promise<ApiResponse<CsvUpdateResult>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await client.post(`${BASE_PATH}/csv-update/preview`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  // CSV 정답/배점/난이도 업데이트 적용
+  csvUpdateApply: async (file: File): Promise<ApiResponse<CsvUpdateResult>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await client.post(`${BASE_PATH}/csv-update/apply`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   },
 };

@@ -38,6 +38,8 @@ public class ExamDto {
         @DecimalMin(value = "0", message = "합격점수는 0 이상입니다")
         @DecimalMax(value = "10000", message = "합격점수는 10000 이하입니다")
         private BigDecimal passScore;
+        @Size(max = 20, message = "시험 카테고리는 20자 이내입니다")
+        private String examCategory;
         @Size(max = 1, message = "사용여부는 1자입니다")
         private String isUse;
         @Valid
@@ -58,6 +60,7 @@ public class ExamDto {
         private LocalDate examDate;
         private BigDecimal totalScore;
         private BigDecimal passScore;
+        private String examCategory;
         private Long questionSetId;
         private String questionSetNm;
         private String examStatus;
@@ -82,6 +85,7 @@ public class ExamDto {
         private LocalDate examDate;
         private BigDecimal totalScore;
         private BigDecimal passScore;
+        private String examCategory;
         private Long questionSetId;
         private String questionSetNm;
         private String examStatus;

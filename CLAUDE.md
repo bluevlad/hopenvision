@@ -209,3 +209,38 @@ com.hopenvision/
 - **네트워크**: database-network (외부)
 
 > 로컬 환경 정보는 `CLAUDE.local.md` 참조 (git에 포함되지 않음)
+
+## Fix 커밋 오류 추적
+
+> 상세: [FIX_COMMIT_TRACKING_GUIDE.md](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/standards/git/FIX_COMMIT_TRACKING_GUIDE.md) | [ERROR_TAXONOMY.md](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/standards/git/ERROR_TAXONOMY.md)
+
+`fix:` 커밋 시 footer에 오류 추적 메타데이터를 **필수** 포함합니다.
+
+### 이 프로젝트에서 자주 발생하는 Root-Cause
+
+| Root-Cause | 설명 | 예방 |
+|-----------|------|------|
+| `env-assumption` | profile별 설정 차이, 환경변수 가정 | `@Value` + `${VAR:?required}` 패턴 필수 |
+| `null-handling` | NullPointerException | `Optional<T>` 반환, `@Nullable` 어노테이션 |
+| `config-typo` | application.yml 키 오타, 들여쓰기 오류 | IDE YAML 검증, 프로파일별 설정 테스트 |
+| `type-mismatch` | DTO ↔ Entity 매핑 타입 불일치 | MapStruct 또는 ModelMapper 사용, 단위 테스트 |
+| `missing-auth` | API 인증/인가 누락 | `@PreAuthorize` 또는 SecurityFilterChain에 명시 |
+| `cors-miscfg` | CORS 와일드카드 허용 | `allowedOrigins`에 명시적 도메인만 등록 |
+
+### 예시
+
+```
+fix(auth): JWT 토큰 만료 검증 로직 수정
+
+- JwtTokenProvider에서 만료 시간 비교 시 초/밀리초 단위 혼동
+- Instant.now().getEpochSecond() 사용으로 통일
+
+Root-Cause: unit-mismatch
+Error-Category: logic-error
+Affected-Layer: backend/auth
+Recurrence: first
+Prevention: 시간 비교 시 단위를 변수명에 명시 (epochSec, epochMs)
+
+fixes #15
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+```

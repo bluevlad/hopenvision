@@ -137,6 +137,8 @@ public class QuestionBankDto {
         private String correctionNote;
         @Size(max = 200, message = "이미지경로는 200자 이내입니다")
         private String imageFile;
+        @Size(max = 1, message = "사용여부는 1자입니다")
+        private String isUse;
     }
 
     @Getter
@@ -147,6 +149,7 @@ public class QuestionBankDto {
     public static class ItemResponse {
         private Long itemId;
         private Long groupId;
+        private String groupNm;
         private String subjectCd;
         private String subjectNm;
         private Integer questionNo;
@@ -182,11 +185,65 @@ public class QuestionBankDto {
     @Builder
     public static class ItemSearchRequest {
         private String keyword;
+        private Long groupId;
         private String subjectCd;
         private String difficulty;
         private String questionType;
         private String category;
+        private String isUse;
         private int page = 0;
         private int size = 20;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class BulkImportRequest {
+        private List<ItemRequest> items;
+    }
+
+    // ==================== CSV Update ====================
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CsvUpdateRow {
+        private int rowNum;
+        private String examCd;
+        private String examNm;
+        private Integer round;
+        private String subjectNm;
+        private Integer questionNo;
+        private String correctAns;
+        private BigDecimal score;
+        private String difficulty;
+        // 매칭 결과
+        private String groupCd;
+        private Long groupId;
+        private Long itemId;
+        private String status;       // MATCHED, NOT_FOUND, SKIP, ERROR
+        private String message;
+        // 변경 전 값 (미리보기용)
+        private String prevCorrectAns;
+        private BigDecimal prevScore;
+        private String prevDifficulty;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CsvUpdateResult {
+        private int totalRows;
+        private int matchedRows;
+        private int skippedRows;
+        private int updatedRows;
+        private int errorRows;
+        private List<CsvUpdateRow> rows;
     }
 }

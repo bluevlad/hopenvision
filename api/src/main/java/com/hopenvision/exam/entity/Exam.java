@@ -46,12 +46,37 @@ public class Exam {
     @Column(name = "pass_score", precision = 5, scale = 2)
     private BigDecimal passScore;
 
+    @Column(name = "exam_category", length = 20)
+    @Builder.Default
+    private String examCategory = "ACTUAL";
+
     @Column(name = "question_set_id")
     private Long questionSetId;
 
     @Column(name = "exam_status", length = 20)
     @Builder.Default
     private String examStatus = "DRAFT";
+
+    @Column(name = "status", length = 20)
+    private String status;
+
+    @Column(name = "reg_start_dt")
+    private LocalDateTime regStartDt;
+
+    @Column(name = "reg_end_dt")
+    private LocalDateTime regEndDt;
+
+    @Column(name = "exam_minute")
+    private Integer examMinute;
+
+    @Column(name = "max_applicant")
+    private Integer maxApplicant;
+
+    @Column(name = "exam_place", length = 200)
+    private String examPlace;
+
+    @Column(name = "result_publish_dt")
+    private LocalDateTime resultPublishDt;
 
     @Column(name = "is_use", length = 1)
     @Builder.Default

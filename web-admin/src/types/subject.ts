@@ -11,6 +11,7 @@ export interface SubjectMasterResponse {
   updDt: string;
   childCount: number;
   examCount: number | null;
+  children?: SubjectMasterResponse[];
 }
 
 export interface SubjectMasterRequest {
@@ -34,4 +35,12 @@ export interface SubjectMasterTreeResponse {
   sortOrder: number;
   isUse: string;
   children: SubjectMasterTreeResponse[];
+}
+
+export interface SubjectSearchParams {
+  keyword?: string;
+  category?: string;
+  isUse?: string;
+  page?: number;
+  size?: number;
 }

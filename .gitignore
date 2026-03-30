@@ -51,3 +51,13 @@ wiki/.venv/
 .env.*
 !.env.example
 !.env.*.example
+
+# Python
+__pycache__/
+*.pyc
+
+# Scripts data (HWPX, PDF, 파싱 결과)
+scripts/data/
+
+# Local Docker Compose (개발 PC 전용)
+docker-compose.local.yml

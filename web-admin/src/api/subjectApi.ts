@@ -4,19 +4,14 @@ import type {
   SubjectMasterResponse,
   SubjectMasterRequest,
   SubjectMasterTreeResponse,
+  SubjectSearchParams,
 } from '../types/subject';
 
 const BASE_PATH = '/api/subjects';
 
 export const subjectApi = {
-  // 과목 목록 조회
-  getSubjectList: async (params: {
-    keyword?: string;
-    category?: string;
-    isUse?: string;
-    page?: number;
-    size?: number;
-  }): Promise<ApiResponse<PageResponse<SubjectMasterResponse>>> => {
+  // 과목 목록 조회 (페이징)
+  getSubjectList: async (params: SubjectSearchParams): Promise<ApiResponse<PageResponse<SubjectMasterResponse>>> => {
     const response = await client.get(BASE_PATH, { params });
     return response.data;
   },
@@ -30,6 +25,12 @@ export const subjectApi = {
   // 카테고리별 과목 목록 (드롭다운용)
   getSubjectsByCategory: async (category?: string): Promise<ApiResponse<SubjectMasterResponse[]>> => {
     const response = await client.get(`${BASE_PATH}/by-category`, { params: { category } });
+    return response.data;
+  },
+
+  // 과목 검색 (페이징)
+  searchSubjects: async (params: SubjectSearchParams): Promise<ApiResponse<PageResponse<SubjectMasterResponse>>> => {
+    const response = await client.get(`${BASE_PATH}/search`, { params });
     return response.data;
   },
 

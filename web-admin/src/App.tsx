@@ -26,6 +26,11 @@ import GosiStatistics from './pages/gosi/GosiStatistics';
 import GosiAnalytics from './pages/gosi/GosiAnalytics';
 import GosiSubjectList from './pages/gosi/GosiSubjectList';
 import GosiMemberList from './pages/gosi/GosiMemberList';
+import SubjectMasterList from './pages/SubjectMasterList';
+import QuestionBankGroupList from './pages/QuestionBankGroupList';
+import QuestionBankItemList from './pages/QuestionBankItemList';
+import QuestionBankBulkImport from './pages/QuestionBankBulkImport';
+import QuestionBankCsvUpdate from './pages/QuestionBankCsvUpdate';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -65,6 +70,11 @@ function App() {
                 <Route path="question-sets" element={<QuestionSetList />} />
                 <Route path="question-sets/:setId" element={<QuestionSetDetail />} />
                 <Route path="import/preview" element={<ExcelImport />} />
+                <Route path="subjects" element={<SubjectMasterList />} />
+                <Route path="question-bank/groups" element={<QuestionBankGroupList />} />
+                <Route path="question-bank/items" element={<QuestionBankItemList />} />
+                <Route path="question-bank/bulk-import" element={<QuestionBankBulkImport />} />
+                <Route path="question-bank/csv-update" element={<QuestionBankCsvUpdate />} />
                 <Route path="gosi/exams" element={<GosiExamList />} />
                 <Route path="gosi/pass" element={<GosiPassList />} />
                 <Route path="gosi/results" element={<GosiScoreList />} />

@@ -6,7 +6,6 @@ import {
   UserOutlined,
   BarChartOutlined,
   LogoutOutlined,
-  TrophyOutlined,
   BookOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../auth/useAuth';
@@ -25,9 +24,13 @@ const menuItems = [
     label: '응시자 관리',
   },
   {
-    key: '/statistics',
+    key: 'stats',
     icon: <BarChartOutlined />,
     label: '통계',
+    children: [
+      { key: '/statistics', label: '시험 통계' },
+      { key: '/gosi/analytics', label: '성적 분석' },
+    ],
   },
   {
     key: 'content',
@@ -40,20 +43,6 @@ const menuItems = [
       { key: '/question-bank/csv-update', label: 'CSV 정답 업데이트' },
       { key: '/question-bank/excel-update', label: 'Excel 정답 업데이트' },
       { key: '/question-sets', label: '문제세트' },
-    ],
-  },
-  {
-    key: 'gosi',
-    icon: <TrophyOutlined />,
-    label: '합격예측',
-    children: [
-      { key: '/gosi/exams', label: '시험/지역 관리' },
-      { key: '/gosi/pass', label: '정답 관리' },
-      { key: '/gosi/results', label: '성적 관리' },
-      { key: '/gosi/statistics', label: '통계' },
-      { key: '/gosi/analytics', label: '성적 분석' },
-      { key: '/gosi/subjects', label: '과목/VOD' },
-      { key: '/gosi/members', label: '회원 관리' },
     ],
   },
 ];
@@ -77,13 +66,7 @@ export default function AdminLayout() {
     if (path.startsWith('/question-bank/bulk-import')) return '/question-bank/bulk-import';
     if (path.startsWith('/question-bank')) return '/question-bank';
     if (path.startsWith('/question-sets')) return '/question-sets';
-    if (path.startsWith('/gosi/exams')) return '/gosi/exams';
-    if (path.startsWith('/gosi/pass')) return '/gosi/pass';
-    if (path.startsWith('/gosi/results')) return '/gosi/results';
-    if (path.startsWith('/gosi/statistics')) return '/gosi/statistics';
     if (path.startsWith('/gosi/analytics')) return '/gosi/analytics';
-    if (path.startsWith('/gosi/subjects')) return '/gosi/subjects';
-    if (path.startsWith('/gosi/members')) return '/gosi/members';
     if (path.startsWith('/exams')) return '/exams';
     if (path.startsWith('/applicants')) return '/applicants';
     if (path.startsWith('/statistics')) return '/statistics';
@@ -95,7 +78,7 @@ export default function AdminLayout() {
     if (path.startsWith('/question-sets')) return ['content'];
     if (path.startsWith('/question-bank')) return ['content'];
     if (path.startsWith('/subjects')) return ['content'];
-    if (path.startsWith('/gosi')) return ['gosi'];
+    if (path.startsWith('/statistics') || path.startsWith('/gosi/analytics')) return ['stats'];
     return [];
   };
 

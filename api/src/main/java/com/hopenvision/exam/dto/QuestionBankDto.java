@@ -203,4 +203,47 @@ public class QuestionBankDto {
     public static class BulkImportRequest {
         private List<ItemRequest> items;
     }
+
+    // ==================== CSV Update ====================
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CsvUpdateRow {
+        private int rowNum;
+        private String examCd;
+        private String examNm;
+        private Integer round;
+        private String subjectNm;
+        private Integer questionNo;
+        private String correctAns;
+        private BigDecimal score;
+        private String difficulty;
+        // 매칭 결과
+        private String groupCd;
+        private Long groupId;
+        private Long itemId;
+        private String status;       // MATCHED, NOT_FOUND, SKIP, ERROR
+        private String message;
+        // 변경 전 값 (미리보기용)
+        private String prevCorrectAns;
+        private BigDecimal prevScore;
+        private String prevDifficulty;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CsvUpdateResult {
+        private int totalRows;
+        private int matchedRows;
+        private int skippedRows;
+        private int updatedRows;
+        private int errorRows;
+        private List<CsvUpdateRow> rows;
+    }
 }

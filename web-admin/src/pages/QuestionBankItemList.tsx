@@ -12,6 +12,7 @@ import {
 import { DIFFICULTY_LEVELS } from '@hopenvision/shared';
 import { questionBankApi } from '../api/questionBankApi';
 import { subjectApi } from '../api/subjectApi';
+import type { PageResponse } from '@hopenvision/shared';
 import type {
   QuestionBankItemResponse,
   QuestionBankItemRequest,
@@ -59,7 +60,7 @@ export default function QuestionBankItemList() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: QuestionBankItemRequest) => questionBankApi.createItem(data),
+    mutationFn: (data: QuestionBankItemRequest) => questionBankApi.createItem(searchParams.groupId || 0, data),
     onSuccess: () => {
       message.success('문제가 등록되었습니다.');
       queryClient.invalidateQueries({ queryKey: ['questionBankItems'] });
@@ -70,7 +71,7 @@ export default function QuestionBankItemList() {
 
   const updateMutation = useMutation({
     mutationFn: ({ itemId, data }: { itemId: number; data: QuestionBankItemRequest }) =>
-      questionBankApi.updateItem(itemId, data),
+      questionBankApi.updateItem(searchParams.groupId || 0, itemId, data),
     onSuccess: () => {
       message.success('문제가 수정되었습니다.');
       queryClient.invalidateQueries({ queryKey: ['questionBankItems'] });
@@ -80,7 +81,7 @@ export default function QuestionBankItemList() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (itemId: number) => questionBankApi.deleteItem(itemId),
+    mutationFn: (itemId: number) => questionBankApi.deleteItem(searchParams.groupId || 0, itemId),
     onSuccess: () => {
       message.success('문제가 삭제되었습니다.');
       queryClient.invalidateQueries({ queryKey: ['questionBankItems'] });
@@ -88,12 +89,14 @@ export default function QuestionBankItemList() {
     onError: () => message.error('문제 삭제에 실패했습니다.'),
   });
 
-  const groupOptions = (groupsData?.data || []).map((g) => ({
+  const groupsList = groupsData?.data;
+  const groupOptions = (groupsList && 'content' in groupsList ? groupsList.content : groupsList || []).map((g: { groupId: number; groupNm: string; groupCd: string }) => ({
     value: g.groupId,
     label: `${g.groupNm} (${g.groupCd})`,
   }));
 
-  const subjectOptions = (subjectsData?.data || []).map((s) => ({
+  const subjectsList = subjectsData?.data;
+  const subjectOptions = (subjectsList && 'content' in subjectsList ? subjectsList.content : subjectsList || []).map((s: { subjectCd: string; subjectNm: string }) => ({
     value: s.subjectCd,
     label: `${s.subjectNm} (${s.subjectCd})`,
   }));
@@ -287,14 +290,14 @@ export default function QuestionBankItemList() {
 
       <Table
         columns={columns}
-        dataSource={data?.data || []}
+        dataSource={(data?.data as PageResponse<QuestionBankItemResponse> | undefined)?.content || []}
         rowKey="itemId"
         loading={isLoading}
         size="small"
         pagination={{
-          current: (data?.page ?? 0) + 1,
-          pageSize: data?.size ?? 10,
-          total: data?.totalElements ?? 0,
+          current: ((data?.data as PageResponse<QuestionBankItemResponse> | undefined)?.number ?? 0) + 1,
+          pageSize: (data?.data as PageResponse<QuestionBankItemResponse> | undefined)?.size ?? 10,
+          total: (data?.data as PageResponse<QuestionBankItemResponse> | undefined)?.totalElements ?? 0,
           showSizeChanger: true,
           showTotal: (total) => `총 ${total}건`,
           onChange: (page, pageSize) =>

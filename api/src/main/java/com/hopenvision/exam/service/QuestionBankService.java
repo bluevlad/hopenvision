@@ -15,10 +15,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.math.BigDecimal;
+import java.nio.charset.Charset;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -249,6 +252,183 @@ public class QuestionBankService {
         return items.stream()
                 .map(item -> toItemResponse(item, subjectNameMap.getOrDefault(item.getSubjectCd(), "")))
                 .collect(Collectors.toList());
+    }
+
+    // ==================== CSV Update ====================
+
+    private static final Map<String, String> SUBJECT_NAME_ALIAS = Map.of(
+            "행정법", "행정법총론"
+    );
+
+    /**
+     * CSV 파일 파싱 → 미리보기 (DB 변경 없음)
+     */
+    public QuestionBankDto.CsvUpdateResult previewCsvUpdate(MultipartFile file) {
+        List<QuestionBankDto.CsvUpdateRow> rows = parseCsvFile(file);
+        matchRowsToItems(rows);
+        return buildResult(rows, false);
+    }
+
+    /**
+     * CSV 파일 파싱 → 실제 업데이트 적용
+     */
+    @Transactional
+    public QuestionBankDto.CsvUpdateResult applyCsvUpdate(MultipartFile file) {
+        List<QuestionBankDto.CsvUpdateRow> rows = parseCsvFile(file);
+        matchRowsToItems(rows);
+
+        int updatedCount = 0;
+        for (QuestionBankDto.CsvUpdateRow row : rows) {
+            if (!"MATCHED".equals(row.getStatus()) || row.getItemId() == null) {
+                continue;
+            }
+            QuestionBankItem item = itemRepository.findById(row.getItemId()).orElse(null);
+            if (item == null) {
+                row.setStatus("ERROR");
+                row.setMessage("항목을 찾을 수 없습니다");
+                continue;
+            }
+            item.setCorrectAns(row.getCorrectAns());
+            item.setScore(row.getScore());
+            item.setDifficulty(row.getDifficulty());
+            itemRepository.save(item);
+            updatedCount++;
+        }
+
+        QuestionBankDto.CsvUpdateResult result = buildResult(rows, true);
+        result.setUpdatedRows(updatedCount);
+        return result;
+    }
+
+    private List<QuestionBankDto.CsvUpdateRow> parseCsvFile(MultipartFile file) {
+        List<QuestionBankDto.CsvUpdateRow> rows = new ArrayList<>();
+        // EUC-KR 시도, 실패 시 UTF-8
+        Charset charset = Charset.forName("EUC-KR");
+        try {
+            byte[] bytes = file.getBytes();
+            String firstLine = new String(bytes, 0, Math.min(bytes.length, 200), charset);
+            if (firstLine.contains("\ufffd") || firstLine.contains("?")) {
+                // EUC-KR 디코딩 실패 징후 → UTF-8로 전환
+                charset = Charset.forName("UTF-8");
+            }
+        } catch (Exception e) {
+            charset = Charset.forName("UTF-8");
+        }
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(file.getInputStream(), charset))) {
+            String line = reader.readLine(); // 헤더 스킵
+            if (line == null) return rows;
+
+            int rowNum = 1;
+            while ((line = reader.readLine()) != null) {
+                rowNum++;
+                line = line.trim();
+                if (line.isEmpty()) continue;
+
+                String[] cols = line.split(",", -1);
+                if (cols.length < 8) {
+                    rows.add(QuestionBankDto.CsvUpdateRow.builder()
+                            .rowNum(rowNum).status("ERROR")
+                            .message("컬럼 수 부족 (8개 필요, " + cols.length + "개)")
+                            .build());
+                    continue;
+                }
+
+                try {
+                    rows.add(QuestionBankDto.CsvUpdateRow.builder()
+                            .rowNum(rowNum)
+                            .examCd(cols[0].trim())
+                            .examNm(cols[1].trim())
+                            .round(parseIntSafe(cols[2].trim()))
+                            .subjectNm(cols[3].trim())
+                            .questionNo(parseIntSafe(cols[4].trim()))
+                            .correctAns(cols[5].trim())
+                            .score(parseBigDecimalSafe(cols[6].trim()))
+                            .difficulty(cols[7].trim())
+                            .status("PARSED")
+                            .build());
+                } catch (Exception e) {
+                    rows.add(QuestionBankDto.CsvUpdateRow.builder()
+                            .rowNum(rowNum).status("ERROR")
+                            .message("파싱 오류: " + e.getMessage())
+                            .build());
+                }
+            }
+        } catch (Exception e) {
+            log.error("CSV 파일 읽기 실패", e);
+            throw new IllegalArgumentException("CSV 파일을 읽을 수 없습니다: " + e.getMessage());
+        }
+        return rows;
+    }
+
+    private void matchRowsToItems(List<QuestionBankDto.CsvUpdateRow> rows) {
+        // groupCd 캐시
+        Map<String, QuestionBankGroup> groupCache = new HashMap<>();
+
+        for (QuestionBankDto.CsvUpdateRow row : rows) {
+            if (!"PARSED".equals(row.getStatus())) continue;
+
+            String subjectNm = row.getSubjectNm();
+            String resolvedSubjectNm = SUBJECT_NAME_ALIAS.getOrDefault(subjectNm, subjectNm);
+            String groupCd = row.getExamCd() + "-" + resolvedSubjectNm;
+            row.setGroupCd(groupCd);
+
+            // 그룹 조회
+            QuestionBankGroup group = groupCache.computeIfAbsent(groupCd,
+                    cd -> groupRepository.findByGroupCd(cd).orElse(null));
+
+            if (group == null) {
+                row.setStatus("SKIP");
+                row.setMessage("그룹 없음: " + groupCd);
+                continue;
+            }
+            row.setGroupId(group.getGroupId());
+
+            // questionNo로 항목 매칭
+            List<QuestionBankItem> items = itemRepository.findByGroupCdAndQuestionNo(groupCd, row.getQuestionNo());
+            if (items.isEmpty()) {
+                row.setStatus("NOT_FOUND");
+                row.setMessage("문항 없음: " + groupCd + " #" + row.getQuestionNo());
+                continue;
+            }
+
+            QuestionBankItem item = items.get(0);
+            row.setItemId(item.getItemId());
+            row.setPrevCorrectAns(item.getCorrectAns());
+            row.setPrevScore(item.getScore());
+            row.setPrevDifficulty(item.getDifficulty());
+            row.setStatus("MATCHED");
+        }
+    }
+
+    private QuestionBankDto.CsvUpdateResult buildResult(List<QuestionBankDto.CsvUpdateRow> rows, boolean isApply) {
+        int matched = 0, skipped = 0, error = 0;
+        for (QuestionBankDto.CsvUpdateRow row : rows) {
+            switch (row.getStatus()) {
+                case "MATCHED" -> matched++;
+                case "SKIP", "NOT_FOUND" -> skipped++;
+                default -> error++;
+            }
+        }
+        return QuestionBankDto.CsvUpdateResult.builder()
+                .totalRows(rows.size())
+                .matchedRows(matched)
+                .skippedRows(skipped)
+                .errorRows(error)
+                .updatedRows(isApply ? 0 : matched) // apply에서 덮어씀
+                .rows(rows)
+                .build();
+    }
+
+    private Integer parseIntSafe(String val) {
+        if (val == null || val.isEmpty()) return null;
+        return Integer.parseInt(val);
+    }
+
+    private BigDecimal parseBigDecimalSafe(String val) {
+        if (val == null || val.isEmpty()) return null;
+        return new BigDecimal(val);
     }
 
     // ==================== Mapper ====================

@@ -115,3 +115,34 @@ export interface ItemSearchParams {
   page?: number;
   size?: number;
 }
+
+// ==================== CSV Update ====================
+
+export interface CsvUpdateRow {
+  rowNum: number;
+  examCd: string | null;
+  examNm: string | null;
+  round: number | null;
+  subjectNm: string | null;
+  questionNo: number | null;
+  correctAns: string | null;
+  score: number | null;
+  difficulty: string | null;
+  groupCd: string | null;
+  groupId: number | null;
+  itemId: number | null;
+  status: 'MATCHED' | 'NOT_FOUND' | 'SKIP' | 'ERROR' | 'PARSED';
+  message: string | null;
+  prevCorrectAns: string | null;
+  prevScore: number | null;
+  prevDifficulty: string | null;
+}
+
+export interface CsvUpdateResult {
+  totalRows: number;
+  matchedRows: number;
+  skippedRows: number;
+  updatedRows: number;
+  errorRows: number;
+  rows: CsvUpdateRow[];
+}

@@ -7,7 +7,6 @@ import {
   BarChartOutlined,
   LogoutOutlined,
   TrophyOutlined,
-  DatabaseOutlined,
   BookOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../auth/useAuth';
@@ -38,6 +37,7 @@ const menuItems = [
       { key: '/subjects', label: '과목 관리' },
       { key: '/question-bank', label: '문제은행' },
       { key: '/question-bank/bulk-import', label: '문제 일괄등록' },
+      { key: '/question-bank/csv-update', label: 'CSV 정답 업데이트' },
       { key: '/question-sets', label: '문제세트' },
     ],
   },
@@ -71,6 +71,7 @@ export default function AdminLayout() {
   const getSelectedKey = () => {
     const path = location.pathname;
     if (path.startsWith('/subjects')) return '/subjects';
+    if (path.startsWith('/question-bank/csv-update')) return '/question-bank/csv-update';
     if (path.startsWith('/question-bank/bulk-import')) return '/question-bank/bulk-import';
     if (path.startsWith('/question-bank')) return '/question-bank';
     if (path.startsWith('/question-sets')) return '/question-sets';

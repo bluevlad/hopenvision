@@ -8,6 +8,7 @@ import type {
   QuestionBankItemRequest,
   GroupSearchParams,
   ItemSearchParams,
+  CsvUpdateResult,
 } from '../types/questionBank';
 
 const BASE_PATH = '/api/question-bank';
@@ -80,6 +81,26 @@ export const questionBankApi = {
   // 문제 일괄 등록
   bulkImportItems: async (groupId: number, items: QuestionBankItemRequest[]): Promise<ApiResponse<QuestionBankItemResponse[]>> => {
     const response = await client.post(`${BASE_PATH}/${groupId}/bulk-import`, { items });
+    return response.data;
+  },
+
+  // CSV 정답/배점/난이도 업데이트 미리보기
+  csvUpdatePreview: async (file: File): Promise<ApiResponse<CsvUpdateResult>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await client.post(`${BASE_PATH}/csv-update/preview`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  // CSV 정답/배점/난이도 업데이트 적용
+  csvUpdateApply: async (file: File): Promise<ApiResponse<CsvUpdateResult>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await client.post(`${BASE_PATH}/csv-update/apply`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   },
 };

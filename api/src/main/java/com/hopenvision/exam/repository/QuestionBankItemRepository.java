@@ -33,4 +33,11 @@ public interface QuestionBankItemRepository extends JpaRepository<QuestionBankIt
             Pageable pageable);
 
     long countByGroupId(Long groupId);
+
+    @Query("SELECT i FROM QuestionBankItem i " +
+            "JOIN i.group g " +
+            "WHERE g.groupCd = :groupCd AND i.questionNo = :questionNo")
+    List<QuestionBankItem> findByGroupCdAndQuestionNo(
+            @Param("groupCd") String groupCd,
+            @Param("questionNo") Integer questionNo);
 }

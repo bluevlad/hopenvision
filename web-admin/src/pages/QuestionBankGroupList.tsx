@@ -9,6 +9,7 @@ import {
   EyeOutlined,
 } from '@ant-design/icons';
 import { EXAM_TYPES, QUESTION_SOURCES } from '@hopenvision/shared';
+import type { PageResponse } from '@hopenvision/shared';
 import { questionBankApi } from '../api/questionBankApi';
 import type {
   QuestionBankGroupResponse,
@@ -234,14 +235,14 @@ export default function QuestionBankGroupList() {
 
       <Table
         columns={columns}
-        dataSource={data?.data || []}
+        dataSource={(data?.data as PageResponse<QuestionBankGroupResponse> | undefined)?.content || []}
         rowKey="groupId"
         loading={isLoading}
         size="small"
         pagination={{
-          current: (data?.page ?? 0) + 1,
-          pageSize: data?.size ?? 10,
-          total: data?.totalElements ?? 0,
+          current: ((data?.data as PageResponse<QuestionBankGroupResponse> | undefined)?.number ?? 0) + 1,
+          pageSize: (data?.data as PageResponse<QuestionBankGroupResponse> | undefined)?.size ?? 10,
+          total: (data?.data as PageResponse<QuestionBankGroupResponse> | undefined)?.totalElements ?? 0,
           showSizeChanger: true,
           showTotal: (total) => `총 ${total}건`,
           onChange: (page, pageSize) =>

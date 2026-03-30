@@ -96,13 +96,17 @@ export default function QuestionBankBulkImport() {
     queryFn: () => subjectApi.searchSubjects({ page: 0, size: 200 }),
   });
 
-  const groupOptions = (groupsData?.data || []).map((g: QuestionBankGroupResponse) => ({
+  const groupsList = groupsData?.data;
+  const groupsContent = groupsList && 'content' in groupsList ? groupsList.content : (groupsList || []);
+  const groupOptions = groupsContent.map((g: QuestionBankGroupResponse) => ({
     value: g.groupId,
     label: `${g.groupNm} (${g.groupCd})`,
   }));
 
+  const subjectsList = subjectsData?.data;
+  const subjectsContent = subjectsList && 'content' in subjectsList ? subjectsList.content : (subjectsList || []);
   const subjectMap = new Map(
-    (subjectsData?.data || []).map((s) => [s.subjectCd, s.subjectNm])
+    subjectsContent.map((s: { subjectCd: string; subjectNm: string }) => [s.subjectCd, s.subjectNm])
   );
 
   // 파일 업로드 설정
@@ -271,7 +275,7 @@ export default function QuestionBankBulkImport() {
             selectedGroupId,
             apiItems
           );
-          totalSuccess += result.count;
+          totalSuccess += result.data?.length ?? batch.length;
         } catch {
           totalFail += batch.length;
         }

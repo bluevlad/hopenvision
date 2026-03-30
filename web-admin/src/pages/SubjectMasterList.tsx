@@ -8,6 +8,7 @@ import {
   PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined, ReloadOutlined,
 } from '@ant-design/icons';
 import { EXAM_TYPES } from '@hopenvision/shared';
+import type { PageResponse } from '@hopenvision/shared';
 import { subjectApi } from '../api/subjectApi';
 import type { SubjectMasterResponse, SubjectMasterRequest } from '../types/subject';
 
@@ -200,14 +201,14 @@ export default function SubjectMasterList() {
 
       <Table
         columns={columns}
-        dataSource={data?.data || []}
+        dataSource={(data?.data as PageResponse<SubjectMasterResponse> | undefined)?.content || []}
         rowKey="subjectCd"
         loading={isLoading}
         size="small"
         pagination={{
-          current: (data?.page ?? 0) + 1,
-          pageSize: data?.size ?? 20,
-          total: data?.totalElements ?? 0,
+          current: ((data?.data as PageResponse<SubjectMasterResponse> | undefined)?.number ?? 0) + 1,
+          pageSize: (data?.data as PageResponse<SubjectMasterResponse> | undefined)?.size ?? 20,
+          total: (data?.data as PageResponse<SubjectMasterResponse> | undefined)?.totalElements ?? 0,
           showSizeChanger: true,
           showTotal: (total) => `총 ${total}건`,
           onChange: (page, pageSize) =>

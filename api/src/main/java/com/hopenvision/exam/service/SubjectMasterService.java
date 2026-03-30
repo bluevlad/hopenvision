@@ -143,11 +143,11 @@ public class SubjectMasterService {
 
         subject.setSubjectNm(request.getSubjectNm());
         subject.setParentSubjectCd(request.getParentSubjectCd());
-        subject.setSubjectDepth(request.getSubjectDepth());
+        if (request.getSubjectDepth() != null) subject.setSubjectDepth(request.getSubjectDepth());
         subject.setCategory(request.getCategory());
         subject.setDescription(request.getDescription());
-        subject.setSortOrder(request.getSortOrder());
-        subject.setIsUse(request.getIsUse());
+        if (request.getSortOrder() != null) subject.setSortOrder(request.getSortOrder());
+        if (request.getIsUse() != null) subject.setIsUse(request.getIsUse());
 
         long childCount = subjectMasterRepository.findByParentSubjectCdOrderBySortOrder(subjectCd).size();
         return toResponse(subjectMasterRepository.save(subject), childCount);

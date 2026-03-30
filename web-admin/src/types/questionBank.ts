@@ -42,9 +42,10 @@ export interface QuestionBankGroupRequest {
 export interface QuestionBankItemResponse {
   itemId: number;
   groupId: number;
+  groupNm: string | null;
   subjectCd: string;
-  subjectNm: string;
-  questionNo: number;
+  subjectNm: string | null;
+  questionNo: number | null;
   questionTitle: string | null;
   questionText: string | null;
   contextText: string | null;
@@ -71,8 +72,9 @@ export interface QuestionBankItemResponse {
 }
 
 export interface QuestionBankItemRequest {
+  groupId?: number;
   subjectCd: string;
-  questionNo: number;
+  questionNo?: number;
   questionTitle?: string;
   questionText?: string;
   contextText?: string;
@@ -91,4 +93,56 @@ export interface QuestionBankItemRequest {
   explanation?: string;
   correctionNote?: string;
   imageFile?: string;
+  isUse?: string;
+}
+
+export interface GroupSearchParams {
+  keyword?: string;
+  category?: string;
+  examYear?: string;
+  source?: string;
+  isUse?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface ItemSearchParams {
+  groupId?: number;
+  subjectCd?: string;
+  difficulty?: string;
+  keyword?: string;
+  isUse?: string;
+  page?: number;
+  size?: number;
+}
+
+// ==================== CSV Update ====================
+
+export interface CsvUpdateRow {
+  rowNum: number;
+  examCd: string | null;
+  examNm: string | null;
+  round: number | null;
+  subjectNm: string | null;
+  questionNo: number | null;
+  correctAns: string | null;
+  score: number | null;
+  difficulty: string | null;
+  groupCd: string | null;
+  groupId: number | null;
+  itemId: number | null;
+  status: 'MATCHED' | 'NOT_FOUND' | 'SKIP' | 'ERROR' | 'PARSED';
+  message: string | null;
+  prevCorrectAns: string | null;
+  prevScore: number | null;
+  prevDifficulty: string | null;
+}
+
+export interface CsvUpdateResult {
+  totalRows: number;
+  matchedRows: number;
+  skippedRows: number;
+  updatedRows: number;
+  errorRows: number;
+  rows: CsvUpdateRow[];
 }

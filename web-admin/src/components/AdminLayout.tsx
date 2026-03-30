@@ -36,6 +36,8 @@ const menuItems = [
     children: [
       { key: '/subjects', label: '과목 관리' },
       { key: '/question-bank', label: '문제은행' },
+      { key: '/question-bank/bulk-import', label: '문제 일괄등록' },
+      { key: '/question-bank/csv-update', label: 'CSV 정답 업데이트' },
       { key: '/question-sets', label: '문제세트' },
     ],
   },
@@ -68,6 +70,11 @@ export default function AdminLayout() {
 
   const getSelectedKey = () => {
     const path = location.pathname;
+    if (path.startsWith('/subjects')) return '/subjects';
+    if (path.startsWith('/question-bank/csv-update')) return '/question-bank/csv-update';
+    if (path.startsWith('/question-bank/bulk-import')) return '/question-bank/bulk-import';
+    if (path.startsWith('/question-bank')) return '/question-bank';
+    if (path.startsWith('/question-sets')) return '/question-sets';
     if (path.startsWith('/gosi/exams')) return '/gosi/exams';
     if (path.startsWith('/gosi/pass')) return '/gosi/pass';
     if (path.startsWith('/gosi/results')) return '/gosi/results';
@@ -75,9 +82,6 @@ export default function AdminLayout() {
     if (path.startsWith('/gosi/analytics')) return '/gosi/analytics';
     if (path.startsWith('/gosi/subjects')) return '/gosi/subjects';
     if (path.startsWith('/gosi/members')) return '/gosi/members';
-    if (path.startsWith('/question-sets')) return '/question-sets';
-    if (path.startsWith('/question-bank')) return '/question-bank';
-    if (path.startsWith('/subjects')) return '/subjects';
     if (path.startsWith('/exams')) return '/exams';
     if (path.startsWith('/applicants')) return '/applicants';
     if (path.startsWith('/statistics')) return '/statistics';

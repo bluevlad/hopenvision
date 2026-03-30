@@ -17,6 +17,10 @@ public interface SubjectMasterRepository extends JpaRepository<SubjectMaster, St
 
     List<SubjectMaster> findByCategoryAndIsUseOrderBySortOrder(String category, String isUse);
 
+    List<SubjectMaster> findByIsUseOrderByCategoryAscSortOrderAsc(String isUse);
+
+    List<SubjectMaster> findByParentSubjectCdAndIsUseOrderBySortOrder(String parentSubjectCd, String isUse);
+
     List<SubjectMaster> findByParentSubjectCdOrderBySortOrder(String parentSubjectCd);
 
     List<SubjectMaster> findByParentSubjectCdIsNullOrderBySortOrder();

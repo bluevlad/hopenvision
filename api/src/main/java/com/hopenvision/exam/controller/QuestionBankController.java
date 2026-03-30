@@ -10,8 +10,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -129,5 +131,50 @@ public class QuestionBankController {
     ) {
         questionBankService.deleteItem(groupId, itemId);
         return ResponseEntity.ok(ApiResponse.success("문제가 삭제되었습니다.", null));
+    }
+
+    // ==================== CSV 업데이트 ====================
+
+    @Operation(summary = "CSV 정답/배점/난이도 업데이트 미리보기",
+            description = "CSV 파일을 파싱하여 매칭 결과를 미리보기합니다. DB 변경 없음.")
+    @PostMapping(value = "/csv-update/preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<QuestionBankDto.CsvUpdateResult>> previewCsvUpdate(
+            @RequestParam("file") MultipartFile file
+    ) {
+        validateCsvFile(file);
+        QuestionBankDto.CsvUpdateResult result = questionBankService.previewCsvUpdate(file);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @Operation(summary = "CSV 정답/배점/난이도 업데이트 적용",
+            description = "CSV 파일을 파싱하여 매칭된 항목의 정답/배점/난이도를 업데이트합니다.")
+    @PostMapping(value = "/csv-update/apply", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<QuestionBankDto.CsvUpdateResult>> applyCsvUpdate(
+            @RequestParam("file") MultipartFile file
+    ) {
+        validateCsvFile(file);
+        QuestionBankDto.CsvUpdateResult result = questionBankService.applyCsvUpdate(file);
+        return ResponseEntity.ok(ApiResponse.success(
+                "총 " + result.getUpdatedRows() + "건 업데이트 완료", result));
+    }
+
+    private void validateCsvFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("파일이 비어있습니다.");
+        }
+        String filename = file.getOriginalFilename();
+        if (filename == null || !filename.toLowerCase().endsWith(".csv")) {
+            throw new IllegalArgumentException("CSV 파일만 업로드 가능합니다.");
+        }
+    }
+
+    @Operation(summary = "항목 일괄 등록", description = "문제은행 그룹에 문제 항목을 일괄 등록합니다.")
+    @PostMapping("/{groupId}/bulk-import")
+    public ResponseEntity<ApiResponse<List<QuestionBankDto.ItemResponse>>> bulkImportItems(
+            @Parameter(description = "그룹 ID") @PathVariable Long groupId,
+            @Valid @RequestBody QuestionBankDto.BulkImportRequest request
+    ) {
+        List<QuestionBankDto.ItemResponse> result = questionBankService.bulkImportItems(groupId, request);
+        return ResponseEntity.ok(ApiResponse.success("총 " + result.size() + "개 문제가 등록되었습니다.", result));
     }
 }

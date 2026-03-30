@@ -1,6 +1,6 @@
 import { adminClient as client } from './adminClient';
 import type { ApiResponse, PageResponse } from '@hopenvision/shared';
-import type { ApplicantResponse, ApplicantRequest, CsvResultImportResult } from '../types/applicant';
+import type { ApplicantResponse, ApplicantRequest, CsvResultImportResult, ImportJobResponse } from '../types/applicant';
 
 export const applicantApi = {
   getApplicantList: async (examCd: string, params: {
@@ -54,25 +54,26 @@ export const applicantApi = {
     return response.data;
   },
 
-  // 임시점수결과 미리보기
-  tempScorePreview: async (examCd: string, file: File): Promise<ApiResponse<CsvResultImportResult>> => {
+  // 임시점수결과 파일 업로드 (비동기 Job)
+  tempScoreUpload: async (examCd: string, file: File): Promise<ApiResponse<{ jobId: string; status: string; fileName: string }>> => {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await client.post(`/api/exams/${examCd}/applicants/temp-score/preview`, formData, {
+    const response = await client.post(`/api/exams/${examCd}/jobs/temp-score`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
-      timeout: 120000,
+      timeout: 30000,
     });
     return response.data;
   },
 
-  // 임시점수결과 적용
-  tempScoreApply: async (examCd: string, file: File): Promise<ApiResponse<CsvResultImportResult>> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await client.post(`/api/exams/${examCd}/applicants/temp-score/apply`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-      timeout: 120000,
-    });
+  // Job 상태 조회
+  getJobStatus: async (jobId: string): Promise<ApiResponse<ImportJobResponse>> => {
+    const response = await client.get(`/api/jobs/${jobId}`);
+    return response.data;
+  },
+
+  // 시험별 Job 목록
+  getJobList: async (examCd: string): Promise<ApiResponse<ImportJobResponse[]>> => {
+    const response = await client.get(`/api/exams/${examCd}/jobs`);
     return response.data;
   },
 };

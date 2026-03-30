@@ -71,6 +71,24 @@ export interface CsvResultImportResult {
   rows: CsvResultRow[];
 }
 
+export interface ImportJobResponse {
+  jobId: string;
+  fileName: string | null;
+  fileHash: string | null;
+  jobType: string;
+  examCd: string;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  totalRows: number;
+  processedRows: number;
+  successRows: number;
+  errorRows: number;
+  errorMessage: string | null;
+  resultSummary: string | null;
+  regDt: string;
+  startDt: string | null;
+  endDt: string | null;
+}
+
 export const APPLY_TYPES = [
   { value: 'GENERAL', label: '일반' },
   { value: 'DISABLED', label: '장애인' },

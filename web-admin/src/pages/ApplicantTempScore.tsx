@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Card,
@@ -9,45 +9,78 @@ import {
   Typography,
   Space,
   Alert,
-  Statistic,
+  Progress,
   Row,
   Col,
-  Steps,
-  Result,
   Select,
   message,
 } from 'antd';
 import {
   UploadOutlined,
   CheckCircleOutlined,
-  WarningOutlined,
   CloseCircleOutlined,
+  LoadingOutlined,
   FileTextOutlined,
   ThunderboltOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload';
 import { examApi } from '../api/examApi';
 import { applicantApi } from '../api/applicantApi';
-import type { CsvResultImportResult, CsvResultRow } from '../types/applicant';
+import type { ImportJobResponse } from '../types/applicant';
 
 const { Title, Text } = Typography;
 const { Dragger } = Upload;
 
 export default function ApplicantTempScore() {
-  const [currentStep, setCurrentStep] = useState(0);
   const [selectedExamCd, setSelectedExamCd] = useState<string | undefined>();
   const [file, setFile] = useState<File | null>(null);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const [previewResult, setPreviewResult] = useState<CsvResultImportResult | null>(null);
-  const [applyResult, setApplyResult] = useState<CsvResultImportResult | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [currentJob, setCurrentJob] = useState<ImportJobResponse | null>(null);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const { data: examListData } = useQuery({
     queryKey: ['exams', { page: 0, size: 100 }],
     queryFn: () => examApi.getExamList({ page: 0, size: 100 }),
   });
 
+  const { data: jobListData, refetch: refetchJobs } = useQuery({
+    queryKey: ['import-jobs', selectedExamCd],
+    queryFn: () => applicantApi.getJobList(selectedExamCd!),
+    enabled: !!selectedExamCd,
+  });
+
   const examList = examListData?.data?.content || [];
+  const jobList = jobListData?.data || [];
+
+  // 폴링: 처리 중인 Job 상태 추적
+  useEffect(() => {
+    if (currentJob && (currentJob.status === 'PENDING' || currentJob.status === 'PROCESSING')) {
+      pollingRef.current = setInterval(async () => {
+        try {
+          const res = await applicantApi.getJobStatus(currentJob.jobId);
+          if (res.success) {
+            setCurrentJob(res.data);
+            if (res.data.status === 'COMPLETED' || res.data.status === 'FAILED') {
+              if (pollingRef.current) clearInterval(pollingRef.current);
+              refetchJobs();
+              if (res.data.status === 'COMPLETED') {
+                message.success(`${res.data.successRows}건 등록 완료`);
+              } else {
+                message.error('처리 실패: ' + (res.data.errorMessage || ''));
+              }
+            }
+          }
+        } catch {
+          // 폴링 에러 무시
+        }
+      }, 3000);
+    }
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [currentJob?.jobId, currentJob?.status]);
 
   const handleFileSelect = (info: { fileList: UploadFile[] }) => {
     const latestFile = info.fileList.slice(-1);
@@ -59,7 +92,7 @@ export default function ApplicantTempScore() {
     }
   };
 
-  const handlePreview = async () => {
+  const handleUpload = async () => {
     if (!selectedExamCd) {
       message.warning('시험을 선택해주세요.');
       return;
@@ -68,119 +101,107 @@ export default function ApplicantTempScore() {
       message.warning('CSV 파일을 선택해주세요.');
       return;
     }
-    setLoading(true);
+    setUploading(true);
     try {
-      const res = await applicantApi.tempScorePreview(selectedExamCd, file);
+      const res = await applicantApi.tempScoreUpload(selectedExamCd, file);
       if (res.success) {
-        setPreviewResult(res.data);
-        setCurrentStep(1);
+        message.success('파일 업로드 완료. 백그라운드 처리를 시작합니다.');
+        setCurrentJob({
+          jobId: res.data.jobId,
+          status: 'PENDING',
+          fileName: res.data.fileName,
+          totalRows: 0,
+          processedRows: 0,
+          successRows: 0,
+          errorRows: 0,
+        } as ImportJobResponse);
+        setFile(null);
+        setFileList([]);
+        refetchJobs();
       } else {
-        message.error(res.message || '미리보기 실패');
+        message.error(res.message || '업로드 실패');
       }
     } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : '미리보기 중 오류 발생';
+      const errorMsg = err instanceof Error ? err.message : '업로드 중 오류 발생';
       message.error(errorMsg);
     } finally {
-      setLoading(false);
+      setUploading(false);
     }
-  };
-
-  const handleApply = async () => {
-    if (!selectedExamCd || !file) return;
-    setLoading(true);
-    try {
-      const res = await applicantApi.tempScoreApply(selectedExamCd, file);
-      if (res.success) {
-        setApplyResult(res.data);
-        setCurrentStep(2);
-        message.success(`${res.data.importedRows}건 등록 완료`);
-      } else {
-        message.error(res.message || '등록 실패');
-      }
-    } catch (err: unknown) {
-      const errorMsg = err instanceof Error ? err.message : '등록 중 오류 발생';
-      message.error(errorMsg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleReset = () => {
-    setCurrentStep(0);
-    setFile(null);
-    setFileList([]);
-    setPreviewResult(null);
-    setApplyResult(null);
   };
 
   const statusTag = (status: string) => {
     switch (status) {
-      case 'MATCHED':
-        return <Tag color="green">매칭</Tag>;
-      case 'SKIP':
-        return <Tag color="default">건너뜀</Tag>;
-      case 'ERROR':
-        return <Tag color="red">오류</Tag>;
+      case 'PENDING':
+        return <Tag icon={<LoadingOutlined />} color="default">대기 중</Tag>;
+      case 'PROCESSING':
+        return <Tag icon={<LoadingOutlined />} color="processing">처리 중</Tag>;
+      case 'COMPLETED':
+        return <Tag icon={<CheckCircleOutlined />} color="success">완료</Tag>;
+      case 'FAILED':
+        return <Tag icon={<CloseCircleOutlined />} color="error">실패</Tag>;
       default:
         return <Tag>{status}</Tag>;
     }
   };
 
-  const columns = [
-    { title: '행', dataIndex: 'rowNum', key: 'rowNum', width: 50 },
-    { title: '사용자ID', dataIndex: 'userId', key: 'userId', width: 100 },
-    { title: '이름', dataIndex: 'userNm', key: 'userNm', width: 80 },
-    { title: '과목', dataIndex: 'subjectNm', key: 'subjectNm', width: 100 },
-    {
-      title: '입력점수',
-      key: 'inputScore',
-      width: 80,
-      align: 'center' as const,
-      render: (_: unknown, row: CsvResultRow) => (
-        <Text strong>{row.score != null ? `${row.score}점` : '-'}</Text>
-      ),
-    },
-    {
-      title: '정답',
-      dataIndex: 'correctCnt',
-      key: 'correctCnt',
-      width: 60,
-      align: 'center' as const,
-      render: (val: number) => <Text type="success">{val}</Text>,
-    },
-    {
-      title: '오답',
-      dataIndex: 'wrongCnt',
-      key: 'wrongCnt',
-      width: 60,
-      align: 'center' as const,
-      render: (val: number) => <Text type="danger">{val}</Text>,
-    },
+  const jobColumns = [
     {
       title: '상태',
+      dataIndex: 'status',
       key: 'status',
-      width: 80,
-      render: (_: unknown, row: CsvResultRow) => statusTag(row.status),
+      width: 100,
+      render: (status: string) => statusTag(status),
     },
     {
-      title: '생성 답안',
-      dataIndex: 'answers',
-      key: 'answers',
+      title: '파일명',
+      dataIndex: 'fileName',
+      key: 'fileName',
       ellipsis: true,
+    },
+    {
+      title: '진행률',
+      key: 'progress',
       width: 200,
-      render: (val: string | null) => (
-        <Text style={{ fontSize: 12 }} type="secondary">{val || '-'}</Text>
+      render: (_: unknown, record: ImportJobResponse) => {
+        if (record.totalRows === 0) return '-';
+        const pct = Math.round((record.processedRows / record.totalRows) * 100);
+        return (
+          <Progress
+            percent={pct}
+            size="small"
+            status={record.status === 'FAILED' ? 'exception' : record.status === 'COMPLETED' ? 'success' : 'active'}
+          />
+        );
+      },
+    },
+    {
+      title: '성공/오류',
+      key: 'result',
+      width: 120,
+      render: (_: unknown, record: ImportJobResponse) => (
+        <Space size={4}>
+          <Text type="success">{record.successRows}</Text>
+          <Text>/</Text>
+          <Text type="danger">{record.errorRows}</Text>
+        </Space>
       ),
     },
     {
-      title: '비고',
-      dataIndex: 'message',
-      key: 'message',
+      title: '등록일시',
+      dataIndex: 'regDt',
+      key: 'regDt',
+      width: 160,
+      render: (val: string) => val ? new Date(val).toLocaleString('ko-KR') : '-',
+    },
+    {
+      title: '결과',
+      dataIndex: 'resultSummary',
+      key: 'resultSummary',
       ellipsis: true,
     },
   ];
 
-  const result = applyResult || previewResult;
+  const isProcessing = currentJob?.status === 'PENDING' || currentJob?.status === 'PROCESSING';
 
   return (
     <div>
@@ -189,177 +210,114 @@ export default function ApplicantTempScore() {
         임시점수결과 등록
       </Title>
 
-      <Steps
-        current={currentStep}
-        style={{ marginBottom: 24 }}
-        items={[
-          { title: '점수 파일 업로드' },
-          { title: '미리보기 확인' },
-          { title: '완료' },
-        ]}
-      />
+      <Card style={{ marginBottom: 16 }}>
+        <Alert
+          message="CSV 파일 형식 (점수 기반 무작위 답안 생성)"
+          description={
+            <div>
+              <p style={{ margin: '4px 0' }}>
+                헤더(첫 행): <strong>시험코드,과목명,이름,사용자ID,점수</strong>
+              </p>
+              <p style={{ margin: '4px 0' }}>
+                예시: <code>2025-9LEVEL-R1,한국사,홍길동,hong123,60</code>
+              </p>
+              <p style={{ margin: '4px 0', color: '#faad14' }}>
+                파일 업로드 후 백그라운드에서 비동기 처리됩니다. 동일 파일 중복 업로드는 자동 차단됩니다.
+              </p>
+            </div>
+          }
+          type="warning"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
 
-      {currentStep === 0 && (
-        <Card>
-          <Alert
-            message="CSV 파일 형식 (점수 기반 무작위 답안 생성)"
-            description={
-              <div>
-                <p style={{ margin: '4px 0' }}>
-                  헤더(첫 행): <strong>시험코드,과목명,이름,사용자ID,점수</strong>
-                </p>
-                <p style={{ margin: '4px 0' }}>
-                  예시: <code>2025-9LEVEL-R1,한국사,홍길동,hong123,60</code>
-                </p>
-                <p style={{ margin: '4px 0', color: '#faad14' }}>
-                  점수에 맞는 정답/오답 개수를 계산하여 무작위로 답안을 생성합니다.
-                  정답키(문제은행)가 등록된 과목만 처리됩니다.
-                </p>
-              </div>
-            }
-            type="warning"
-            showIcon
-            style={{ marginBottom: 16 }}
-          />
+        <Row gutter={16} style={{ marginBottom: 16 }}>
+          <Col span={12}>
+            <Select
+              placeholder="시험 선택"
+              style={{ width: '100%' }}
+              value={selectedExamCd}
+              onChange={setSelectedExamCd}
+              showSearch
+              filterOption={(input, option) =>
+                (option?.label as string)?.toLowerCase().includes(input.toLowerCase()) ?? false
+              }
+              options={examList.map((exam) => ({
+                value: exam.examCd,
+                label: `${exam.examNm} (${exam.examCd})`,
+              }))}
+            />
+          </Col>
+        </Row>
 
-          <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Dragger
+          accept=".csv"
+          fileList={fileList}
+          onChange={handleFileSelect}
+          beforeUpload={() => false}
+          maxCount={1}
+          disabled={isProcessing}
+        >
+          <p className="ant-upload-drag-icon">
+            <FileTextOutlined />
+          </p>
+          <p className="ant-upload-text">CSV 파일을 드래그하거나 클릭하여 선택</p>
+          <p className="ant-upload-hint">.csv 파일만 지원 (UTF-8 / EUC-KR)</p>
+        </Dragger>
+        <div style={{ marginTop: 16, textAlign: 'right' }}>
+          <Button
+            type="primary"
+            icon={<UploadOutlined />}
+            onClick={handleUpload}
+            loading={uploading}
+            disabled={!file || !selectedExamCd || isProcessing}
+          >
+            업로드 및 처리 시작
+          </Button>
+        </div>
+      </Card>
+
+      {/* 현재 처리 중인 Job */}
+      {currentJob && isProcessing && (
+        <Card title="처리 진행 중" style={{ marginBottom: 16 }}>
+          <Row gutter={16} align="middle">
+            <Col span={4}>
+              {statusTag(currentJob.status)}
+            </Col>
             <Col span={12}>
-              <Select
-                placeholder="시험 선택"
-                style={{ width: '100%' }}
-                value={selectedExamCd}
-                onChange={setSelectedExamCd}
-                showSearch
-                filterOption={(input, option) =>
-                  (option?.label as string)?.toLowerCase().includes(input.toLowerCase()) ?? false
-                }
-                options={examList.map((exam) => ({
-                  value: exam.examCd,
-                  label: `${exam.examNm} (${exam.examCd})`,
-                }))}
+              <Progress
+                percent={currentJob.totalRows > 0
+                  ? Math.round((currentJob.processedRows / currentJob.totalRows) * 100)
+                  : 0}
+                status="active"
               />
             </Col>
+            <Col span={8}>
+              <Text>
+                {currentJob.processedRows} / {currentJob.totalRows}건 처리
+                (성공: {currentJob.successRows}, 오류: {currentJob.errorRows})
+              </Text>
+            </Col>
           </Row>
-
-          <Dragger
-            accept=".csv"
-            fileList={fileList}
-            onChange={handleFileSelect}
-            beforeUpload={() => false}
-            maxCount={1}
-          >
-            <p className="ant-upload-drag-icon">
-              <FileTextOutlined />
-            </p>
-            <p className="ant-upload-text">CSV 파일을 드래그하거나 클릭하여 선택</p>
-            <p className="ant-upload-hint">.csv 파일만 지원 (UTF-8 / EUC-KR)</p>
-          </Dragger>
-          <div style={{ marginTop: 16, textAlign: 'right' }}>
-            <Button
-              type="primary"
-              icon={<UploadOutlined />}
-              onClick={handlePreview}
-              loading={loading}
-              disabled={!file || !selectedExamCd}
-            >
-              미리보기
-            </Button>
-          </div>
         </Card>
       )}
 
-      {currentStep === 1 && previewResult && (
-        <>
-          <Row gutter={16} style={{ marginBottom: 16 }}>
-            <Col span={6}>
-              <Card>
-                <Statistic title="전체" value={previewResult.totalRows} />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <Statistic
-                  title="매칭 (등록 대상)"
-                  value={previewResult.matchedRows}
-                  valueStyle={{ color: '#52c41a' }}
-                  prefix={<CheckCircleOutlined />}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <Statistic
-                  title="건너뜀"
-                  value={previewResult.skippedRows}
-                  valueStyle={{ color: '#faad14' }}
-                  prefix={<WarningOutlined />}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <Statistic
-                  title="오류"
-                  value={previewResult.errorRows}
-                  valueStyle={{ color: '#ff4d4f' }}
-                  prefix={<CloseCircleOutlined />}
-                />
-              </Card>
-            </Col>
-          </Row>
-
-          <Card
-            title="미리보기 결과 (답안은 무작위 생성)"
-            extra={
-              <Space>
-                <Button onClick={handleReset}>다시 선택</Button>
-                <Button
-                  type="primary"
-                  onClick={handleApply}
-                  loading={loading}
-                  disabled={previewResult.matchedRows === 0}
-                >
-                  {previewResult.matchedRows}건 등록 적용
-                </Button>
-              </Space>
-            }
-          >
-            <Table
-              columns={columns}
-              dataSource={previewResult.rows}
-              rowKey="rowNum"
-              size="small"
-              scroll={{ x: 1000, y: 500 }}
-              pagination={{ pageSize: 50, showSizeChanger: true, showTotal: (t) => `총 ${t}건` }}
-              rowClassName={(row) => {
-                if (row.status === 'ERROR') return 'ant-table-row-error';
-                if (row.status === 'SKIP') return 'ant-table-row-warning';
-                return '';
-              }}
-            />
-          </Card>
-        </>
-      )}
-
-      {currentStep === 2 && result && (
-        <Card>
-          <Result
-            status="success"
-            title="임시점수결과 등록 완료"
-            subTitle={`총 ${result.totalRows}건 중 ${result.importedRows}건 등록, ${result.skippedRows}건 건너뜀, ${result.errorRows}건 오류`}
-            extra={[
-              <Button key="reset" type="primary" onClick={handleReset}>
-                다른 파일 업로드
-              </Button>,
-            ]}
-          />
+      {/* Job 히스토리 */}
+      {selectedExamCd && (
+        <Card
+          title="처리 이력"
+          extra={
+            <Button icon={<ReloadOutlined />} onClick={() => refetchJobs()}>
+              새로고침
+            </Button>
+          }
+        >
           <Table
-            columns={columns}
-            dataSource={result.rows}
-            rowKey="rowNum"
+            columns={jobColumns}
+            dataSource={jobList}
+            rowKey="jobId"
             size="small"
-            scroll={{ x: 1000, y: 400 }}
-            pagination={{ pageSize: 50, showSizeChanger: true, showTotal: (t) => `총 ${t}건` }}
+            pagination={{ pageSize: 10, showTotal: (t) => `총 ${t}건` }}
           />
         </Card>
       )}

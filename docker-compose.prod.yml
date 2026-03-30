@@ -19,6 +19,8 @@ services:
       SUPER_ADMIN_EMAILS: ${SUPER_ADMIN_EMAILS:-}
       JWT_SECRET: ${JWT_SECRET:-}
       TZ: ${TZ:-Asia/Seoul}
+    volumes:
+      - hopenvision-upload:/data/hopenvision/upload
     ports:
       - "9050:8080"
     healthcheck:
@@ -59,6 +61,9 @@ services:
       - hopenvision-api
     networks:
       - database-network
+
+volumes:
+  hopenvision-upload:
 
 networks:
   database-network:

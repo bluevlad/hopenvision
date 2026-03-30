@@ -111,6 +111,33 @@ public class ApplicantController {
                 "총 " + result.getImportedRows() + "건 등록 완료", result));
     }
 
+    // ==================== 임시점수결과 등록 ====================
+
+    @Operation(summary = "임시점수결과 등록 미리보기",
+            description = "CSV 점수 파일로 무작위 답안을 생성하여 미리보기합니다. DB 변경 없음.")
+    @PostMapping(value = "/temp-score/preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ApplicantDto.CsvResultImportResult>> previewTempScore(
+            @PathVariable String examCd,
+            @RequestParam("file") MultipartFile file
+    ) {
+        validateCsvFile(file);
+        ApplicantDto.CsvResultImportResult result = applicantService.previewTempScore(file);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @Operation(summary = "임시점수결과 등록 적용",
+            description = "CSV 점수 파일로 무작위 답안을 생성하고 응시결과로 저장합니다.")
+    @PostMapping(value = "/temp-score/apply", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ApplicantDto.CsvResultImportResult>> applyTempScore(
+            @PathVariable String examCd,
+            @RequestParam("file") MultipartFile file
+    ) {
+        validateCsvFile(file);
+        ApplicantDto.CsvResultImportResult result = applicantService.applyTempScore(file);
+        return ResponseEntity.ok(ApiResponse.success(
+                "총 " + result.getImportedRows() + "건 등록 완료", result));
+    }
+
     private void validateCsvFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("파일이 비어있습니다.");

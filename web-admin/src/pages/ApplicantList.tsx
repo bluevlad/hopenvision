@@ -21,6 +21,7 @@ import {
   EditOutlined,
   DeleteOutlined,
   UploadOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { examApi } from '../api/examApi';
@@ -291,6 +292,12 @@ export default function ApplicantList() {
         }
         extra={
           <Space>
+            <Button
+              icon={<ThunderboltOutlined />}
+              onClick={() => navigate('/applicants/temp-score')}
+            >
+              임시점수결과등록
+            </Button>
             <Button
               icon={<UploadOutlined />}
               onClick={() => navigate('/applicants/csv-import')}

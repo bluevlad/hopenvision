@@ -13,6 +13,7 @@ import ExcelImport from './pages/ExcelImport';
 import JsonImport from './pages/JsonImport';
 import ApplicantList from './pages/ApplicantList';
 import ApplicantCsvImport from './pages/ApplicantCsvImport';
+import ApplicantTempScore from './pages/ApplicantTempScore';
 import Statistics from './pages/Statistics';
 import SubjectList from './pages/SubjectList';
 import QuestionBankList from './pages/QuestionBankList';
@@ -66,6 +67,7 @@ function App() {
                 <Route path="exams/:examCd/json-import" element={<JsonImport />} />
                 <Route path="applicants" element={<ApplicantList />} />
                 <Route path="applicants/csv-import" element={<ApplicantCsvImport />} />
+                <Route path="applicants/temp-score" element={<ApplicantTempScore />} />
                 <Route path="statistics" element={<Statistics />} />
                 <Route path="subjects" element={<SubjectList />} />
                 <Route path="question-bank" element={<QuestionBankList />} />

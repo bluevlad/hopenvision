@@ -51,4 +51,24 @@ export const applicantApi = {
     });
     return response.data;
   },
+
+  // 임시점수결과 미리보기
+  tempScorePreview: async (examCd: string, file: File): Promise<ApiResponse<CsvResultImportResult>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await client.post(`/api/exams/${examCd}/applicants/temp-score/preview`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  // 임시점수결과 적용
+  tempScoreApply: async (examCd: string, file: File): Promise<ApiResponse<CsvResultImportResult>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await client.post(`/api/exams/${examCd}/applicants/temp-score/apply`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
 };

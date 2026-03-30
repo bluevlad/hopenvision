@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ApplicantDto {
 
@@ -63,5 +64,43 @@ public class ApplicantDto {
         private String keyword;
         private int page = 0;
         private int size = 10;
+    }
+
+    // ==================== CSV Result Import ====================
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CsvResultRow {
+        private int rowNum;
+        private String examCd;
+        private String subjectNm;
+        private String userNm;
+        private String userId;
+        private String answers;          // 원본 답안 문자열
+        // 매칭 결과
+        private String subjectCd;        // 매칭된 과목코드
+        private int answerCount;         // 파싱된 답안 수
+        private int correctCnt;          // 정답 수
+        private int wrongCnt;            // 오답 수
+        private BigDecimal score;        // 점수
+        private String status;           // MATCHED, SKIP, ERROR, DUPLICATE
+        private String message;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class CsvResultImportResult {
+        private int totalRows;
+        private int matchedRows;
+        private int skippedRows;
+        private int errorRows;
+        private int importedRows;
+        private List<CsvResultRow> rows;
     }
 }

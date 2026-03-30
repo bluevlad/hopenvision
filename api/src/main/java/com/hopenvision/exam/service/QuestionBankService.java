@@ -17,9 +17,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Row;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -429,6 +433,138 @@ public class QuestionBankService {
     private BigDecimal parseBigDecimalSafe(String val) {
         if (val == null || val.isEmpty()) return null;
         return new BigDecimal(val);
+    }
+
+    // ==================== Excel Update ====================
+
+    /**
+     * Excel 파일 파싱 → 미리보기 (DB 변경 없음)
+     */
+    public QuestionBankDto.CsvUpdateResult previewExcelUpdate(MultipartFile file) {
+        List<QuestionBankDto.CsvUpdateRow> rows = parseExcelFile(file);
+        matchRowsToItems(rows);
+        return buildResult(rows, false);
+    }
+
+    /**
+     * Excel 파일 파싱 → 실제 업데이트 적용
+     */
+    @Transactional
+    public QuestionBankDto.CsvUpdateResult applyExcelUpdate(MultipartFile file) {
+        List<QuestionBankDto.CsvUpdateRow> rows = parseExcelFile(file);
+        matchRowsToItems(rows);
+
+        int updatedCount = 0;
+        for (QuestionBankDto.CsvUpdateRow row : rows) {
+            if (!"MATCHED".equals(row.getStatus()) || row.getItemId() == null) {
+                continue;
+            }
+            QuestionBankItem item = itemRepository.findById(row.getItemId()).orElse(null);
+            if (item == null) {
+                row.setStatus("ERROR");
+                row.setMessage("항목을 찾을 수 없습니다");
+                continue;
+            }
+            item.setCorrectAns(row.getCorrectAns());
+            item.setScore(row.getScore());
+            item.setDifficulty(row.getDifficulty());
+            itemRepository.save(item);
+            updatedCount++;
+        }
+
+        QuestionBankDto.CsvUpdateResult result = buildResult(rows, true);
+        result.setUpdatedRows(updatedCount);
+        return result;
+    }
+
+    private List<QuestionBankDto.CsvUpdateRow> parseExcelFile(MultipartFile file) {
+        List<QuestionBankDto.CsvUpdateRow> rows = new ArrayList<>();
+
+        try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            if (sheet == null) {
+                throw new IllegalArgumentException("시트가 비어있습니다.");
+            }
+
+            int lastRowNum = sheet.getLastRowNum();
+            // 첫 행은 헤더 → 스킵
+            for (int i = 1; i <= lastRowNum; i++) {
+                Row row = sheet.getRow(i);
+                if (row == null) continue;
+
+                int rowNum = i + 1; // 1-based (헤더 포함)
+
+                try {
+                    String examCd = getCellStringValue(row.getCell(0));
+                    String examNm = getCellStringValue(row.getCell(1));
+                    String roundStr = getCellStringValue(row.getCell(2));
+                    String subjectNm = getCellStringValue(row.getCell(3));
+                    String questionNoStr = getCellStringValue(row.getCell(4));
+                    String correctAns = getCellStringValue(row.getCell(5));
+                    String scoreStr = getCellStringValue(row.getCell(6));
+                    String difficulty = getCellStringValue(row.getCell(7));
+
+                    if (examCd.isEmpty() && examNm.isEmpty() && subjectNm.isEmpty()) {
+                        continue; // 빈 행 스킵
+                    }
+
+                    rows.add(QuestionBankDto.CsvUpdateRow.builder()
+                            .rowNum(rowNum)
+                            .examCd(examCd)
+                            .examNm(examNm)
+                            .round(parseIntSafe(roundStr))
+                            .subjectNm(subjectNm)
+                            .questionNo(parseIntSafe(questionNoStr))
+                            .correctAns(correctAns)
+                            .score(parseBigDecimalSafe(scoreStr))
+                            .difficulty(difficulty)
+                            .status("PARSED")
+                            .build());
+                } catch (Exception e) {
+                    rows.add(QuestionBankDto.CsvUpdateRow.builder()
+                            .rowNum(rowNum).status("ERROR")
+                            .message("파싱 오류: " + e.getMessage())
+                            .build());
+                }
+            }
+        } catch (IllegalArgumentException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Excel 파일 읽기 실패", e);
+            throw new IllegalArgumentException("Excel 파일을 읽을 수 없습니다: " + e.getMessage());
+        }
+        return rows;
+    }
+
+    private String getCellStringValue(Cell cell) {
+        if (cell == null) return "";
+        return switch (cell.getCellType()) {
+            case STRING -> cell.getStringCellValue().trim();
+            case NUMERIC -> {
+                double numVal = cell.getNumericCellValue();
+                if (numVal == Math.floor(numVal) && !Double.isInfinite(numVal)) {
+                    yield String.valueOf((long) numVal);
+                }
+                yield BigDecimal.valueOf(numVal).stripTrailingZeros().toPlainString();
+            }
+            case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+            case FORMULA -> {
+                try {
+                    yield cell.getStringCellValue().trim();
+                } catch (Exception e) {
+                    try {
+                        double numVal = cell.getNumericCellValue();
+                        if (numVal == Math.floor(numVal) && !Double.isInfinite(numVal)) {
+                            yield String.valueOf((long) numVal);
+                        }
+                        yield BigDecimal.valueOf(numVal).stripTrailingZeros().toPlainString();
+                    } catch (Exception e2) {
+                        yield "";
+                    }
+                }
+            }
+            default -> "";
+        };
     }
 
     // ==================== Mapper ====================

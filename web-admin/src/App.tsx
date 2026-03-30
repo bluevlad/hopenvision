@@ -12,6 +12,7 @@ import AnswerKeyForm from './pages/AnswerKeyForm';
 import ExcelImport from './pages/ExcelImport';
 import JsonImport from './pages/JsonImport';
 import ApplicantList from './pages/ApplicantList';
+import ApplicantCsvImport from './pages/ApplicantCsvImport';
 import Statistics from './pages/Statistics';
 import SubjectList from './pages/SubjectList';
 import QuestionBankList from './pages/QuestionBankList';
@@ -31,6 +32,7 @@ import QuestionBankGroupList from './pages/QuestionBankGroupList';
 import QuestionBankItemList from './pages/QuestionBankItemList';
 import QuestionBankBulkImport from './pages/QuestionBankBulkImport';
 import QuestionBankCsvUpdate from './pages/QuestionBankCsvUpdate';
+import QuestionBankExcelUpdate from './pages/QuestionBankExcelUpdate';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -63,6 +65,7 @@ function App() {
                 <Route path="exams/:examCd/import" element={<ExcelImport />} />
                 <Route path="exams/:examCd/json-import" element={<JsonImport />} />
                 <Route path="applicants" element={<ApplicantList />} />
+                <Route path="applicants/csv-import" element={<ApplicantCsvImport />} />
                 <Route path="statistics" element={<Statistics />} />
                 <Route path="subjects" element={<SubjectList />} />
                 <Route path="question-bank" element={<QuestionBankList />} />
@@ -75,6 +78,7 @@ function App() {
                 <Route path="question-bank/items" element={<QuestionBankItemList />} />
                 <Route path="question-bank/bulk-import" element={<QuestionBankBulkImport />} />
                 <Route path="question-bank/csv-update" element={<QuestionBankCsvUpdate />} />
+                <Route path="question-bank/excel-update" element={<QuestionBankExcelUpdate />} />
                 <Route path="gosi/exams" element={<GosiExamList />} />
                 <Route path="gosi/pass" element={<GosiPassList />} />
                 <Route path="gosi/results" element={<GosiScoreList />} />

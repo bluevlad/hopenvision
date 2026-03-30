@@ -1,6 +1,6 @@
 import { adminClient as client } from './adminClient';
 import type { ApiResponse, PageResponse } from '@hopenvision/shared';
-import type { ApplicantResponse, ApplicantRequest } from '../types/applicant';
+import type { ApplicantResponse, ApplicantRequest, CsvResultImportResult } from '../types/applicant';
 
 export const applicantApi = {
   getApplicantList: async (examCd: string, params: {
@@ -29,6 +29,26 @@ export const applicantApi = {
 
   deleteApplicant: async (examCd: string, applicantNo: string): Promise<ApiResponse<void>> => {
     const response = await client.delete(`/api/exams/${examCd}/applicants/${applicantNo}`);
+    return response.data;
+  },
+
+  // CSV 응시결과 등록 미리보기
+  csvResultPreview: async (examCd: string, file: File): Promise<ApiResponse<CsvResultImportResult>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await client.post(`/api/exams/${examCd}/applicants/csv-result/preview`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  // CSV 응시결과 등록 적용
+  csvResultApply: async (examCd: string, file: File): Promise<ApiResponse<CsvResultImportResult>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await client.post(`/api/exams/${examCd}/applicants/csv-result/apply`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   },
 };

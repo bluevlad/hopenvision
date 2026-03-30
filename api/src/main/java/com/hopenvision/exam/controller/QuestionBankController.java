@@ -168,6 +168,41 @@ public class QuestionBankController {
         }
     }
 
+    // ==================== Excel 업데이트 ====================
+
+    @Operation(summary = "Excel 정답/배점/난이도 업데이트 미리보기",
+            description = "Excel 파일을 파싱하여 매칭 결과를 미리보기합니다. DB 변경 없음.")
+    @PostMapping(value = "/excel-update/preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<QuestionBankDto.CsvUpdateResult>> previewExcelUpdate(
+            @RequestParam("file") MultipartFile file
+    ) {
+        validateExcelFile(file);
+        QuestionBankDto.CsvUpdateResult result = questionBankService.previewExcelUpdate(file);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @Operation(summary = "Excel 정답/배점/난이도 업데이트 적용",
+            description = "Excel 파일을 파싱하여 매칭된 항목의 정답/배점/난이도를 업데이트합니다.")
+    @PostMapping(value = "/excel-update/apply", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<QuestionBankDto.CsvUpdateResult>> applyExcelUpdate(
+            @RequestParam("file") MultipartFile file
+    ) {
+        validateExcelFile(file);
+        QuestionBankDto.CsvUpdateResult result = questionBankService.applyExcelUpdate(file);
+        return ResponseEntity.ok(ApiResponse.success(
+                "총 " + result.getUpdatedRows() + "건 업데이트 완료", result));
+    }
+
+    private void validateExcelFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("파일이 비어있습니다.");
+        }
+        String filename = file.getOriginalFilename();
+        if (filename == null || !(filename.toLowerCase().endsWith(".xlsx") || filename.toLowerCase().endsWith(".xls"))) {
+            throw new IllegalArgumentException("Excel 파일(.xlsx, .xls)만 업로드 가능합니다.");
+        }
+    }
+
     @Operation(summary = "항목 일괄 등록", description = "문제은행 그룹에 문제 항목을 일괄 등록합니다.")
     @PostMapping("/{groupId}/bulk-import")
     public ResponseEntity<ApiResponse<List<QuestionBankDto.ItemResponse>>> bulkImportItems(

@@ -108,6 +108,35 @@ public class ImportJobProcessor {
         score.setCorrectCnt(correctCnt);
         score.setWrongCnt(20 - correctCnt);
         scoreRepository.save(score);
+
+        // 응시자 총점/평균 자동 갱신
+        updateApplicantTotalScore(csvExamCd, userId);
+    }
+
+    /**
+     * 응시자의 전체 과목 점수를 합산하여 총점/평균/순위 업데이트
+     */
+    private void updateApplicantTotalScore(String examCd, String applicantNo) {
+        ExamApplicantId appId = new ExamApplicantId(examCd, applicantNo);
+        ExamApplicant applicant = applicantRepository.findById(appId).orElse(null);
+        if (applicant == null) return;
+
+        // 해당 응시자의 모든 과목 점수 조회
+        List<ExamApplicantScore> scores = scoreRepository.findByExamCdAndApplicantNo(examCd, applicantNo);
+        if (scores.isEmpty()) return;
+
+        BigDecimal sumScore = BigDecimal.ZERO;
+        for (ExamApplicantScore s : scores) {
+            if (s.getRawScore() != null) {
+                sumScore = sumScore.add(s.getRawScore());
+            }
+        }
+        BigDecimal avgScore = sumScore.divide(BigDecimal.valueOf(scores.size()), 2, java.math.RoundingMode.HALF_UP);
+
+        applicant.setTotalScore(sumScore);
+        applicant.setAvgScore(avgScore);
+        applicant.setScoreStatus("Y");
+        applicantRepository.save(applicant);
     }
 
     // ==================== Helper ====================

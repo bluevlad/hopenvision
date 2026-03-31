@@ -101,7 +101,8 @@ public class StatisticsService {
 
     private List<StatisticsDto.ScoreDistribution> calculateScoreDistribution(String examCd, long totalApplicants) {
         // DB에서 점수 분포를 단일 쿼리로 계산 (메모리 로딩 제거)
-        Object[] distResult = userTotalScoreRepository.getScoreDistribution(examCd);
+        List<Object[]> distRows = userTotalScoreRepository.getScoreDistribution(examCd);
+        Object[] distResult = distRows != null && !distRows.isEmpty() ? distRows.get(0) : null;
 
         String[] ranges = { "90~100", "80~89", "70~79", "60~69", "50~59", "40~49", "30~39", "20~29", "10~19", "0~9" };
         List<StatisticsDto.ScoreDistribution> distributions = new ArrayList<>();

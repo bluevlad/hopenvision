@@ -64,5 +64,5 @@ public interface UserTotalScoreRepository extends JpaRepository<UserTotalScore, 
            "SUM(CASE WHEN uts.totalScore >= 10 AND uts.totalScore < 20 THEN 1 ELSE 0 END), " +
            "SUM(CASE WHEN uts.totalScore < 10 THEN 1 ELSE 0 END) " +
            "FROM UserTotalScore uts WHERE uts.examCd = :examCd AND uts.totalScore IS NOT NULL")
-    Object[] getScoreDistribution(@Param("examCd") String examCd);
+    List<Object[]> getScoreDistribution(@Param("examCd") String examCd);
 }

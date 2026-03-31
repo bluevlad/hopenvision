@@ -27,8 +27,8 @@ public interface ExamApplicantRepository extends JpaRepository<ExamApplicant, Ex
 
     java.util.List<ExamApplicant> findByExamCd(String examCd);
 
-    @Query("SELECT COUNT(a) FROM ExamApplicant a WHERE a.examCd = :examCd AND a.passYn = 'Y'")
-    long countPassedByExamCd(@Param("examCd") String examCd);
+    @Query("SELECT COUNT(a) FROM ExamApplicant a WHERE a.examCd = :examCd AND a.avgScore >= :passScore")
+    long countPassedByExamCd(@Param("examCd") String examCd, @Param("passScore") java.math.BigDecimal passScore);
 
     @Query("SELECT AVG(a.avgScore) FROM ExamApplicant a WHERE a.examCd = :examCd AND a.totalScore IS NOT NULL")
     java.math.BigDecimal avgScoreByExamCd(@Param("examCd") String examCd);

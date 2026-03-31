@@ -45,8 +45,10 @@ public class StatisticsService {
         Exam exam = examRepository.findById(examCd)
                 .orElseThrow(() -> new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd));
 
+        BigDecimal passScore = exam.getPassScore() != null ? exam.getPassScore() : BigDecimal.valueOf(60);
+
         long totalApplicants = applicantRepository.countByExamCd(examCd);
-        long passedCount = applicantRepository.countPassedByExamCd(examCd);
+        long passedCount = applicantRepository.countPassedByExamCd(examCd, passScore);
         BigDecimal avgScore = applicantRepository.avgScoreByExamCd(examCd);
         BigDecimal maxScore = applicantRepository.maxScoreByExamCd(examCd);
         BigDecimal minScore = applicantRepository.minScoreByExamCd(examCd);
@@ -61,7 +63,7 @@ public class StatisticsService {
         // 점수 분포 계산
         List<StatisticsDto.ScoreDistribution> distributions = calculateScoreDistribution(examCd, totalApplicants);
 
-        // 과목별 통계 (단일 GROUP BY 쿼리로 일괄 조회)
+        // 과목별 통계 (단일 GROUP BY 쿼리로 일괄 조회, 응시자 0인 과목 제외)
         List<ExamSubject> subjects = subjectRepository.findByExamCdOrderBySortOrder(examCd);
         Map<String, Object[]> subjectStatsMap = new HashMap<>();
         for (Object[] row : applicantScoreRepository.getSubjectStatsBatch(examCd)) {
@@ -69,12 +71,13 @@ public class StatisticsService {
         }
 
         List<StatisticsDto.SubjectStatistics> subjectStats = subjects.stream()
+                .filter(subject -> subjectStatsMap.containsKey(subject.getSubjectCd()))
                 .map(subject -> {
                     Object[] stats = subjectStatsMap.get(subject.getSubjectCd());
-                    long subjectCount = stats != null ? (Long) stats[1] : 0;
-                    BigDecimal subAvg = stats != null && stats[2] != null ? new BigDecimal(stats[2].toString()).setScale(2, RoundingMode.HALF_UP) : null;
-                    BigDecimal subMax = stats != null ? (BigDecimal) stats[3] : null;
-                    BigDecimal subMin = stats != null ? (BigDecimal) stats[4] : null;
+                    long subjectCount = ((Number) stats[1]).longValue();
+                    BigDecimal subAvg = stats[2] != null ? new BigDecimal(stats[2].toString()).setScale(2, RoundingMode.HALF_UP) : null;
+                    BigDecimal subMax = stats[3] != null ? new BigDecimal(stats[3].toString()) : null;
+                    BigDecimal subMin = stats[4] != null ? new BigDecimal(stats[4].toString()) : null;
 
                     return StatisticsDto.SubjectStatistics.builder()
                             .subjectCd(subject.getSubjectCd())

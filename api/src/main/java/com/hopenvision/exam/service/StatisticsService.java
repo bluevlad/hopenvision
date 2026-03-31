@@ -6,6 +6,7 @@ import com.hopenvision.exam.entity.ExamAnswerKey;
 import com.hopenvision.exam.entity.ExamSubject;
 import com.hopenvision.exam.repository.ExamAnswerKeyRepository;
 import com.hopenvision.exam.repository.ExamApplicantRepository;
+import com.hopenvision.exam.repository.ExamApplicantScoreRepository;
 import com.hopenvision.exam.repository.ExamRepository;
 import com.hopenvision.exam.repository.ExamSubjectRepository;
 import com.hopenvision.user.entity.UserAnswer;
@@ -35,6 +36,7 @@ public class StatisticsService {
     private final ExamSubjectRepository subjectRepository;
     private final ExamAnswerKeyRepository answerKeyRepository;
     private final ExamApplicantRepository applicantRepository;
+    private final ExamApplicantScoreRepository applicantScoreRepository;
     private final UserTotalScoreRepository userTotalScoreRepository;
     private final UserScoreRepository userScoreRepository;
     private final UserAnswerRepository userAnswerRepository;
@@ -43,11 +45,11 @@ public class StatisticsService {
         Exam exam = examRepository.findById(examCd)
                 .orElseThrow(() -> new EntityNotFoundException("시험을 찾을 수 없습니다: " + examCd));
 
-        long totalApplicants = userTotalScoreRepository.countByExamCd(examCd);
-        long passedCount = userTotalScoreRepository.countPassedByExamCd(examCd);
-        BigDecimal avgScore = userTotalScoreRepository.avgTotalScoreByExamCd(examCd);
-        BigDecimal maxScore = userTotalScoreRepository.maxTotalScoreByExamCd(examCd);
-        BigDecimal minScore = userTotalScoreRepository.minTotalScoreByExamCd(examCd);
+        long totalApplicants = applicantRepository.countByExamCd(examCd);
+        long passedCount = applicantRepository.countPassedByExamCd(examCd);
+        BigDecimal avgScore = applicantRepository.avgScoreByExamCd(examCd);
+        BigDecimal maxScore = applicantRepository.maxScoreByExamCd(examCd);
+        BigDecimal minScore = applicantRepository.minScoreByExamCd(examCd);
 
         BigDecimal passRate = BigDecimal.ZERO;
         if (totalApplicants > 0) {
@@ -62,7 +64,7 @@ public class StatisticsService {
         // 과목별 통계 (단일 GROUP BY 쿼리로 일괄 조회)
         List<ExamSubject> subjects = subjectRepository.findByExamCdOrderBySortOrder(examCd);
         Map<String, Object[]> subjectStatsMap = new HashMap<>();
-        for (Object[] row : userScoreRepository.getSubjectStatsBatch(examCd)) {
+        for (Object[] row : applicantScoreRepository.getSubjectStatsBatch(examCd)) {
             subjectStatsMap.put((String) row[0], row);
         }
 
@@ -100,8 +102,8 @@ public class StatisticsService {
     }
 
     private List<StatisticsDto.ScoreDistribution> calculateScoreDistribution(String examCd, long totalApplicants) {
-        // DB에서 점수 분포를 단일 쿼리로 계산 (메모리 로딩 제거)
-        List<Object[]> distRows = userTotalScoreRepository.getScoreDistribution(examCd);
+        // DB에서 점수 분포를 단일 쿼리로 계산
+        List<Object[]> distRows = applicantRepository.getScoreDistribution(examCd);
         Object[] distResult = distRows != null && !distRows.isEmpty() ? distRows.get(0) : null;
 
         String[] ranges = { "90~100", "80~89", "70~79", "60~69", "50~59", "40~49", "30~39", "20~29", "10~19", "0~9" };
@@ -300,10 +302,10 @@ public class StatisticsService {
             applicantCounts.put((String) row[0], (Long) row[2]);
         }
 
-        // 제출 완료 수 일괄 조회
+        // 채점 완료 수 일괄 조회
         Map<String, Long> submittedCounts = new HashMap<>();
-        for (Object[] row : userTotalScoreRepository.countByExamCdIn(examCds)) {
-            submittedCounts.put((String) row[0], (Long) row[1]);
+        for (Object[] row : applicantRepository.countScoredByExamCdIn(examCds)) {
+            submittedCounts.put((String) row[0], ((Number) row[1]).longValue());
         }
 
         return exams.stream().map(exam -> {

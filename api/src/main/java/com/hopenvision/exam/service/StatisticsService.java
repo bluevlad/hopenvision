@@ -70,8 +70,7 @@ public class StatisticsService {
                 .map(subject -> {
                     Object[] stats = subjectStatsMap.get(subject.getSubjectCd());
                     long subjectCount = stats != null ? (Long) stats[1] : 0;
-                    Double subAvgDouble = stats != null ? (Double) stats[2] : null;
-                    BigDecimal subAvg = subAvgDouble != null ? BigDecimal.valueOf(subAvgDouble) : null;
+                    BigDecimal subAvg = stats != null && stats[2] != null ? new BigDecimal(stats[2].toString()).setScale(2, RoundingMode.HALF_UP) : null;
                     BigDecimal subMax = stats != null ? (BigDecimal) stats[3] : null;
                     BigDecimal subMin = stats != null ? (BigDecimal) stats[4] : null;
 
@@ -79,7 +78,7 @@ public class StatisticsService {
                             .subjectCd(subject.getSubjectCd())
                             .subjectNm(subject.getSubjectNm())
                             .applicantCount(subjectCount)
-                            .avgScore(subAvg != null ? subAvg.setScale(2, RoundingMode.HALF_UP) : null)
+                            .avgScore(subAvg)
                             .maxScore(subMax)
                             .minScore(subMin)
                             .build();

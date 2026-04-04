@@ -205,7 +205,7 @@ com.hopenvision/
 - **CI/CD**: GitHub Actions (prod 브랜치 push 시 자동 배포)
 - **Docker Image**: hopenvision-api, hopenvision-web, hopenvision-admin
 - **운영 포트**: Frontend User 4060, Frontend Admin 4061, Backend 9050
-- **도메인**: study.unmong.com (사용자), admin.unmong.com (관리자)
+- **도메인**: study.unmong.com (사용자), admin.unmong.com (관리자), hopenvision.unmong.com (통합)
 - **네트워크**: database-network (외부)
 
 > 로컬 환경 정보는 `CLAUDE.local.md` 참조 (git에 포함되지 않음)

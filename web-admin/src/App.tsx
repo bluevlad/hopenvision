@@ -43,7 +43,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ConfigProvider locale={koKR}>
         <AuthProvider>
-          <BrowserRouter>
+          <BrowserRouter basename={(window as any).__BASE_PATH__ || ''}>
             <Routes>
               <Route path="/login" element={<ApiKeyLogin />} />
               <Route path="/" element={

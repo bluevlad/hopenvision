@@ -4,6 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > 상위 `C:/GIT/CLAUDE.md`의 Git-First Workflow를 상속합니다.
 
+## 실행 환경 감지 (SSH 재접속 금지)
+
+- Claude는 현재 호스트에서 직접 실행 중 — **SSH 재접속을 시도하지 말 것**
+- `uname -s` = `Darwin` → MacBook 운영환경 (172.30.1.72), docker/docker compose 직접 실행 가능
+- `uname -s` 결과가 Windows/MINGW/MSYS → Windows 개발환경 (172.30.1.100)
+- Docker 명령은 현재 호스트에서 바로 실행 (별도 SSH 접속 불필요)
+- compose 파일 선택: Darwin → `docker-compose.yml` / Windows → `docker-compose.local.yml`
+
 ## Project Overview
 
 HopenVision - 공무원 시험 성적 관리 및 채점 시스템 (Excel 업로드 → 자동 채점 → 통계 대시보드)

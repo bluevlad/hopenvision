@@ -18,17 +18,33 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       SUPER_ADMIN_EMAILS: ${SUPER_ADMIN_EMAILS:-}
       JWT_SECRET: ${JWT_SECRET:-}
+      REDIS_HOST: ${REDIS_HOST:-hopenvision-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
       TZ: ${TZ:-Asia/Seoul}
     volumes:
       - hopenvision-upload:/data/hopenvision/upload
     ports:
       - "9050:8080"
+    depends_on:
+      - hopenvision-redis
     healthcheck:
       test: ["CMD-SHELL", "curl -f 'http://localhost:8080/api/exams?page=0&size=1' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
+    networks:
+      - database-network
+
+  # Redis — 캐시·JWT refresh·장바구니 임시 (MVP Sprint 0+)
+  hopenvision-redis:
+    image: redis:7-alpine
+    container_name: hopenvision-redis
+    restart: always
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - hopenvision-redis-data:/data
     networks:
       - database-network
 
@@ -64,6 +80,7 @@ services:
 
 volumes:
   hopenvision-upload:
+  hopenvision-redis-data:
 
 networks:
   database-network:

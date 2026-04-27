@@ -1,0 +1,446 @@
+-- ============================================
+-- 공무원 시험 채점 시스템 DB 스키마
+-- PostgreSQL Database
+-- ============================================
+
+-- 1. 시험 마스터 테이블
+CREATE TABLE IF NOT EXISTS exam_mst (
+    exam_cd         VARCHAR(50) PRIMARY KEY,
+    exam_nm         VARCHAR(200) NOT NULL,
+    exam_type       VARCHAR(20),
+    exam_year       VARCHAR(4),
+    exam_round      INTEGER,
+    exam_date       DATE,
+    total_score     NUMERIC(5,2) DEFAULT 100,
+    pass_score      NUMERIC(5,2),
+    question_set_id INTEGER,
+    exam_status     VARCHAR(20) DEFAULT 'DRAFT',
+    is_use          CHAR(1) DEFAULT 'Y',
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP
+);
+
+COMMENT ON TABLE exam_mst IS '시험 마스터';
+COMMENT ON COLUMN exam_mst.exam_cd IS '시험코드';
+COMMENT ON COLUMN exam_mst.exam_nm IS '시험명';
+COMMENT ON COLUMN exam_mst.pass_score IS '합격 기준 총점';
+
+-- 2. 과목 테이블
+CREATE TABLE IF NOT EXISTS exam_subject (
+    exam_cd         VARCHAR(50) NOT NULL,
+    subject_cd      VARCHAR(20) NOT NULL,
+    subject_nm      VARCHAR(100) NOT NULL,
+    subject_type    CHAR(1) DEFAULT 'M',
+    question_cnt    INTEGER DEFAULT 20,
+    score_per_q     NUMERIC(5,2) DEFAULT 5,
+    question_type   VARCHAR(20) DEFAULT 'CHOICE',
+    cut_line        NUMERIC(5,2) DEFAULT 40,
+    sort_order      INTEGER DEFAULT 1,
+    group_id        BIGINT,
+    time_limit      INTEGER DEFAULT 22,
+    is_use          CHAR(1) DEFAULT 'Y',
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (exam_cd, subject_cd),
+    FOREIGN KEY (exam_cd) REFERENCES exam_mst(exam_cd) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE exam_subject IS '과목 정보';
+COMMENT ON COLUMN exam_subject.subject_type IS '과목유형 (M:필수, S:선택)';
+COMMENT ON COLUMN exam_subject.question_type IS '문제유형 (CHOICE:객관식, ESSAY:주관식)';
+COMMENT ON COLUMN exam_subject.cut_line IS '과목별 커트라인 (과락 기준)';
+
+-- 3. 문제 테이블 (문항 정보, 해설 포함)
+CREATE TABLE IF NOT EXISTS exam_question (
+    exam_cd         VARCHAR(50) NOT NULL,
+    subject_cd      VARCHAR(20) NOT NULL,
+    question_no     INTEGER NOT NULL,
+    question_text   TEXT,
+    context_text    TEXT,
+    choice_1        VARCHAR(1000),
+    choice_2        VARCHAR(1000),
+    choice_3        VARCHAR(1000),
+    choice_4        VARCHAR(1000),
+    choice_5        VARCHAR(1000),
+    image_file      VARCHAR(200),
+    category        VARCHAR(100),
+    difficulty      VARCHAR(10),
+    title           VARCHAR(500),
+    explanation     TEXT,
+    correction_note TEXT,
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP,
+    PRIMARY KEY (exam_cd, subject_cd, question_no),
+    FOREIGN KEY (exam_cd, subject_cd) REFERENCES exam_subject(exam_cd, subject_cd) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE exam_question IS '문제 정보';
+COMMENT ON COLUMN exam_question.question_text IS '문제 텍스트';
+COMMENT ON COLUMN exam_question.context_text IS '지문/보기';
+COMMENT ON COLUMN exam_question.choice_1 IS '선택지 1';
+COMMENT ON COLUMN exam_question.choice_2 IS '선택지 2';
+COMMENT ON COLUMN exam_question.choice_3 IS '선택지 3';
+COMMENT ON COLUMN exam_question.choice_4 IS '선택지 4';
+COMMENT ON COLUMN exam_question.choice_5 IS '선택지 5';
+COMMENT ON COLUMN exam_question.image_file IS '이미지 파일명';
+COMMENT ON COLUMN exam_question.category IS '분류 (고대사-선사시대 등)';
+COMMENT ON COLUMN exam_question.difficulty IS '난이도 (상/중/하)';
+COMMENT ON COLUMN exam_question.title IS '문제 제목';
+COMMENT ON COLUMN exam_question.explanation IS '해설';
+COMMENT ON COLUMN exam_question.correction_note IS '오답 분석';
+
+-- 4. 정답 테이블 (문항별 정답)
+CREATE TABLE IF NOT EXISTS exam_answer_key (
+    exam_cd         VARCHAR(50) NOT NULL,
+    subject_cd      VARCHAR(20) NOT NULL,
+    question_no     INTEGER NOT NULL,
+    correct_ans     VARCHAR(10) NOT NULL,
+    score           NUMERIC(5,2) DEFAULT 5,
+    is_multi_ans    CHAR(1) DEFAULT 'N',
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP,
+    PRIMARY KEY (exam_cd, subject_cd, question_no),
+    FOREIGN KEY (exam_cd, subject_cd) REFERENCES exam_subject(exam_cd, subject_cd) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE exam_answer_key IS '시험 정답';
+COMMENT ON COLUMN exam_answer_key.correct_ans IS '정답 (객관식:1~5, 주관식:텍스트)';
+COMMENT ON COLUMN exam_answer_key.is_multi_ans IS '복수정답 여부';
+
+-- 4. 응시자 마스터 테이블
+CREATE TABLE IF NOT EXISTS exam_applicant (
+    exam_cd         VARCHAR(50) NOT NULL,
+    applicant_no    VARCHAR(20) NOT NULL,
+    user_id         VARCHAR(50),
+    user_nm         VARCHAR(100),
+    apply_area      VARCHAR(50),
+    apply_type      VARCHAR(20),
+    add_score       NUMERIC(5,2) DEFAULT 0,
+    total_score     NUMERIC(5,2),
+    avg_score       NUMERIC(5,2),
+    ranking         INTEGER,
+    pass_yn         CHAR(1),
+    score_status    CHAR(1) DEFAULT 'N',
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP,
+    PRIMARY KEY (exam_cd, applicant_no),
+    FOREIGN KEY (exam_cd) REFERENCES exam_mst(exam_cd) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE exam_applicant IS '응시자 정보';
+COMMENT ON COLUMN exam_applicant.add_score IS '가산점';
+COMMENT ON COLUMN exam_applicant.pass_yn IS '합격여부 (Y:합격, N:불합격, P:예비합격)';
+
+-- 5. 응시자 답안 테이블
+CREATE TABLE IF NOT EXISTS exam_applicant_ans (
+    exam_cd         VARCHAR(50) NOT NULL,
+    applicant_no    VARCHAR(20) NOT NULL,
+    subject_cd      VARCHAR(20) NOT NULL,
+    question_no     INTEGER NOT NULL,
+    user_ans        VARCHAR(10),
+    is_correct      CHAR(1),
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (exam_cd, applicant_no, subject_cd, question_no),
+    FOREIGN KEY (exam_cd, applicant_no) REFERENCES exam_applicant(exam_cd, applicant_no) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE exam_applicant_ans IS '응시자 답안';
+COMMENT ON COLUMN exam_applicant_ans.is_correct IS '정답여부';
+
+-- 6. 응시자 과목별 성적 테이블
+CREATE TABLE IF NOT EXISTS exam_applicant_score (
+    exam_cd         VARCHAR(50) NOT NULL,
+    applicant_no    VARCHAR(20) NOT NULL,
+    subject_cd      VARCHAR(20) NOT NULL,
+    raw_score       NUMERIC(5,2),
+    adj_score       NUMERIC(5,2),
+    correct_cnt     INTEGER,
+    wrong_cnt       INTEGER,
+    subject_rank    INTEGER,
+    cut_pass_yn     CHAR(1),
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP,
+    PRIMARY KEY (exam_cd, applicant_no, subject_cd),
+    FOREIGN KEY (exam_cd, applicant_no) REFERENCES exam_applicant(exam_cd, applicant_no) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE exam_applicant_score IS '응시자 과목별 성적';
+COMMENT ON COLUMN exam_applicant_score.raw_score IS '원점수';
+COMMENT ON COLUMN exam_applicant_score.adj_score IS '조정점수';
+COMMENT ON COLUMN exam_applicant_score.cut_pass_yn IS '과락여부 (Y:통과, N:과락)';
+
+-- 7. 합격선 설정 테이블 (지역/유형별)
+CREATE TABLE IF NOT EXISTS exam_pass_line (
+    exam_cd         VARCHAR(50) NOT NULL,
+    apply_area      VARCHAR(50) NOT NULL,
+    apply_type      VARCHAR(20) NOT NULL,
+    recruit_cnt     INTEGER,
+    pass_line       NUMERIC(5,2),
+    cut_line_must   NUMERIC(5,2) DEFAULT 40,
+    cut_line_sel    NUMERIC(5,2) DEFAULT 40,
+    pass_ranking    INTEGER,
+    is_use          CHAR(1) DEFAULT 'Y',
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP,
+    PRIMARY KEY (exam_cd, apply_area, apply_type),
+    FOREIGN KEY (exam_cd) REFERENCES exam_mst(exam_cd) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE exam_pass_line IS '합격선 설정';
+COMMENT ON COLUMN exam_pass_line.pass_line IS '합격 커트라인';
+COMMENT ON COLUMN exam_pass_line.cut_line_must IS '필수과목 과락 기준';
+COMMENT ON COLUMN exam_pass_line.cut_line_sel IS '선택과목 과락 기준';
+
+-- 8. 시험 통계 테이블
+CREATE TABLE IF NOT EXISTS exam_stat (
+    id              SERIAL PRIMARY KEY,
+    exam_cd         VARCHAR(50) NOT NULL,
+    apply_area      VARCHAR(50) DEFAULT 'ALL',
+    subject_cd      VARCHAR(20) DEFAULT 'ALL',
+    applicant_cnt   INTEGER,
+    avg_score       NUMERIC(5,2),
+    max_score       NUMERIC(5,2),
+    min_score       NUMERIC(5,2),
+    top_3_score     NUMERIC(5,2),
+    top_10_score    NUMERIC(5,2),
+    score_1_per     NUMERIC(5,2),
+    score_2_per     NUMERIC(5,2),
+    score_3_per     NUMERIC(5,2),
+    score_4_per     NUMERIC(5,2),
+    score_5_per     NUMERIC(5,2),
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP,
+    UNIQUE (exam_cd, apply_area, subject_cd)
+);
+
+COMMENT ON TABLE exam_stat IS '시험 통계';
+
+-- 9. 사용자 답안 테이블
+CREATE TABLE IF NOT EXISTS user_answer (
+    user_id         VARCHAR(50) NOT NULL,
+    exam_cd         VARCHAR(50) NOT NULL,
+    subject_cd      VARCHAR(50) NOT NULL,
+    question_no     INTEGER NOT NULL,
+    user_ans        VARCHAR(100),
+    is_correct      CHAR(1),
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, exam_cd, subject_cd, question_no),
+    FOREIGN KEY (exam_cd) REFERENCES exam_mst(exam_cd) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE user_answer IS '사용자 답안';
+COMMENT ON COLUMN user_answer.user_ans IS '사용자 입력 답안';
+COMMENT ON COLUMN user_answer.is_correct IS '정답여부 (Y/N)';
+
+-- 10. 사용자 과목별 성적 테이블
+CREATE TABLE IF NOT EXISTS user_score (
+    user_id         VARCHAR(50) NOT NULL,
+    exam_cd         VARCHAR(50) NOT NULL,
+    subject_cd      VARCHAR(50) NOT NULL,
+    raw_score       NUMERIC(5,2),
+    correct_cnt     INTEGER,
+    wrong_cnt       INTEGER,
+    ranking         INTEGER,
+    percentile      NUMERIC(5,2),
+    standard_score  NUMERIC(5,2),
+    batch_yn        CHAR(1) DEFAULT 'N',
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP,
+    PRIMARY KEY (user_id, exam_cd, subject_cd),
+    FOREIGN KEY (exam_cd) REFERENCES exam_mst(exam_cd) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE user_score IS '사용자 과목별 성적';
+COMMENT ON COLUMN user_score.raw_score IS '원점수';
+COMMENT ON COLUMN user_score.correct_cnt IS '정답 수';
+COMMENT ON COLUMN user_score.wrong_cnt IS '오답 수';
+COMMENT ON COLUMN user_score.ranking IS '과목별 순위';
+COMMENT ON COLUMN user_score.percentile IS '백분위';
+
+-- 11. 사용자 총점 테이블
+CREATE TABLE IF NOT EXISTS user_total_score (
+    user_id         VARCHAR(50) NOT NULL,
+    exam_cd         VARCHAR(50) NOT NULL,
+    total_score     NUMERIC(5,2),
+    avg_score       NUMERIC(5,2),
+    total_ranking   INTEGER,
+    area_ranking    INTEGER,
+    type_ranking    INTEGER,
+    percentile      NUMERIC(5,2),
+    standard_score  NUMERIC(5,2),
+    pass_yn         CHAR(1),
+    cut_fail_yn     CHAR(1) DEFAULT 'N',
+    batch_yn        CHAR(1) DEFAULT 'N',
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP,
+    PRIMARY KEY (user_id, exam_cd),
+    FOREIGN KEY (exam_cd) REFERENCES exam_mst(exam_cd) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE user_total_score IS '사용자 총점';
+COMMENT ON COLUMN user_total_score.total_score IS '총점';
+COMMENT ON COLUMN user_total_score.avg_score IS '평균 점수';
+COMMENT ON COLUMN user_total_score.total_ranking IS '전체 순위';
+COMMENT ON COLUMN user_total_score.pass_yn IS '합격여부 (Y/N)';
+COMMENT ON COLUMN user_total_score.cut_fail_yn IS '과락여부 (Y:과락있음, N:없음)';
+COMMENT ON COLUMN user_total_score.standard_score IS '표준점수 (T = (원점수-평균)/표준편차*20+100)';
+
+-- 12. 과목 마스터 테이블
+CREATE TABLE IF NOT EXISTS subject_master (
+    subject_cd          VARCHAR(20) PRIMARY KEY,
+    subject_nm          VARCHAR(100) NOT NULL,
+    parent_subject_cd   VARCHAR(20),
+    subject_depth       INTEGER DEFAULT 1,
+    sort_order          INTEGER DEFAULT 1,
+    category            VARCHAR(50),
+    description         TEXT,
+    is_use              CHAR(1) DEFAULT 'Y',
+    reg_dt              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt              TIMESTAMP,
+    FOREIGN KEY (parent_subject_cd) REFERENCES subject_master(subject_cd)
+);
+
+COMMENT ON TABLE subject_master IS '과목 마스터';
+COMMENT ON COLUMN subject_master.subject_cd IS '과목코드';
+COMMENT ON COLUMN subject_master.subject_nm IS '과목명';
+COMMENT ON COLUMN subject_master.parent_subject_cd IS '상위 과목코드 (계층 구조)';
+
+-- 13. 문제은행 그룹 테이블
+CREATE TABLE IF NOT EXISTS question_bank_group (
+    group_id        SERIAL PRIMARY KEY,
+    group_cd        VARCHAR(50) UNIQUE NOT NULL,
+    group_nm        VARCHAR(200) NOT NULL,
+    exam_year       VARCHAR(4),
+    exam_round      INTEGER,
+    category        VARCHAR(50),
+    source          VARCHAR(100),
+    description     TEXT,
+    is_use          CHAR(1) DEFAULT 'Y',
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP
+);
+
+COMMENT ON TABLE question_bank_group IS '문제은행 그룹';
+COMMENT ON COLUMN question_bank_group.group_cd IS '그룹코드';
+COMMENT ON COLUMN question_bank_group.group_nm IS '그룹명';
+
+-- 14. 문제은행 항목 테이블
+CREATE TABLE IF NOT EXISTS question_bank_item (
+    item_id         SERIAL PRIMARY KEY,
+    group_id        INTEGER NOT NULL REFERENCES question_bank_group(group_id) ON DELETE CASCADE,
+    subject_cd      VARCHAR(20) NOT NULL,
+    question_no     INTEGER,
+    question_title  VARCHAR(500),
+    question_text   TEXT,
+    context_text    TEXT,
+    choice1         VARCHAR(1000),
+    choice2         VARCHAR(1000),
+    choice3         VARCHAR(1000),
+    choice4         VARCHAR(1000),
+    choice5         VARCHAR(1000),
+    correct_ans     VARCHAR(100) NOT NULL,
+    is_multi_ans    CHAR(1) DEFAULT 'N',
+    score           NUMERIC(5,2) DEFAULT 5,
+    category        VARCHAR(100),
+    difficulty      VARCHAR(10),
+    question_type   VARCHAR(20) DEFAULT 'CHOICE',
+    tags            VARCHAR(500),
+    explanation     TEXT,
+    correction_note TEXT,
+    image_file      VARCHAR(200),
+    use_count       INTEGER DEFAULT 0,
+    correct_rate    NUMERIC(5,2),
+    is_use          CHAR(1) DEFAULT 'Y',
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP
+);
+
+COMMENT ON TABLE question_bank_item IS '문제은행 항목';
+COMMENT ON COLUMN question_bank_item.item_id IS '항목 ID';
+COMMENT ON COLUMN question_bank_item.group_id IS '그룹 ID';
+COMMENT ON COLUMN question_bank_item.correct_ans IS '정답';
+CREATE INDEX IF NOT EXISTS idx_qb_item_group ON question_bank_item(group_id, subject_cd);
+
+-- 15. 문제세트 테이블 (시험 단위, 여러 과목 포함)
+CREATE TABLE IF NOT EXISTS question_set (
+    set_id          SERIAL PRIMARY KEY,
+    set_cd          VARCHAR(50) UNIQUE NOT NULL,
+    set_nm          VARCHAR(200) NOT NULL,
+    question_cnt    INTEGER DEFAULT 0,
+    total_score     INTEGER DEFAULT 0,
+    subject_cnt     INTEGER DEFAULT 0,
+    category        VARCHAR(50),
+    difficulty_level VARCHAR(10),
+    description     TEXT,
+    is_use          CHAR(1) DEFAULT 'Y',
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP
+);
+
+COMMENT ON TABLE question_set IS '문제세트 (시험 단위)';
+COMMENT ON COLUMN question_set.set_cd IS '세트코드';
+COMMENT ON COLUMN question_set.set_nm IS '세트명';
+COMMENT ON COLUMN question_set.question_cnt IS '총 문제 수';
+COMMENT ON COLUMN question_set.total_score IS '총 배점';
+COMMENT ON COLUMN question_set.subject_cnt IS '과목 수';
+COMMENT ON COLUMN question_set.difficulty_level IS '평균 난이도';
+
+-- 16. 문제세트 항목 테이블 (과목별 문제 귀속)
+CREATE TABLE IF NOT EXISTS question_set_item (
+    set_item_id     SERIAL PRIMARY KEY,
+    set_id          INTEGER NOT NULL REFERENCES question_set(set_id) ON DELETE CASCADE,
+    item_id         INTEGER NOT NULL REFERENCES question_bank_item(item_id),
+    subject_cd      VARCHAR(20) NOT NULL,
+    question_no     INTEGER,
+    score           NUMERIC(5,2),
+    sort_order      INTEGER DEFAULT 1
+);
+
+COMMENT ON TABLE question_set_item IS '문제세트 항목';
+COMMENT ON COLUMN question_set_item.set_id IS '세트 ID';
+COMMENT ON COLUMN question_set_item.item_id IS '문제은행 항목 ID';
+COMMENT ON COLUMN question_set_item.subject_cd IS '과목코드';
+COMMENT ON COLUMN question_set_item.question_no IS '과목 내 문항 번호';
+COMMENT ON COLUMN question_set_item.score IS '배점 (오버라이드)';
+
+CREATE INDEX IF NOT EXISTS idx_question_set_item_subject ON question_set_item(set_id, subject_cd);
+
+-- 17. 시험 공지사항 테이블
+CREATE TABLE IF NOT EXISTS exam_notice (
+    notice_id       SERIAL PRIMARY KEY,
+    exam_cd         VARCHAR(50) NOT NULL,
+    title           VARCHAR(200) NOT NULL,
+    content         TEXT,
+    is_pinned       CHAR(1) DEFAULT 'N',
+    is_use          CHAR(1) DEFAULT 'Y',
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP,
+    FOREIGN KEY (exam_cd) REFERENCES exam_mst(exam_cd) ON DELETE CASCADE
+);
+
+COMMENT ON TABLE exam_notice IS '시험 공지사항';
+
+-- 18. 사용자 프로필 테이블
+CREATE TABLE IF NOT EXISTS user_profile (
+    user_id         VARCHAR(50) PRIMARY KEY,
+    user_nm         VARCHAR(100) NOT NULL,
+    email           VARCHAR(200),
+    newsletter_yn   CHAR(1) DEFAULT 'N',
+    version         BIGINT DEFAULT 0,
+    reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    upd_dt          TIMESTAMP
+);
+
+COMMENT ON TABLE user_profile IS '사용자 프로필';
+COMMENT ON COLUMN user_profile.user_id IS '사용자 ID';
+COMMENT ON COLUMN user_profile.user_nm IS '사용자명';
+COMMENT ON COLUMN user_profile.newsletter_yn IS '뉴스레터 수신 여부';
+
+-- ============================================
+-- 인덱스 생성
+-- ============================================
+CREATE INDEX IF NOT EXISTS idx_exam_applicant_user ON exam_applicant(user_id);
+CREATE INDEX IF NOT EXISTS idx_exam_applicant_area ON exam_applicant(exam_cd, apply_area);
+CREATE INDEX IF NOT EXISTS idx_exam_app_score_subj ON exam_applicant_score(exam_cd, subject_cd);
+CREATE INDEX IF NOT EXISTS idx_user_answer_exam ON user_answer(exam_cd, subject_cd);
+CREATE INDEX IF NOT EXISTS idx_user_score_exam ON user_score(exam_cd, subject_cd);
+CREATE INDEX IF NOT EXISTS idx_user_total_score_exam ON user_total_score(exam_cd);

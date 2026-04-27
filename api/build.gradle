@@ -33,6 +33,15 @@ dependencies {
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'com.h2database:h2'
 
+    // Flyway — DB 마이그레이션 (Sprint 0+: MVP 모듈 확장)
+    implementation 'org.flywaydb:flyway-core'
+
+    // Redis — 캐시·세션·장바구니 임시 저장 (Sprint 0+)
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    // ArchUnit — 모듈 경계 규칙 테스트
+    testImplementation 'com.tngtech.archunit:archunit-junit5:1.3.0'
+
     // Google OAuth
     implementation 'com.google.api-client:google-api-client:2.2.0'
 

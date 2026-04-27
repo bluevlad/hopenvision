@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HopenVision - Autonomous Dev & Ops</title>
+    <meta name="description" content="HopenVision - 모의고사와 입시 예측, 합격을 향한 비전">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/service-landing.css">
+    <style>
+        :root {
+            --service-color: #3b82f6;
+            --glow-r: 59; --glow-g: 130; --glow-b: 246;
+        }
+    </style>
+</head>
+<body>
+    <div class="sl-container">
+
+        <nav class="sl-topnav">
+            <div class="sl-nav-links">
+                <a href="https://www.unmong.com/index.html" class="sl-nav-link"><span class="sl-nav-arrow">&#8593;</span> Portal</a>
+                <a href="https://www.unmong.com/architecture.html" class="sl-nav-link"><span class="sl-nav-arrow">&#8594;</span> Architecture</a>
+            </div>
+        </nav>
+
+        <section class="sl-hero">
+            <div class="sl-hero-status"><span class="dot"></span> Active</div>
+            <h1>HopenVision</h1>
+            <p class="tagline">Admission Prediction System</p>
+            <p class="desc">모의고사 성적 데이터를 기반으로 대학별 합격 가능성을 예측하고, 학습 방향을 제시하는 입시 예측 시스템</p>
+            <div class="sl-hero-actions">
+                <a href="https://study.unmong.com/" target="_blank" rel="noopener" class="sl-btn sl-btn-primary">시험 채점</a>
+                <a href="https://study.unmong.com/exams" target="_blank" rel="noopener" class="sl-btn sl-btn-outline">모의고사</a>
+                <a href="https://study.unmong.com/history" target="_blank" rel="noopener" class="sl-btn sl-btn-outline">응시 이력</a>
+                <a href="https://admin.unmong.com/statistics" target="_blank" rel="noopener" class="sl-btn sl-btn-outline">통계 대시보드</a>
+                <a href="https://admin.unmong.com/login" target="_blank" rel="noopener" class="sl-btn sl-btn-outline">관리자</a>
+            </div>
+        </section>
+
+        <section class="sl-section">
+            <div class="sl-section-title">Features</div>
+            <div class="sl-features">
+                <a class="sl-feature" href="https://study.unmong.com/" target="_blank" rel="noopener">
+                    <span class="sl-feature-icon">&#128221;</span>
+                    <div class="sl-feature-name">시험 채점</div>
+                    <div class="sl-feature-desc">OMR/약식 답안 입력 후 즉시 채점 — 과목별 점수와 합격 예측을 한 화면에 표시</div>
+                    <span class="sl-feature-tag">Public · Exam</span>
+                </a>
+                <a class="sl-feature" href="https://study.unmong.com/exams" target="_blank" rel="noopener">
+                    <span class="sl-feature-icon">&#128203;</span>
+                    <div class="sl-feature-name">모의고사</div>
+                    <div class="sl-feature-desc">문제세트 기반 온라인 모의고사 응시 — 시간 제한·자동 채점·해설 제공</div>
+                    <span class="sl-feature-tag">Public · Mock</span>
+                </a>
+                <a class="sl-feature" href="https://study.unmong.com/history" target="_blank" rel="noopener">
+                    <span class="sl-feature-icon">&#128202;</span>
+                    <div class="sl-feature-name">응시 이력</div>
+                    <div class="sl-feature-desc">과거 응시 결과·점수 추이·과목별 정답률을 누적 조회</div>
+                    <span class="sl-feature-tag">Public · History</span>
+                </a>
+                <a class="sl-feature" href="https://admin.unmong.com/exams" target="_blank" rel="noopener">
+                    <span class="sl-feature-icon">&#128203;</span>
+                    <div class="sl-feature-name">시험 관리</div>
+                    <div class="sl-feature-desc">시험 회차 등록·수정·답안지 매핑·임포트 진입 통합 (관리자 전용)</div>
+                    <span class="sl-feature-tag">Admin · Exam</span>
+                </a>
+                <a class="sl-feature" href="https://admin.unmong.com/exams" target="_blank" rel="noopener">
+                    <span class="sl-feature-icon">&#128273;</span>
+                    <div class="sl-feature-name">답안지 등록</div>
+                    <div class="sl-feature-desc">과목·문항별 정답·배점·문제유형(객관식/주관식) 일괄 입력</div>
+                    <span class="sl-feature-tag">Admin · AnswerKey</span>
+                </a>
+                <a class="sl-feature" href="https://admin.unmong.com/import/preview" target="_blank" rel="noopener">
+                    <span class="sl-feature-icon">&#128194;</span>
+                    <div class="sl-feature-name">Excel 임포트</div>
+                    <div class="sl-feature-desc">정답표·응시자 명단 Excel 업로드 → 미리보기 → 일괄 저장 (Apache POI)</div>
+                    <span class="sl-feature-tag">Admin · Import</span>
+                </a>
+                <a class="sl-feature" href="https://admin.unmong.com/applicants" target="_blank" rel="noopener">
+                    <span class="sl-feature-icon">&#128101;</span>
+                    <div class="sl-feature-name">응시자 관리</div>
+                    <div class="sl-feature-desc">응시자 명부·CSV 업로드·임시점수 등록·시험별 응시자 매핑 통합 운영</div>
+                    <span class="sl-feature-tag">Admin · Applicant</span>
+                </a>
+                <a class="sl-feature" href="https://admin.unmong.com/statistics" target="_blank" rel="noopener">
+                    <span class="sl-feature-icon">&#128200;</span>
+                    <div class="sl-feature-name">통계 대시보드</div>
+                    <div class="sl-feature-desc">과목별 평균·합격률·점수 분포 시각화 (Recharts, exam_applicant 기반)</div>
+                    <span class="sl-feature-tag">Admin · Statistics</span>
+                </a>
+                <a class="sl-feature" href="https://admin.unmong.com/subjects" target="_blank" rel="noopener">
+                    <span class="sl-feature-icon">&#128218;</span>
+                    <div class="sl-feature-name">과목 관리</div>
+                    <div class="sl-feature-desc">과목 마스터 코드·명칭·표시 순서 관리 — 시험 등록 시 참조 카탈로그</div>
+                    <span class="sl-feature-tag">Admin · Master</span>
+                </a>
+                <a class="sl-feature" href="https://admin.unmong.com/question-bank" target="_blank" rel="noopener">
+                    <span class="sl-feature-icon">&#127974;</span>
+                    <div class="sl-feature-name">문제은행</div>
+                    <div class="sl-feature-desc">문항 그룹·문항·정답·해설 등록 + CSV/Excel 일괄 임포트·갱신 지원</div>
+                    <span class="sl-feature-tag">Admin · QuestionBank</span>
+                </a>
+                <a class="sl-feature" href="https://admin.unmong.com/question-sets" target="_blank" rel="noopener">
+                    <span class="sl-feature-icon">&#128196;</span>
+                    <div class="sl-feature-name">문제세트</div>
+                    <div class="sl-feature-desc">문제은행에서 문항을 골라 모의고사용 시험지 세트를 구성·발행</div>
+                    <span class="sl-feature-tag">Admin · QuestionSet</span>
+                </a>
+                <a class="sl-feature" href="https://admin.unmong.com/gosi/analytics" target="_blank" rel="noopener">
+                    <span class="sl-feature-icon">&#128269;</span>
+                    <div class="sl-feature-name">고시 분석</div>
+                    <div class="sl-feature-desc">공무원 시험 회차·과목별 정답률·난이도·오답 패턴 심층 리포트</div>
+                    <span class="sl-feature-tag">Admin · Analytics</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="sl-section sl-arch">
+            <div class="sl-section-title">Architecture</div>
+            <div class="sl-arch-diagram">
+                <div class="sl-arch-node">
+                    <div class="sl-arch-node-label">Frontend</div>
+                    <div class="sl-arch-node-tech">React</div>
+                </div>
+                <div class="sl-arch-arrow">&#8594;</div>
+                <div class="sl-arch-node highlight">
+                    <div class="sl-arch-node-label">Backend</div>
+                    <div class="sl-arch-node-tech">Spring Boot</div>
+                </div>
+                <div class="sl-arch-arrow">&#8594;</div>
+                <div class="sl-arch-node">
+                    <div class="sl-arch-node-label">Database</div>
+                    <div class="sl-arch-node-tech">PostgreSQL</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="sl-section sl-flow">
+            <div class="sl-section-title">Service Flow</div>
+            <div class="sl-flow-steps">
+                <div class="sl-flow-step">
+                    <div class="sl-flow-step-num">1</div>
+                    <div class="sl-flow-step-label">시험 응시</div>
+                    <div class="sl-flow-step-desc">온라인 모의고사</div>
+                </div>
+                <div class="sl-flow-arrow">&#8594;</div>
+                <div class="sl-flow-step">
+                    <div class="sl-flow-step-num">2</div>
+                    <div class="sl-flow-step-label">성적 분석</div>
+                    <div class="sl-flow-step-desc">과목별 분석</div>
+                </div>
+                <div class="sl-flow-arrow">&#8594;</div>
+                <div class="sl-flow-step">
+                    <div class="sl-flow-step-num">3</div>
+                    <div class="sl-flow-step-label">합격 예측</div>
+                    <div class="sl-flow-step-desc">대학별 가능성</div>
+                </div>
+                <div class="sl-flow-arrow">&#8594;</div>
+                <div class="sl-flow-step">
+                    <div class="sl-flow-step-num">4</div>
+                    <div class="sl-flow-step-label">통계 리포트</div>
+                    <div class="sl-flow-step-desc">추이 시각화</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="sl-section sl-tech">
+            <div class="sl-section-title">Tech Stack</div>
+            <div class="sl-tech-list">
+                <span class="sl-tech-badge"><span class="sl-tech-dot" style="background:#61dafb;"></span> React</span>
+                <span class="sl-tech-badge"><span class="sl-tech-dot" style="background:#6db33f;"></span> Spring Boot</span>
+                <span class="sl-tech-badge"><span class="sl-tech-dot" style="background:#336791;"></span> PostgreSQL</span>
+                <span class="sl-tech-badge"><span class="sl-tech-dot" style="background:#2496ed;"></span> Docker</span>
+                <span class="sl-tech-badge"><span class="sl-tech-dot" style="background:#f97316;"></span> Nginx</span>
+                <span class="sl-tech-badge"><span class="sl-tech-dot" style="background:#526cfe;"></span> MkDocs</span>
+            </div>
+        </section>
+
+        <section class="sl-section sl-connected">
+            <div class="sl-section-title">Connected Services</div>
+            <div class="sl-connected-grid">
+                <a href="https://infrawatcher.unmong.com/intro.html" target="_blank" rel="noopener noreferrer" class="sl-connected-card">
+                    <span class="sl-connected-dot" style="background:#06b6d4;"></span>
+                    <div class="sl-connected-info">
+                        <div class="sl-connected-name">InfraWatcher</div>
+                        <div class="sl-connected-role">컨테이너 모니터링</div>
+                    </div>
+                    <span class="sl-connected-arrow">&#8594;</span>
+                </a>
+                <a href="https://qadashboard.unmong.com/intro.html" target="_blank" rel="noopener noreferrer" class="sl-connected-card">
+                    <span class="sl-connected-dot" style="background:#8b5cf6;"></span>
+                    <div class="sl-connected-info">
+                        <div class="sl-connected-name">QA-Agent</div>
+                        <div class="sl-connected-role">품질 자동 테스트</div>
+                    </div>
+                    <span class="sl-connected-arrow">&#8594;</span>
+                </a>
+                <a href="https://standup.unmong.com/intro.html" target="_blank" rel="noopener noreferrer" class="sl-connected-card">
+                    <span class="sl-connected-dot" style="background:#14b8a6;"></span>
+                    <div class="sl-connected-info">
+                        <div class="sl-connected-name">StandUp</div>
+                        <div class="sl-connected-role">업무 추적 연동</div>
+                    </div>
+                    <span class="sl-connected-arrow">&#8594;</span>
+                </a>
+            </div>
+        </section>
+
+    </div>
+</body>
+</html>

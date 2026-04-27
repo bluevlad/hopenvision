@@ -22,6 +22,6 @@ export const adminClient = createApiClient({
     sessionStorage.removeItem(TOKEN_KEY);
     sessionStorage.removeItem('admin_user');
     sessionStorage.removeItem(METHOD_KEY);
-    window.location.href = ((window as any).__BASE_PATH__ || '') + '/login';
+    window.location.href = (window.__BASE_PATH__ || '') + '/login';
   },
 });

@@ -129,17 +129,20 @@ export default function ApiKeyLogin() {
 
           {GOOGLE_CLIENT_ID && (
             <>
+              {!googleReady && (
+                <div style={{ display: 'flex', justifyContent: 'center', minHeight: 44, alignItems: 'center' }}>
+                  <Spin size="small" />
+                </div>
+              )}
               <div
                 ref={googleButtonRef}
                 style={{
-                  display: 'flex',
+                  display: googleReady ? 'flex' : 'none',
                   justifyContent: 'center',
                   minHeight: 44,
                   alignItems: 'center',
                 }}
-              >
-                {!googleReady && <Spin size="small" />}
-              </div>
+              />
 
               <Divider plain>
                 <Text type="secondary" style={{ fontSize: 12 }}>또는 API Key로 로그인</Text>

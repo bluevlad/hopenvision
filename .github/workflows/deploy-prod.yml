@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - prod
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -25,7 +26,7 @@ jobs:
           GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
           SUPER_ADMIN_EMAILS=${{ secrets.SUPER_ADMIN_EMAILS }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
-          CORS_ALLOWED_ORIGINS=https://study.unmong.com,https://admin.unmong.com,http://study.unmong.com:4060,http://study.unmong.com:4061
+          CORS_ALLOWED_ORIGINS=https://study.unmong.com,https://admin.unmong.com,https://hopenvision.unmong.com
           TZ=Asia/Seoul
           EOF
           sed -i '' 's/^[[:space:]]*//' .env
@@ -225,6 +226,28 @@ jobs:
                 END IF;
               END LOOP;
             END \$\$;
+
+            -- v5.2: Import Job History 테이블
+            CREATE TABLE IF NOT EXISTS import_job_history (
+              job_id          VARCHAR(36) PRIMARY KEY,
+              file_name       VARCHAR(200),
+              file_hash       VARCHAR(64) UNIQUE,
+              file_path       VARCHAR(500),
+              job_type        VARCHAR(20),
+              exam_cd         VARCHAR(50),
+              status          VARCHAR(20) DEFAULT 'PENDING',
+              total_rows      INTEGER DEFAULT 0,
+              processed_rows  INTEGER DEFAULT 0,
+              success_rows    INTEGER DEFAULT 0,
+              error_rows      INTEGER DEFAULT 0,
+              error_message   TEXT,
+              result_summary  TEXT,
+              reg_dt          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              start_dt        TIMESTAMP,
+              end_dt          TIMESTAMP
+            );
+            CREATE INDEX IF NOT EXISTS idx_import_job_hash ON import_job_history(file_hash);
+            CREATE INDEX IF NOT EXISTS idx_import_job_exam ON import_job_history(exam_cd, job_type);
           " || echo "Migration skipped or already applied"
 
       - name: Stop existing services

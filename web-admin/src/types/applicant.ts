@@ -44,6 +44,51 @@ export const APPLY_AREAS = [
   { value: 'JEJU', label: '제주' },
 ];
 
+// ==================== CSV Result Import ====================
+
+export interface CsvResultRow {
+  rowNum: number;
+  examCd: string | null;
+  subjectNm: string | null;
+  userNm: string | null;
+  userId: string | null;
+  answers: string | null;
+  subjectCd: string | null;
+  answerCount: number;
+  correctCnt: number;
+  wrongCnt: number;
+  score: number | null;
+  status: 'MATCHED' | 'SKIP' | 'ERROR' | 'PARSED' | 'DUPLICATE';
+  message: string | null;
+}
+
+export interface CsvResultImportResult {
+  totalRows: number;
+  matchedRows: number;
+  skippedRows: number;
+  errorRows: number;
+  importedRows: number;
+  rows: CsvResultRow[];
+}
+
+export interface ImportJobResponse {
+  jobId: string;
+  fileName: string | null;
+  fileHash: string | null;
+  jobType: string;
+  examCd: string;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  totalRows: number;
+  processedRows: number;
+  successRows: number;
+  errorRows: number;
+  errorMessage: string | null;
+  resultSummary: string | null;
+  regDt: string;
+  startDt: string | null;
+  endDt: string | null;
+}
+
 export const APPLY_TYPES = [
   { value: 'GENERAL', label: '일반' },
   { value: 'DISABLED', label: '장애인' },

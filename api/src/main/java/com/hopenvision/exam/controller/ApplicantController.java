@@ -10,8 +10,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Tag(name = "응시자 관리", description = "응시자 CRUD API")
 @RestController
@@ -80,5 +82,69 @@ public class ApplicantController {
     ) {
         applicantService.deleteApplicant(examCd, applicantNo);
         return ResponseEntity.ok(ApiResponse.success("응시자가 삭제되었습니다.", null));
+    }
+
+    // ==================== CSV 응시결과 등록 ====================
+
+    @Operation(summary = "CSV 응시결과 등록 미리보기",
+            description = "CSV 파일을 파싱하여 매칭 결과를 미리보기합니다. DB 변경 없음.")
+    @PostMapping(value = "/csv-result/preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ApplicantDto.CsvResultImportResult>> previewCsvResult(
+            @PathVariable String examCd,
+            @RequestParam("file") MultipartFile file
+    ) {
+        validateCsvFile(file);
+        ApplicantDto.CsvResultImportResult result = applicantService.previewCsvResult(file);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @Operation(summary = "CSV 응시결과 등록 적용",
+            description = "CSV 파일을 파싱하여 응시자 및 답안을 등록하고 자동 채점합니다.")
+    @PostMapping(value = "/csv-result/apply", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ApplicantDto.CsvResultImportResult>> applyCsvResult(
+            @PathVariable String examCd,
+            @RequestParam("file") MultipartFile file
+    ) {
+        validateCsvFile(file);
+        ApplicantDto.CsvResultImportResult result = applicantService.applyCsvResult(file);
+        return ResponseEntity.ok(ApiResponse.success(
+                "총 " + result.getImportedRows() + "건 등록 완료", result));
+    }
+
+    // ==================== 임시점수결과 등록 ====================
+
+    @Operation(summary = "임시점수결과 등록 미리보기",
+            description = "CSV 점수 파일로 무작위 답안을 생성하여 미리보기합니다. DB 변경 없음.")
+    @PostMapping(value = "/temp-score/preview", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ApplicantDto.CsvResultImportResult>> previewTempScore(
+            @PathVariable String examCd,
+            @RequestParam("file") MultipartFile file
+    ) {
+        validateCsvFile(file);
+        ApplicantDto.CsvResultImportResult result = applicantService.previewTempScore(file);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @Operation(summary = "임시점수결과 등록 적용",
+            description = "CSV 점수 파일로 무작위 답안을 생성하고 응시결과로 저장합니다.")
+    @PostMapping(value = "/temp-score/apply", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<ApplicantDto.CsvResultImportResult>> applyTempScore(
+            @PathVariable String examCd,
+            @RequestParam("file") MultipartFile file
+    ) {
+        validateCsvFile(file);
+        ApplicantDto.CsvResultImportResult result = applicantService.applyTempScore(file);
+        return ResponseEntity.ok(ApiResponse.success(
+                "총 " + result.getImportedRows() + "건 등록 완료", result));
+    }
+
+    private void validateCsvFile(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("파일이 비어있습니다.");
+        }
+        String filename = file.getOriginalFilename();
+        if (filename == null || !filename.toLowerCase().endsWith(".csv")) {
+            throw new IllegalArgumentException("CSV 파일만 업로드 가능합니다.");
+        }
     }
 }

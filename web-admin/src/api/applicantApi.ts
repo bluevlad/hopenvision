@@ -1,6 +1,6 @@
 import { adminClient as client } from './adminClient';
 import type { ApiResponse, PageResponse } from '@hopenvision/shared';
-import type { ApplicantResponse, ApplicantRequest } from '../types/applicant';
+import type { ApplicantResponse, ApplicantRequest, CsvResultImportResult, ImportJobResponse } from '../types/applicant';
 
 export const applicantApi = {
   getApplicantList: async (examCd: string, params: {
@@ -29,6 +29,57 @@ export const applicantApi = {
 
   deleteApplicant: async (examCd: string, applicantNo: string): Promise<ApiResponse<void>> => {
     const response = await client.delete(`/api/exams/${examCd}/applicants/${applicantNo}`);
+    return response.data;
+  },
+
+  // CSV 응시결과 등록 미리보기
+  csvResultPreview: async (examCd: string, file: File): Promise<ApiResponse<CsvResultImportResult>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await client.post(`/api/exams/${examCd}/applicants/csv-result/preview`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
+    });
+    return response.data;
+  },
+
+  // CSV 응시결과 등록 적용
+  csvResultApply: async (examCd: string, file: File): Promise<ApiResponse<CsvResultImportResult>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await client.post(`/api/exams/${examCd}/applicants/csv-result/apply`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000,
+    });
+    return response.data;
+  },
+
+  // 임시점수결과 파일 업로드 (비동기 Job)
+  tempScoreUpload: async (examCd: string, file: File): Promise<ApiResponse<{ jobId: string; status: string; fileName: string }>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await client.post(`/api/exams/${examCd}/jobs/temp-score`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 30000,
+    });
+    return response.data;
+  },
+
+  // Job 상태 조회
+  getJobStatus: async (jobId: string): Promise<ApiResponse<ImportJobResponse>> => {
+    const response = await client.get(`/api/jobs/${jobId}`);
+    return response.data;
+  },
+
+  // 시험별 Job 목록
+  getJobList: async (examCd: string): Promise<ApiResponse<ImportJobResponse[]>> => {
+    const response = await client.get(`/api/exams/${examCd}/jobs`);
+    return response.data;
+  },
+
+  // 성적채점 시작
+  startScoring: async (examCd: string): Promise<ApiResponse<{ jobId: string; status: string; examCd: string }>> => {
+    const response = await client.post(`/api/exams/${examCd}/jobs/scoring`);
     return response.data;
   },
 };

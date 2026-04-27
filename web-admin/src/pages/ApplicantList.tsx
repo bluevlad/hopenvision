@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Table,
@@ -19,6 +20,8 @@ import {
   ReloadOutlined,
   EditOutlined,
   DeleteOutlined,
+  UploadOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { examApi } from '../api/examApi';
@@ -28,6 +31,7 @@ import { APPLY_AREAS, APPLY_TYPES } from '../types/applicant';
 import ApplicantModal from '../components/ApplicantModal';
 
 export default function ApplicantList() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedExamCd, setSelectedExamCd] = useState<string | undefined>();
   const [keyword, setKeyword] = useState('');
@@ -287,17 +291,31 @@ export default function ApplicantList() {
           </span>
         }
         extra={
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setEditData(null);
-              setModalOpen(true);
-            }}
-            disabled={!selectedExamCd}
-          >
-            응시자 등록
-          </Button>
+          <Space>
+            <Button
+              icon={<ThunderboltOutlined />}
+              onClick={() => navigate('/applicants/temp-score')}
+            >
+              임시점수결과등록
+            </Button>
+            <Button
+              icon={<UploadOutlined />}
+              onClick={() => navigate('/applicants/csv-import')}
+            >
+              응시결과등록
+            </Button>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setEditData(null);
+                setModalOpen(true);
+              }}
+              disabled={!selectedExamCd}
+            >
+              응시자 등록
+            </Button>
+          </Space>
         }
       >
         <Table

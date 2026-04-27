@@ -1,3 +1,11 @@
+# === Wiki build stage ===
+FROM python:3.12-alpine AS wiki-builder
+WORKDIR /wiki
+COPY wiki/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY wiki/ .
+RUN mkdocs build
+
 # === Build stage ===
 FROM node:20-alpine AS builder
 WORKDIR /app
@@ -29,7 +37,7 @@ ENV TZ=Asia/Seoul
 RUN rm -rf ./*
 
 COPY --from=builder /app/web-user/dist .
-COPY wiki/site ./wiki
+COPY --from=wiki-builder /wiki/site ./wiki
 COPY web-user/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80

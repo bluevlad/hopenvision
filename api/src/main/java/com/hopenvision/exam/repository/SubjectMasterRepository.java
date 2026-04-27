@@ -13,6 +13,8 @@ import java.util.List;
 @Repository
 public interface SubjectMasterRepository extends JpaRepository<SubjectMaster, String> {
 
+    java.util.Optional<SubjectMaster> findBySubjectNm(String subjectNm);
+
     List<SubjectMaster> findByIsUseOrderBySortOrder(String isUse);
 
     List<SubjectMaster> findByCategoryAndIsUseOrderBySortOrder(String category, String isUse);

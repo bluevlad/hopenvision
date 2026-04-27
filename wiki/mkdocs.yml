@@ -1,6 +1,6 @@
 site_name: HopenVision Wiki
 site_description: HopenVision — 공무원 시험 성적 관리 및 채점 시스템 위키
-site_url: https://unmong.com/wiki/HopenVision/
+site_url: https://study.unmong.com/wiki/
 
 theme:
   name: material

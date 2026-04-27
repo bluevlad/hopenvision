@@ -105,7 +105,8 @@ public class ScoreAnalysisService {
     private List<ScoreAnalysisDto.ScoreDistribution> buildScoreDistributionsFromDb(
             String examCd, long total, BigDecimal myScore) {
 
-        Object[] dist = userTotalScoreRepository.getScoreDistribution(examCd);
+        List<Object[]> distRows = userTotalScoreRepository.getScoreDistribution(examCd);
+        Object[] dist = distRows != null && !distRows.isEmpty() ? distRows.get(0) : new Object[0];
 
         String[][] ranges = {
                 {"90~100", "90", "100"},

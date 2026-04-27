@@ -12,25 +12,21 @@ import AnswerKeyForm from './pages/AnswerKeyForm';
 import ExcelImport from './pages/ExcelImport';
 import JsonImport from './pages/JsonImport';
 import ApplicantList from './pages/ApplicantList';
+import ApplicantCsvImport from './pages/ApplicantCsvImport';
+import ApplicantTempScore from './pages/ApplicantTempScore';
 import Statistics from './pages/Statistics';
 import SubjectList from './pages/SubjectList';
 import QuestionBankList from './pages/QuestionBankList';
 import QuestionBankDetail from './pages/QuestionBankDetail';
 import QuestionSetList from './pages/QuestionSetList';
 import QuestionSetDetail from './pages/QuestionSetDetail';
-import GosiExamList from './pages/gosi/GosiExamList';
-import GosiPassList from './pages/gosi/GosiPassList';
-import GosiScoreList from './pages/gosi/GosiScoreList';
-import GosiScoreDetail from './pages/gosi/GosiScoreDetail';
-import GosiStatistics from './pages/gosi/GosiStatistics';
 import GosiAnalytics from './pages/gosi/GosiAnalytics';
-import GosiSubjectList from './pages/gosi/GosiSubjectList';
-import GosiMemberList from './pages/gosi/GosiMemberList';
 import SubjectMasterList from './pages/SubjectMasterList';
 import QuestionBankGroupList from './pages/QuestionBankGroupList';
 import QuestionBankItemList from './pages/QuestionBankItemList';
 import QuestionBankBulkImport from './pages/QuestionBankBulkImport';
 import QuestionBankCsvUpdate from './pages/QuestionBankCsvUpdate';
+import QuestionBankExcelUpdate from './pages/QuestionBankExcelUpdate';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -47,7 +43,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ConfigProvider locale={koKR}>
         <AuthProvider>
-          <BrowserRouter>
+          <BrowserRouter basename={window.__BASE_PATH__ || ''}>
             <Routes>
               <Route path="/login" element={<ApiKeyLogin />} />
               <Route path="/" element={
@@ -63,6 +59,8 @@ function App() {
                 <Route path="exams/:examCd/import" element={<ExcelImport />} />
                 <Route path="exams/:examCd/json-import" element={<JsonImport />} />
                 <Route path="applicants" element={<ApplicantList />} />
+                <Route path="applicants/csv-import" element={<ApplicantCsvImport />} />
+                <Route path="applicants/temp-score" element={<ApplicantTempScore />} />
                 <Route path="statistics" element={<Statistics />} />
                 <Route path="subjects" element={<SubjectList />} />
                 <Route path="question-bank" element={<QuestionBankList />} />
@@ -75,14 +73,8 @@ function App() {
                 <Route path="question-bank/items" element={<QuestionBankItemList />} />
                 <Route path="question-bank/bulk-import" element={<QuestionBankBulkImport />} />
                 <Route path="question-bank/csv-update" element={<QuestionBankCsvUpdate />} />
-                <Route path="gosi/exams" element={<GosiExamList />} />
-                <Route path="gosi/pass" element={<GosiPassList />} />
-                <Route path="gosi/results" element={<GosiScoreList />} />
-                <Route path="gosi/results/:gosiCd/:rstNo" element={<GosiScoreDetail />} />
-                <Route path="gosi/statistics" element={<GosiStatistics />} />
+                <Route path="question-bank/excel-update" element={<QuestionBankExcelUpdate />} />
                 <Route path="gosi/analytics" element={<GosiAnalytics />} />
-                <Route path="gosi/subjects" element={<GosiSubjectList />} />
-                <Route path="gosi/members" element={<GosiMemberList />} />
                 <Route path="*" element={<Navigate to="/exams" replace />} />
               </Route>
             </Routes>

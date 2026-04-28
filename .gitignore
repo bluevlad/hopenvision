@@ -61,3 +61,6 @@ scripts/data/
 
 # Local Docker Compose (개발 PC 전용)
 docker-compose.local.yml
+
+# DB 운영 백업 (gitignore — 절대 커밋 금지)
+backups/

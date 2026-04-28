@@ -2,12 +2,15 @@
 
 > 작성일: 2026-04-28
 > 입력: `source/acm_basic.{schema,routines,views}.sql`, `source/inventory.md`
-> 의존: [REVERT_SPRINT0.md](REVERT_SPRINT0.md), [ADR-001-academy-integration.md](../adr/ADR-001-academy-integration.md), [PHASE1_DECISIONS.md](decisions/PHASE1_DECISIONS.md)
+> 의존: [REVERT_SPRINT0.md](REVERT_SPRINT0.md), [ADR-001-academy-integration.md](../adr/ADR-001-academy-integration.md), [ADR-002-ai-first-strategy.md](../adr/ADR-002-ai-first-strategy.md), [PHASE1_DECISIONS.md](decisions/PHASE1_DECISIONS.md)
 > **결정 반영** (2026-04-28): REVERT 옵션 **A 확정** → academy 마이그레이션은 **V2부터** 시작. 본 문서의 V8~V60 표기는 **V2~V54 로 시프트** (-6).
+> **🚨 ADR-002 (2026-04-28) 적용**: 레거시 비즈니스 로직 1:1 포팅은 **리소스 낭비**로 판단. **V2~V28 (DDL)** 만 진행하고, **V50~V60 (뷰/시퀀스/함수/프로시저)** 은 **보류 또는 취소**. 상세는 [ADR-002 §2.2](../adr/ADR-002-ai-first-strategy.md#22-v50v60-기존-계획-재정렬). 본 문서의 §3 V50~V60 표 및 §5 함수/프로시저 변환 가이드는 **참고용 (legacy)** 으로 남겨둠.
 
 ## 1. 목표
 
 academy `acm_basic` MariaDB의 **209개 테이블 + 2 뷰 + 35 프로시저 + 18 함수**를 hopenvision PostgreSQL로 변환·이관한다. Phase 1은 **DDL 변환만** 다룸 (데이터 ETL은 Phase 3).
+
+> ⚠️ **ADR-002 적용 후 실제 범위**: **V2~V28 (DDL 202 테이블)** 만 적용 대상. 뷰/시퀀스/함수/프로시저는 신규 모듈에서 호출이 발생하는 시점에 **선택적**으로 신규 설계.
 
 ## 2. 변환 핫스팟 인벤토리
 
@@ -78,7 +81,10 @@ V40  counsel                              counsel_rst, counsel_sch, counsel_time
 V41  coop                                 coop_mst, coop_coupon, coop_coupon_mst, cop_seq (4)
 V42  notuse_misc                          notuse_coupon_lecture, material_menu_mst, off_user, on_user 등 분류외 잔여 (varies)
 
+--- ⚠️ ADR-002 적용: 아래 V50~V60 모두 보류/취소. 참고용으로만 보존 ---
+
 V50  views                                comvnusermaster_view, v_inquiry_view (PostgreSQL 호환 변환)
+     [ADR-002] 🟡 보류 — AI 입력 시점에 신규 뷰로 작성
 V51  sequences                            seq_orderno, seq_offno, seq_offorderno, seq_no, seq_exam_nextseq, seq_exam_identyid, seq_exam_offererid (7)
        — 7개 GET_NEXTSEQ_* 프로시저를 PostgreSQL SEQUENCE로 일괄 대체
 

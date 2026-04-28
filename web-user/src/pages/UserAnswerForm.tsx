@@ -73,7 +73,7 @@ const UserAnswerForm: React.FC = () => {
   }, []);
 
   const handleSubjectCancel = useCallback(() => {
-    navigate('/');
+    navigate('/exams');
   }, [navigate]);
 
   const effectiveActiveTab = activeTab || (activeSubjects[0]?.subjectCd ?? '');
@@ -206,7 +206,7 @@ const UserAnswerForm: React.FC = () => {
         <Button
           style={{ marginTop: 16 }}
           icon={<ArrowLeftOutlined />}
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/exams')}
         >
           목록으로
         </Button>
@@ -224,7 +224,7 @@ const UserAnswerForm: React.FC = () => {
           showIcon
         />
         <Space style={{ marginTop: 16 }}>
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/')}>
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/exams')}>
             목록으로
           </Button>
           <Button type="primary" onClick={() => navigate(`/exams/${examCd}/result`)}>
@@ -291,7 +291,7 @@ const UserAnswerForm: React.FC = () => {
           <div>
             <Button
               icon={<ArrowLeftOutlined />}
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/exams')}
               style={{ marginBottom: 16 }}
             >
               목록으로

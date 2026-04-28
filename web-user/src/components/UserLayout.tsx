@@ -16,7 +16,7 @@ const { Header, Sider, Content } = AntLayout;
 
 const menuItems = [
   {
-    key: '/',
+    key: '/exams',
     icon: <FormOutlined />,
     label: '채점하기',
   },
@@ -61,7 +61,7 @@ export default function UserLayout() {
   const getSelectedKey = () => {
     const path = location.pathname;
     if (path === '/history') return '/history';
-    return '/';
+    return '/exams';
   };
 
   const queryClient = useQueryClient();

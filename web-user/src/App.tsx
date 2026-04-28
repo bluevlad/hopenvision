@@ -8,6 +8,7 @@ import UserAnswerForm from './pages/UserAnswerForm';
 import UserScoreResult from './pages/UserScoreResult';
 import UserHistory from './pages/UserHistory';
 import MockExamPage from './pages/MockExamPage';
+import GatewayLanding from './pages/GatewayLanding/GatewayLanding';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -25,8 +26,9 @@ function App() {
       <ConfigProvider locale={koKR}>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<UserLayout />}>
-              <Route index element={<UserExamList />} />
+            <Route path="/" element={<GatewayLanding />} />
+            <Route element={<UserLayout />}>
+              <Route path="exams" element={<UserExamList />} />
               <Route path="history" element={<UserHistory />} />
               <Route path="exams/:examCd/answer" element={<UserAnswerForm />} />
               <Route path="exams/:examCd/mock" element={<MockExamPage />} />

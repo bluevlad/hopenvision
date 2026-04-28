@@ -109,7 +109,7 @@ const UserScoreResult: React.FC = () => {
         <Button
           style={{ marginTop: 16 }}
           icon={<ArrowLeftOutlined />}
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/exams')}
         >
           목록으로
         </Button>
@@ -556,7 +556,7 @@ const UserScoreResult: React.FC = () => {
         <div style={{ marginBottom: 24 }}>
           <Button
             icon={<ArrowLeftOutlined />}
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/exams')}
             style={{ marginBottom: 16 }}
           >
             목록으로

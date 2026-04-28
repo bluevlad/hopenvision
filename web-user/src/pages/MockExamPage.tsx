@@ -278,7 +278,7 @@ const MockExamPage: React.FC = () => {
   }, []);
 
   const handleSubjectCancel = useCallback(() => {
-    navigate('/');
+    navigate('/exams');
   }, [navigate]);
 
   const handleAnswerSelect = (questionNo: number, answer: string) => {
@@ -356,7 +356,7 @@ const MockExamPage: React.FC = () => {
             reviewMode,
           });
         }
-        navigate('/');
+        navigate('/exams');
       },
     });
   };
@@ -416,7 +416,7 @@ const MockExamPage: React.FC = () => {
     return (
       <div style={{ padding: 24 }}>
         <Alert message="시험 정보를 불러올 수 없습니다" type="error" showIcon />
-        <Button style={{ marginTop: 16 }} icon={<ArrowLeftOutlined />} onClick={() => navigate('/')}>목록으로</Button>
+        <Button style={{ marginTop: 16 }} icon={<ArrowLeftOutlined />} onClick={() => navigate('/exams')}>목록으로</Button>
       </div>
     );
   }
@@ -426,7 +426,7 @@ const MockExamPage: React.FC = () => {
       <div style={{ padding: 24 }}>
         <Alert message="이미 채점이 완료된 시험입니다" type="info" showIcon />
         <Space style={{ marginTop: 16 }}>
-          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/')}>목록으로</Button>
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/exams')}>목록으로</Button>
           <Button type="primary" onClick={() => navigate(`/exams/${examCd}/result`)}>결과 보기</Button>
         </Space>
       </div>

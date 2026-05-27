@@ -59,6 +59,9 @@ __pycache__/
 # Scripts data (HWPX, PDF, 파싱 결과)
 scripts/data/
 
+# Board migration export (학습모델 입력용 JSONL)
+data/board-export/
+
 # Local Docker Compose (개발 PC 전용)
 docker-compose.local.yml
 

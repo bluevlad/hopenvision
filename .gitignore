@@ -52,6 +52,9 @@ wiki/.venv/
 !.env.example
 !.env.*.example
 
+# Local helper scripts with secrets (e.g. board-migrate-env.local.ps1)
+*.local.ps1
+
 # Python
 __pycache__/
 *.pyc
@@ -61,6 +64,9 @@ scripts/data/
 
 # Board migration export (학습모델 입력용 JSONL)
 data/board-export/
+
+# Board migration schema dump (Oracle 메타데이터 추출)
+data/board-schema-dump/
 
 # Local Docker Compose (개발 PC 전용)
 docker-compose.local.yml

@@ -96,6 +96,12 @@ public class BoardMigrationRunner implements CommandLineRunner {
     @Value("${migrate.board.dry-run:true}")
     private boolean dryRun;
 
+    @Value("${migrate.board.schema-dump.enabled:false}")
+    private boolean schemaDumpEnabled;
+
+    @Value("${migrate.board.extra.enabled:false}")
+    private boolean extraEnabled;
+
     @Value("${migrate.board.chunk-size:500}")
     private int chunkSize;
 
@@ -126,6 +132,15 @@ public class BoardMigrationRunner implements CommandLineRunner {
         log.info("Board Migration Runner (dryRun={}, exportEnabled={}, chunkSize={})",
             dryRun, exportEnabled, chunkSize);
         log.info("===============================================");
+
+        if (schemaDumpEnabled) {
+            log.info("[SKIP] schema-dump.enabled=true → BoardSchemaDumpRunner 가 처리. 본 Runner는 종료.");
+            return;
+        }
+        if (extraEnabled) {
+            log.info("[SKIP] extra.enabled=true → BoardExtraMigrationRunner 가 처리. 본 Runner는 종료.");
+            return;
+        }
 
         verifyOracleConnections();
 

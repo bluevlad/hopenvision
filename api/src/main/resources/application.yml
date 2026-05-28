@@ -181,6 +181,12 @@ migrate:
       enabled: ${MIGRATE_EXPORT_ENABLED:false}
       output-dir: ${MIGRATE_EXPORT_DIR:./data/board-export}
       group-by-thread: ${MIGRATE_EXPORT_GROUP:true}
+    schema-dump:
+      enabled: ${MIGRATE_SCHEMA_DUMP_ENABLED:false}
+      output-dir: ${MIGRATE_SCHEMA_DUMP_DIR:./data/board-schema-dump}
+    extra:
+      enabled: ${MIGRATE_EXTRA_ENABLED:false}
+      chunk-size: ${MIGRATE_EXTRA_CHUNK_SIZE:500}
 
 ---
 # 운영 환경

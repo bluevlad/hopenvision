@@ -21,6 +21,8 @@ import QuestionBankDetail from './pages/QuestionBankDetail';
 import QuestionSetList from './pages/QuestionSetList';
 import QuestionSetDetail from './pages/QuestionSetDetail';
 import GosiAnalytics from './pages/gosi/GosiAnalytics';
+import BoardList from './pages/Board/BoardList';
+import BoardDetail from './pages/Board/BoardDetail';
 import SubjectMasterList from './pages/SubjectMasterList';
 import QuestionBankGroupList from './pages/QuestionBankGroupList';
 import QuestionBankItemList from './pages/QuestionBankItemList';
@@ -75,6 +77,8 @@ function App() {
                 <Route path="question-bank/csv-update" element={<QuestionBankCsvUpdate />} />
                 <Route path="question-bank/excel-update" element={<QuestionBankExcelUpdate />} />
                 <Route path="gosi/analytics" element={<GosiAnalytics />} />
+                <Route path="board" element={<BoardList />} />
+                <Route path="board/:id" element={<BoardDetail />} />
                 <Route path="*" element={<Navigate to="/exams" replace />} />
               </Route>
             </Routes>

@@ -8,6 +8,7 @@ import {
   LogoutOutlined,
   BookOutlined,
   AppstoreOutlined,
+  NotificationOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../auth/useAuth';
 
@@ -46,6 +47,11 @@ const menuItems = [
       { key: '/question-sets', label: '문제세트' },
     ],
   },
+  {
+    key: '/board',
+    icon: <NotificationOutlined />,
+    label: '게시판',
+  },
 ];
 
 export default function AdminLayout() {
@@ -71,6 +77,7 @@ export default function AdminLayout() {
     if (path.startsWith('/exams')) return '/exams';
     if (path.startsWith('/applicants')) return '/applicants';
     if (path.startsWith('/statistics')) return '/statistics';
+    if (path.startsWith('/board')) return '/board';
     return '/exams';
   };
 

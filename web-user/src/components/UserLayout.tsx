@@ -1,12 +1,13 @@
 import { useState, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Layout as AntLayout, Menu, Button, Dropdown, Space, theme } from 'antd';
+import { Layout as AntLayout, Menu, Button, Dropdown, Space, Tooltip, theme } from 'antd';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   UserOutlined,
   FormOutlined,
   HistoryOutlined,
   QuestionCircleOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons';
 import { getUserId, getMyProfile, hasProfile as checkHasProfile } from '../api/userApi';
 import type { UserProfile } from '../types/user';
@@ -137,6 +138,14 @@ export default function UserLayout() {
         >
           <h3 style={{ margin: 0 }}>공무원 시험 채점 시스템</h3>
           <Space>
+            <Tooltip title="게이트웨이로">
+              <Button
+                type="text"
+                icon={<AppstoreOutlined />}
+                onClick={() => navigate('/')}
+                aria-label="게이트웨이로 이동"
+              />
+            </Tooltip>
             <Button
               type="text"
               icon={<QuestionCircleOutlined />}

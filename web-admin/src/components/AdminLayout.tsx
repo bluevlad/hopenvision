@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Layout as AntLayout, Menu, Button, Space, theme } from 'antd';
+import { Layout as AntLayout, Menu, Button, Space, Tooltip, theme } from 'antd';
 import {
   FileTextOutlined,
   UserOutlined,
   BarChartOutlined,
   LogoutOutlined,
   BookOutlined,
+  AppstoreOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '../auth/useAuth';
 
@@ -130,6 +131,14 @@ export default function AdminLayout() {
         >
           <h3 style={{ margin: 0 }}>시험 관리 시스템</h3>
           <Space>
+            <Tooltip title="게이트웨이로">
+              <Button
+                type="text"
+                icon={<AppstoreOutlined />}
+                href="https://hopenvision.unmong.com/"
+                aria-label="게이트웨이로 이동"
+              />
+            </Tooltip>
             {user && (
               <Space size="small">
                 {user.picture && (

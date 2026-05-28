@@ -13,21 +13,19 @@ type FeatureItem = {
   level: FeatureLevel;
   to: string;
   external?: boolean;
+  visibleOnlyToAdmin?: boolean;
 };
 
 const FEATURES: FeatureItem[] = [
   { icon: '📝', name: '시험 채점', desc: 'OMR/약식 답안 입력 후 즉시 채점 — 과목별 점수와 합격 예측을 한 화면에 표시', tag: '🌐 채점', level: 'public', to: '/exams' },
   { icon: '📋', name: '모의고사', desc: '문제세트 기반 온라인 모의고사 응시 — 시간 제한·자동 채점·해설 제공', tag: '🌐 모의고사', level: 'public', to: '/exams' },
   { icon: '📊', name: '응시 이력', desc: '과거 응시 결과·점수 추이·과목별 정답률을 누적 조회', tag: '🌐 이력', level: 'public', to: '/history' },
-  { icon: '📋', name: '시험 관리', desc: '시험 회차 등록·수정·답안지 매핑·임포트 진입 통합', level: 'admin', to: '/admin/exams', external: true },
-  { icon: '🔑', name: '답안지 등록', desc: '과목·문항별 정답·배점·문제유형(객관식/주관식) 일괄 입력', level: 'admin', to: '/admin/exams', external: true },
-  { icon: '📂', name: 'Excel 임포트', desc: '정답표·응시자 명단 Excel 업로드 → 미리보기 → 일괄 저장 (Apache POI)', level: 'admin', to: '/admin/import/preview', external: true },
+  { icon: '📢', name: '게시판', desc: '공지·자료실·Q&A — 시험 일정·답안지 자료·합격 후기 통합 열람', tag: '🌐 게시판', level: 'public', to: '/board', visibleOnlyToAdmin: true },
+  { icon: '📋', name: '시험 관리', desc: '시험 회차 등록·답안지 정답 매핑·Excel 임포트까지 한 화면에서 통합 운영', level: 'admin', to: '/admin/exams', external: true },
   { icon: '👥', name: '응시자 관리', desc: '응시자 명부·CSV 업로드·임시점수 등록·시험별 응시자 매핑 통합', level: 'admin', to: '/admin/applicants', external: true },
-  { icon: '📈', name: '통계 대시보드', desc: '과목별 평균·합격률·점수 분포 시각화 (Recharts, exam_applicant 기반)', level: 'admin', to: '/admin/statistics', external: true },
-  { icon: '📚', name: '과목 관리', desc: '과목 마스터 코드·명칭·표시 순서 관리 — 시험 등록 시 참조 카탈로그', level: 'admin', to: '/admin/subjects', external: true },
-  { icon: '🏛️', name: '문제은행', desc: '문항 그룹·문항·정답·해설 등록 + CSV/Excel 일괄 임포트·갱신 지원', level: 'admin', to: '/admin/question-bank', external: true },
-  { icon: '📄', name: '문제세트', desc: '문제은행에서 문항을 골라 모의고사용 시험지 세트를 구성·발행', level: 'admin', to: '/admin/question-sets', external: true },
-  { icon: '🔍', name: '고시 분석', desc: '공무원 시험 회차·과목별 정답률·난이도·오답 패턴 심층 리포트', level: 'admin', to: '/admin/gosi/analytics', external: true },
+  { icon: '🏛️', name: '문항 관리', desc: '과목 마스터·문제은행·문제세트를 한 진입점으로 — 모의고사 콘텐츠 파이프라인', level: 'admin', to: '/admin/question-bank', external: true },
+  { icon: '📈', name: '통계·분석', desc: '과목별 평균·합격률·점수 분포 + 고시 회차 난이도·오답 패턴 심층 리포트', level: 'admin', to: '/admin/statistics', external: true },
+  { icon: '🗂️', name: '게시판 관리', desc: '공지·자료실·Q&A 게시물 작성·고정·노출 관리 (레거시 38,211건 통합)', level: 'admin', to: '/admin/board', external: true },
 ];
 
 const TECH_STACK = [
@@ -150,7 +148,12 @@ export default function GatewayLanding() {
   }, []);
 
   // web-user 는 공개/관리자 권한만 다룸. AuthContext 도입 시 isAuthenticated/isAdmin 으로 교체.
-  const authState: AuthState = { isAuthenticated: false, isAdmin: false };
+  // 관리자 세션 감지: web-admin과 동일 origin에서 sessionStorage('admin_token')가 있으면 관리자로 간주.
+  // 별도 도메인의 web-admin 세션은 cross-origin 격리로 인해 감지되지 않음 — web-user 측 관리자 로그인 도입 시 동작.
+  const isAdmin = typeof window !== 'undefined' && !!window.sessionStorage.getItem('admin_token');
+  const authState: AuthState = { isAuthenticated: isAdmin, isAdmin };
+
+  const visibleFeatures = FEATURES.filter(f => !f.visibleOnlyToAdmin || authState.isAdmin);
 
   return (
     <div className="gateway-landing-root">
@@ -166,7 +169,7 @@ export default function GatewayLanding() {
         <section className="sl-section">
           <div className="sl-section-title">Features</div>
           <div className="sl-features">
-            {FEATURES.map(feature => (
+            {visibleFeatures.map(feature => (
               <FeatureCard
                 key={feature.name}
                 feature={feature}

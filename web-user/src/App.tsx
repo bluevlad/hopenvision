@@ -9,6 +9,9 @@ import UserScoreResult from './pages/UserScoreResult';
 import UserHistory from './pages/UserHistory';
 import MockExamPage from './pages/MockExamPage';
 import GatewayLanding from './pages/GatewayLanding/GatewayLanding';
+import BoardList from './pages/Board/BoardList';
+import BoardDetail from './pages/Board/BoardDetail';
+import BoardGuard from './pages/Board/BoardGuard';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -33,6 +36,8 @@ function App() {
               <Route path="exams/:examCd/answer" element={<UserAnswerForm />} />
               <Route path="exams/:examCd/mock" element={<MockExamPage />} />
               <Route path="exams/:examCd/result" element={<UserScoreResult />} />
+              <Route path="board" element={<BoardGuard><BoardList /></BoardGuard>} />
+              <Route path="board/:id" element={<BoardGuard><BoardDetail /></BoardGuard>} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>

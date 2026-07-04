@@ -46,7 +46,7 @@ const TECH_STACK = [
 
 const CONNECTED_SERVICES = [
   { name: 'InfraWatcher', role: '컨테이너 모니터링', href: 'https://infrawatcher.unmong.com/', dot: '#06b6d4' },
-  { name: 'QA-Agent', role: '품질 자동 테스트', href: 'https://qadashboard.unmong.com/', dot: '#8b5cf6' },
+  { name: 'QA-Agent', role: '품질 자동 테스트', href: 'https://qaagent.unmong.com/', dot: '#8b5cf6' },
   { name: 'StandUp', role: '업무 추적 연동', href: 'https://standup.unmong.com/', dot: '#14b8a6' },
 ];
 

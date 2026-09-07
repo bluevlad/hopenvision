@@ -16,7 +16,7 @@
 | hopenvision-frontend | 4050 | 4050 | React 웹 애플리케이션 |
 | hopenvision-backend | 9050 | 9050 | Spring Boot REST API |
 | hopenvision-db | 5432 | 5432 | PostgreSQL 데이터베이스 |
-| Claude-Opus-bluevlad | - | 4060 | Claude Code 에이전트 서비스 (macbook) |
+| Ai-Legacy-bluevlad | - | 4060 | Claude Code 에이전트 서비스 (macbook) |
 | Swagger UI | 9050/swagger-ui.html | - | API 문서 (개발만) |
 | H2 Console | 9050/h2-console | - | H2 DB 콘솔 (로컬만) |
 
@@ -27,7 +27,7 @@
 | 포트 범위 | 용도 | 비고 |
 |-----------|------|------|
 | 4050-4059 | 웹 프론트엔드 서비스 | 4050: hopenvision |
-| 4060-4069 | AI/에이전트 서비스 | 4060: Claude-Opus-bluevlad |
+| 4060-4069 | AI/에이전트 서비스 | 4060: Ai-Legacy-bluevlad |
 | 4070-4079 | 예비 (향후 확장) | - |
 | 5050-5059 | 관리 도구 | 5050: pgAdmin |
 | 5432 | PostgreSQL | 고정 |
@@ -794,5 +794,5 @@ logging:
 | 버전 | 일자 | 변경 내용 |
 |------|------|----------|
 | 1.0 | 2025-02-06 | 초안 작성 |
-| 1.1 | 2026-02-07 | Claude-Opus-bluevlad 포트(4060) 추가, 포트 할당 계획 수립 |
+| 1.1 | 2026-02-07 | Ai-Legacy-bluevlad 포트(4060) 추가, 포트 할당 계획 수립 |
 | 1.2 | 2026-02-10 | 민감정보 플레이스홀더 치환 (#10), API Nginx 프록시 방식 반영 (#11) |

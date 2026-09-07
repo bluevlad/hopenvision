@@ -143,7 +143,7 @@ server {
 
 ## 신규 서비스 Wiki 추가 시
 
-Wiki Hub에 새 서비스를 추가하려면 [WIKI_HUB_GUIDE.md](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/standards/documentation/WIKI_HUB_GUIDE.md)의 체크리스트를 따릅니다.
+Wiki Hub에 새 서비스를 추가하려면 [WIKI_HUB_GUIDE.md](https://github.com/bluevlad/Ai-Legacy-bluevlad/blob/main/standards/documentation/WIKI_HUB_GUIDE.md)의 체크리스트를 따릅니다.
 
 ### 요약 (5단계)
 

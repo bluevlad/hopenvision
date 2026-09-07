@@ -10,18 +10,18 @@
 
 상세 안내: [`source/README.md`](source/README.md)
 
-## 관련 전략 문서 (Claude-Opus-bluevlad)
+## 관련 전략 문서 (Ai-Legacy-bluevlad)
 
 본 입력 자료를 사용하여 작성될 PostgreSQL Flyway 스크립트의 변환 계획·의사결정은 다음 위치에서 관리합니다.
 
 | 문서 | 위치 |
 |------|------|
-| Phase 1 Flyway 분할 계획 | [`services/hopenvision/plans/phase1-flyway-plan.md`](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/services/hopenvision/plans/phase1-flyway-plan.md) |
-| 비즈니스 프로시저 → JPA 매핑 | [`services/hopenvision/analysis/procedures-to-jpa.md`](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/services/hopenvision/analysis/procedures-to-jpa.md) |
-| Phase 1 의사결정 로그 (D-1 ~ D-6) | [`services/hopenvision/reports/2026-04-28-phase1-decisions.md`](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/services/hopenvision/reports/2026-04-28-phase1-decisions.md) |
-| Sprint 0 Revert 계획 | [`services/hopenvision/reports/2026-04-28-revert-sprint0.md`](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/services/hopenvision/reports/2026-04-28-revert-sprint0.md) |
-| ADR-001 Academy 통합 | [`services/hopenvision/adr/001-academy-integration.md`](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/services/hopenvision/adr/001-academy-integration.md) |
-| ADR-002 AI 우선 전략 | [`services/hopenvision/adr/002-ai-first-strategy.md`](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/services/hopenvision/adr/002-ai-first-strategy.md) |
+| Phase 1 Flyway 분할 계획 | [`services/hopenvision/plans/phase1-flyway-plan.md`](https://github.com/bluevlad/Ai-Legacy-bluevlad/blob/main/services/hopenvision/plans/phase1-flyway-plan.md) |
+| 비즈니스 프로시저 → JPA 매핑 | [`services/hopenvision/analysis/procedures-to-jpa.md`](https://github.com/bluevlad/Ai-Legacy-bluevlad/blob/main/services/hopenvision/analysis/procedures-to-jpa.md) |
+| Phase 1 의사결정 로그 (D-1 ~ D-6) | [`services/hopenvision/reports/2026-04-28-phase1-decisions.md`](https://github.com/bluevlad/Ai-Legacy-bluevlad/blob/main/services/hopenvision/reports/2026-04-28-phase1-decisions.md) |
+| Sprint 0 Revert 계획 | [`services/hopenvision/reports/2026-04-28-revert-sprint0.md`](https://github.com/bluevlad/Ai-Legacy-bluevlad/blob/main/services/hopenvision/reports/2026-04-28-revert-sprint0.md) |
+| ADR-001 Academy 통합 | [`services/hopenvision/adr/001-academy-integration.md`](https://github.com/bluevlad/Ai-Legacy-bluevlad/blob/main/services/hopenvision/adr/001-academy-integration.md) |
+| ADR-002 AI 우선 전략 | [`services/hopenvision/adr/002-ai-first-strategy.md`](https://github.com/bluevlad/Ai-Legacy-bluevlad/blob/main/services/hopenvision/adr/002-ai-first-strategy.md) |
 
 ## 실제 Flyway 스크립트
 

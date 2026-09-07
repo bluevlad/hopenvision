@@ -32,6 +32,8 @@ dependencies {
     // Database
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'com.h2database:h2'
+    // Oracle JDBC — migrate-board 프로파일에서만 사용 (1회성 게시판 마이그레이션)
+    runtimeOnly 'com.oracle.database.jdbc:ojdbc11:23.3.0.23.09'
 
     // Flyway — DB 마이그레이션 (Sprint 0+: MVP 모듈 확장)
     implementation 'org.flywaydb:flyway-core'

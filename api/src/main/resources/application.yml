@@ -156,6 +156,39 @@ spring:
     show-sql: true
 
 ---
+# 게시판 마이그레이션 전용 프로파일 (1회성)
+# 실행: --spring.profiles.active=dev,migrate-board --migrate.board.dry-run=true
+# 필요 env: ORACLE_URL, ORACLE_PUBLIC_USER, ORACLE_PUBLIC_PASSWORD, ORACLE_GOSI_USER, ORACLE_GOSI_PASSWORD
+spring:
+  config:
+    activate:
+      on-profile: migrate-board
+
+  main:
+    web-application-type: none
+
+migrate:
+  board:
+    dry-run: ${MIGRATE_DRY_RUN:true}
+    chunk-size: ${MIGRATE_CHUNK_SIZE:500}
+    oracle:
+      url: ${ORACLE_URL:jdbc:oracle:thin:@localhost:1521/orcl.docker.internal}
+      public-user: ${ORACLE_PUBLIC_USER:WILLBES_PUBLIC}
+      public-password: ${ORACLE_PUBLIC_PASSWORD:}
+      gosi-user: ${ORACLE_GOSI_USER:WILLBES_GOSI}
+      gosi-password: ${ORACLE_GOSI_PASSWORD:}
+    export:
+      enabled: ${MIGRATE_EXPORT_ENABLED:false}
+      output-dir: ${MIGRATE_EXPORT_DIR:./data/board-export}
+      group-by-thread: ${MIGRATE_EXPORT_GROUP:true}
+    schema-dump:
+      enabled: ${MIGRATE_SCHEMA_DUMP_ENABLED:false}
+      output-dir: ${MIGRATE_SCHEMA_DUMP_DIR:./data/board-schema-dump}
+    extra:
+      enabled: ${MIGRATE_EXTRA_ENABLED:false}
+      chunk-size: ${MIGRATE_EXTRA_CHUNK_SIZE:500}
+
+---
 # 운영 환경
 spring:
   config:

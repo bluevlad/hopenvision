@@ -118,7 +118,8 @@
       "Bash(pip install:*)",
       "Bash(mkdocs build:*)",
       "Bash(gh repo:*)",
-      "Bash(open:*)"
+      "Bash(open:*)",
+      "Bash(GIT_EDITOR=true git rebase --continue)"
     ]
   }
 }

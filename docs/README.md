@@ -2,9 +2,9 @@
 
 본 폴더는 **운영·개발에 직접 결합된 자료**만 둡니다 (How — 어떻게).
 
-전략·의사결정·계획·로드맵 등 **왜(Why) + 무엇을(What)** 에 해당하는 문서는 모두 private 저장소 [`Claude-Opus-bluevlad/services/hopenvision/`](https://github.com/bluevlad/Claude-Opus-bluevlad/tree/main/services/hopenvision) 로 이동되어 관리됩니다.
+전략·의사결정·계획·로드맵 등 **왜(Why) + 무엇을(What)** 에 해당하는 문서는 모두 private 저장소 [`Ai-Legacy-bluevlad/services/hopenvision/`](https://github.com/bluevlad/Ai-Legacy-bluevlad/tree/main/services/hopenvision) 로 이동되어 관리됩니다.
 
-> 이원화 표준: [SERVICE_FOLDER_STRUCTURE.md §1.2](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/standards/documentation/SERVICE_FOLDER_STRUCTURE.md)
+> 이원화 표준: [SERVICE_FOLDER_STRUCTURE.md §1.2](https://github.com/bluevlad/Ai-Legacy-bluevlad/blob/main/standards/documentation/SERVICE_FOLDER_STRUCTURE.md)
 
 ## 본 폴더의 잔여 자산
 
@@ -18,16 +18,16 @@
 
 | 카테고리 | 위치 |
 |---------|------|
-| ADR (의사결정) | [`services/hopenvision/adr/`](https://github.com/bluevlad/Claude-Opus-bluevlad/tree/main/services/hopenvision/adr) |
-| 구현 플랜 | [`services/hopenvision/plans/`](https://github.com/bluevlad/Claude-Opus-bluevlad/tree/main/services/hopenvision/plans) |
-| 분석 문서 | [`services/hopenvision/analysis/`](https://github.com/bluevlad/Claude-Opus-bluevlad/tree/main/services/hopenvision/analysis) |
-| 보고서 | [`services/hopenvision/reports/`](https://github.com/bluevlad/Claude-Opus-bluevlad/tree/main/services/hopenvision/reports) |
-| 로드맵 | [`services/hopenvision/roadmap/`](https://github.com/bluevlad/Claude-Opus-bluevlad/tree/main/services/hopenvision/roadmap) |
-| 서비스 README | [`services/hopenvision/README.md`](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/services/hopenvision/README.md) |
+| ADR (의사결정) | [`services/hopenvision/adr/`](https://github.com/bluevlad/Ai-Legacy-bluevlad/tree/main/services/hopenvision/adr) |
+| 구현 플랜 | [`services/hopenvision/plans/`](https://github.com/bluevlad/Ai-Legacy-bluevlad/tree/main/services/hopenvision/plans) |
+| 분석 문서 | [`services/hopenvision/analysis/`](https://github.com/bluevlad/Ai-Legacy-bluevlad/tree/main/services/hopenvision/analysis) |
+| 보고서 | [`services/hopenvision/reports/`](https://github.com/bluevlad/Ai-Legacy-bluevlad/tree/main/services/hopenvision/reports) |
+| 로드맵 | [`services/hopenvision/roadmap/`](https://github.com/bluevlad/Ai-Legacy-bluevlad/tree/main/services/hopenvision/roadmap) |
+| 서비스 README | [`services/hopenvision/README.md`](https://github.com/bluevlad/Ai-Legacy-bluevlad/blob/main/services/hopenvision/README.md) |
 
 ## 신규 문서 작성 시 위치 결정
 
-[SERVICE_FOLDER_STRUCTURE.md §6 배치 결정 트리](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/standards/documentation/SERVICE_FOLDER_STRUCTURE.md)를 따릅니다.
+[SERVICE_FOLDER_STRUCTURE.md §6 배치 결정 트리](https://github.com/bluevlad/Ai-Legacy-bluevlad/blob/main/standards/documentation/SERVICE_FOLDER_STRUCTURE.md)를 따릅니다.
 
 대략적인 분류:
 
@@ -42,4 +42,4 @@
 
 | 날짜 | 변경 내용 |
 |------|----------|
-| 2026-04-29 | 최초 작성. 전략 문서를 Claude-Opus-bluevlad/services/hopenvision/ 로 이동하고 본 폴더는 운영/입력 자료만 보관 |
+| 2026-04-29 | 최초 작성. 전략 문서를 Ai-Legacy-bluevlad/services/hopenvision/ 로 이동하고 본 폴더는 운영/입력 자료만 보관 |

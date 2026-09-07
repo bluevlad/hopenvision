@@ -164,8 +164,8 @@ com.hopenvision/
 
 ## Help Page 관리
 
-> 작성 표준: [HELP_PAGE_GUIDE.md](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/standards/documentation/HELP_PAGE_GUIDE.md)
-> HTML 템플릿: [help-page-template.html](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/standards/documentation/templates/help-page-template.html)
+> 작성 표준: [HELP_PAGE_GUIDE.md](https://github.com/bluevlad/Ai-Legacy-bluevlad/blob/main/standards/documentation/HELP_PAGE_GUIDE.md)
+> HTML 템플릿: [help-page-template.html](https://github.com/bluevlad/Ai-Legacy-bluevlad/blob/main/standards/documentation/templates/help-page-template.html)
 
 - **기능 추가/변경/삭제 시 반드시 헬프 페이지도 함께 업데이트**
 - 헬프 파일 위치:
@@ -200,7 +200,7 @@ com.hopenvision/
 
 ## Wiki
 
-- **구현 표준**: [WIKI_HUB_GUIDE.md](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/standards/documentation/WIKI_HUB_GUIDE.md)
+- **구현 표준**: [WIKI_HUB_GUIDE.md](https://github.com/bluevlad/Ai-Legacy-bluevlad/blob/main/standards/documentation/WIKI_HUB_GUIDE.md)
 - **로컬 위키**: `wiki/` (MkDocs Material, 개발용)
 - **운영 위키**: Wiki Hub 독립 서비스 (`wiki-hub/HopenVision/`)
 - **접근 URL**: `https://study.unmong.com/wiki/HopenVision/`
@@ -220,7 +220,7 @@ com.hopenvision/
 
 ## Fix 커밋 오류 추적
 
-> 상세: [FIX_COMMIT_TRACKING_GUIDE.md](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/standards/git/FIX_COMMIT_TRACKING_GUIDE.md) | [ERROR_TAXONOMY.md](https://github.com/bluevlad/Claude-Opus-bluevlad/blob/main/standards/git/ERROR_TAXONOMY.md)
+> 상세: [FIX_COMMIT_TRACKING_GUIDE.md](https://github.com/bluevlad/Ai-Legacy-bluevlad/blob/main/standards/git/FIX_COMMIT_TRACKING_GUIDE.md) | [ERROR_TAXONOMY.md](https://github.com/bluevlad/Ai-Legacy-bluevlad/blob/main/standards/git/ERROR_TAXONOMY.md)
 
 `fix:` 커밋 시 footer에 오류 추적 메타데이터를 **필수** 포함합니다.
 
